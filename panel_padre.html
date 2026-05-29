@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Tutor - Centro Educativo</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #eaedf1; }
+        header { flex-shrink: 0; z-index: 100; }
+        .app-wrapper { display: flex; flex: 1; overflow: hidden; }
+        
+        .sidebar { width: 260px; background-color: #2c3e50; color: #ecf0f1; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar-menu { list-style: none; padding-top: 10px; }
+        .sidebar-menu li a { display: flex; align-items: center; padding: 15px 20px; color: #ecf0f1; text-decoration: none; cursor: pointer; border-left: 3px solid transparent; }
+        .sidebar-menu li a:hover, .sidebar-menu li a.active { background-color: #34495e; border-left-color: #f39c12; color: #fff; }
+        .sidebar-menu li a i { margin-right: 15px; width: 20px; text-align: center; }
+        
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; background: #ecf0f1; }
+        .view-section { display: none; background: #fff; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 4px solid #f39c12; animation: fadeIn 0.3s; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .section-title { font-size: 1.4rem; color: #2c3e50; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.95rem; }
+        .data-table th, .data-table td { border: 1px solid #d1d8e0; padding: 12px 15px; text-align: left; }
+        .data-table th { background-color: #f4f6f7; color: #2c3e50; }
+        
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; }
+        .bg-green { background: #d4edda; color: #155724; }
+        .bg-red { background: #f8d7da; color: #721c24; }
+        .btn-pay { background: #009ee3; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div class="contact-info">
+                    <span><i class="fas fa-phone"></i> (011) 1234-5678</span>
+                    <span><i class="fas fa-envelope"></i> info@centromixto.edu</span>
+                </div>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
+                <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+                    <span class="logo-icon">🎓</span>
+                    <h1 style="margin:0; font-size: 1.3rem;">Educar Para Transformar</h1>
+                </div>
+                <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; margin: 0; list-style: none;">
+                    <li><a href="index.html#inicio">Inicio</a></li>
+                    <li><a href="index.html#contacto">Contacto</a></li>
+                    <li class="user-menu">
+                        <a href="#" style="color: #f39c12; font-weight: bold;"><i class="fas fa-users"></i> <span id="userNameDisplay">Tutor</span> <i class="fas fa-chevron-down"></i></a>
+                        <div class="dropdown-content">
+                            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="app-wrapper">
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a class="nav-link active" onclick="switchView('finanzas', this)"><i class="fas fa-file-invoice-dollar"></i> Estado de Cuenta</a></li>
+                <li><a class="nav-link" onclick="switchView('boletin', this)"><i class="fas fa-file-invoice"></i> Boletín y Asistencias</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <section id="finanzas" class="view-section active">
+                <h3 class="section-title">Control de Pagos</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Concepto</th><th>Vencimiento</th><th>Monto</th><th>Estado</th><th>Acción</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Cuota Abril 2026</td><td>10/04/2026</td><td>$45.000</td>
+                            <td><span class="badge bg-green">Abonado</span></td><td>-</td>
+                        </tr>
+                        <tr>
+                            <td>Cuota Mayo 2026</td><td>10/05/2026</td><td>$45.000</td>
+                            <td id="estadoPago"><span class="badge bg-red">Vencido</span></td>
+                            <td id="accionPago"><button class="btn-pay" onclick="procesarPago(this)"><i class="fas fa-credit-card"></i> Pagar</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="boletin" class="view-section">
+                <h3 class="section-title">Seguimiento Académico</h3>
+                <div style="margin-bottom: 20px; padding: 15px; background: #fdfefe; border: 1px solid #d1d8e0; border-radius: 6px;">
+                    <label style="font-weight: bold;">Alumno a cargo: </label>
+                    <select style="padding: 5px 10px;"><option>Seleccionar...</option><option>Martín (2° Año)</option></select>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Materia</th><th>Nota Parcial</th><th>Asistencia Global</th><th>Conducta</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Prácticas del Lenguaje</td><td>8.00</td><td>95%</td><td>Excelente</td></tr>
+                        <tr><td>Matemática</td><td>5.50</td><td>80%</td><td>Requiere Seguimiento</td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('usuarioActual'));
+            if (!user || user.tipo !== 'padre') { window.location.href = 'index.html'; return; }
+            document.getElementById('userNameDisplay').textContent = user.nombre;
+        });
+
+        function switchView(viewId, element) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        function procesarPago(btn) {
+            alert('Conectando con Mercado Pago... Pago procesado exitosamente.');
+            document.getElementById('estadoPago').innerHTML = '<span class="badge bg-green">Abonado</span>';
+            document.getElementById('accionPago').innerHTML = '-';
+        }
+
+        function logout() { localStorage.removeItem('usuarioActual'); window.location.href = 'index.html'; }
+    </script>
+</body>
+</html>

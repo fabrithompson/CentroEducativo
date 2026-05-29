@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Estudiante - Centro Educativo</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS Integrado para Layout Master-Detail */
+        body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f4f6f9; }
+        header { flex-shrink: 0; z-index: 100; }
+        .app-wrapper { display: flex; flex: 1; overflow: hidden; }
+        
+        .sidebar { width: 260px; background-color: #1a1c23; color: #e0e0e0; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar-menu { list-style: none; padding-top: 10px; }
+        .sidebar-menu li a { display: flex; align-items: center; padding: 15px 20px; color: #e0e0e0; text-decoration: none; cursor: pointer; border-left: 3px solid transparent; }
+        .sidebar-menu li a:hover, .sidebar-menu li a.active { background-color: #2d303e; border-left-color: #3498db; color: #fff; }
+        .sidebar-menu li a i { margin-right: 15px; width: 20px; text-align: center; }
+        
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; background: #eaedf1; }
+        .view-section { display: none; background: #fff; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 4px solid #3498db; animation: fadeIn 0.3s; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .section-title { font-size: 1.4rem; color: #2c3e50; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.95rem; }
+        .data-table th, .data-table td { border: 1px solid #d1d8e0; padding: 12px 15px; text-align: left; }
+        .data-table th { background-color: #f4f6f7; color: #2c3e50; }
+        
+        .form-controls { display: flex; gap: 15px; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .form-select, .form-input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; }
+        .btn-action { background: #3498db; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div class="contact-info">
+                    <span><i class="fas fa-phone"></i> (011) 1234-5678</span>
+                    <span><i class="fas fa-envelope"></i> info@centromixto.edu</span>
+                </div>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
+                <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+                    <span class="logo-icon">🎓</span>
+                    <h1 style="margin:0; font-size: 1.3rem;">Educar Para Transformar</h1>
+                </div>
+                <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; margin: 0; list-style: none;">
+                    <li><a href="index.html#inicio">Inicio</a></li>
+                    <li><a href="index.html#nosotros">Nosotros</a></li>
+                    <li><a href="index.html#niveles">Niveles</a></li>
+                    <li><a href="index.html#contacto">Contacto</a></li>
+                    <li class="user-menu">
+                        <a href="#" style="color: #3498db; font-weight: bold;"><i class="fas fa-user"></i> <span id="userNameDisplay">Estudiante</span> <i class="fas fa-chevron-down"></i></a>
+                        <div class="dropdown-content">
+                            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="app-wrapper">
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a class="nav-link active" onclick="switchView('inscripcion', this)"><i class="fas fa-edit"></i> Inscripción a Materias</a></li>
+                <li><a class="nav-link" onclick="switchView('cursado', this)"><i class="fas fa-book-open"></i> Mi Cursado Actual</a></li>
+                <li><a class="nav-link" onclick="switchView('estado', this)"><i class="fas fa-chart-line"></i> Estado Académico</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <section id="inscripcion" class="view-section active">
+                <h3 class="section-title">Inscripción a Cursado (Ciclo 2026)</h3>
+                <form id="formInscripcion" onsubmit="inscribirMateria(event)">
+                    <div class="form-controls">
+                        <select id="materiaSelect" class="form-select" required>
+                            <option value="">Seleccione Materia a Inscribirse...</option>
+                            <option value="Programación III|Lunes y Jueves 13:45">Programación III</option>
+                            <option value="Base de Datos II|Martes 13:45">Base de Datos II</option>
+                            <option value="Metodología de Sistemas I|Viernes 13:45">Metodología de Sistemas I</option>
+                        </select>
+                        <button type="submit" class="btn-action"><i class="fas fa-plus"></i> Inscribirse</button>
+                    </div>
+                </form>
+                <div style="background: #e8f4fd; padding: 15px; border-left: 4px solid #3498db;">
+                    Las materias inscriptas aparecerán automáticamente en "Mi Cursado Actual".
+                </div>
+            </section>
+
+            <section id="cursado" class="view-section">
+                <h3 class="section-title">Materias que cursa actualmente</h3>
+                <table class="data-table" id="tablaCursado">
+                    <thead>
+                        <tr>
+                            <th>Materia</th>
+                            <th>Comisión</th>
+                            <th>Horarios</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </section>
+
+            <section id="estado" class="view-section">
+                <h3 class="section-title">Historial y Notas</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Año</th><th>Materia</th><th>Nota Final</th><th>Libro/Folio</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>Programación I</td><td>8</td><td>L: 45 F: 12</td></tr>
+                        <tr><td>1</td><td>Matemática</td><td>7</td><td>L: 45 F: 89</td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('usuarioActual'));
+            if (!user || user.tipo !== 'estudiante') { window.location.href = 'index.html'; return; }
+            document.getElementById('userNameDisplay').textContent = user.nombre;
+        });
+
+        function switchView(viewId, element) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        function inscribirMateria(e) {
+            e.preventDefault();
+            const select = document.getElementById('materiaSelect');
+            if(!select.value) return;
+            const datos = select.value.split('|');
+            const tbody = document.querySelector('#tablaCursado tbody');
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${datos[0]}</td><td>1 (T2.1)</td><td>${datos[1]}</td><td><span style="color: green; font-weight: bold;">Inscripto</span></td>`;
+            tbody.appendChild(tr);
+            
+            alert(`Inscripción a ${datos[0]} procesada con éxito.`);
+            select.selectedIndex = 0;
+            switchView('cursado', document.querySelectorAll('.nav-link')[1]);
+        }
+
+        function logout() { localStorage.removeItem('usuarioActual'); window.location.href = 'index.html'; }
+    </script>
+</body>
+</html>
