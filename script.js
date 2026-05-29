@@ -97,7 +97,7 @@ function updateFileName(input) {
 }
 
 function openLoginModal() {
-    document.getElementById('loginModal').style.display = 'block';
+    document.getElementById('loginModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
 
@@ -108,7 +108,7 @@ function closeModal() {
 
 function openRegisterModal() {
     closeModal();
-    document.getElementById('registerModal').style.display = 'block';
+    document.getElementById('registerModal').style.display = 'flex';
 }
 
 function closeRegisterModal() {
