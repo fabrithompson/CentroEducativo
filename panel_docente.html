@@ -22,8 +22,7 @@
         
         .app-wrapper { display: flex; flex: 1; overflow: hidden; }
         
-        /* Sidebar Styles */
-        .sidebar { width: 280px; background-color: var(--sidebar-bg); color: var(--text-light); display: flex; flex-direction: column; overflow-y: auto; transition: width 0.3s; }
+        .sidebar { width: 280px; background-color: var(--sidebar-bg); color: var(--text-light); display: flex; flex-direction: column; overflow-y: auto; }
         .sidebar-header { padding: 25px 20px; border-bottom: 1px solid #1e293b; background: linear-gradient(to right, #0f172a, #1e293b); }
         .sidebar-header h2 { font-size: 1.1rem; color: #fff; margin-bottom: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
         .sidebar-menu { list-style: none; padding: 15px 0; flex: 1; }
@@ -32,41 +31,29 @@
         .sidebar-menu li a.active { background-color: var(--sidebar-hover); border-left-color: var(--accent); color: #fff; font-weight: 600; }
         .sidebar-menu li a i { margin-right: 15px; width: 20px; text-align: center; font-size: 1.1rem; }
         
-        /* Main Content Styles */
         .main-content { flex: 1; padding: 35px 40px; overflow-y: auto; background: var(--bg-main); }
-        .view-section { display: none; background: #fff; border-radius: 10px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); border-top: 4px solid var(--accent); animation: fadeIn 0.4s ease-out; }
+        .view-section { display: none; background: #fff; border-radius: 10px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-top: 4px solid var(--accent); animation: fadeIn 0.4s ease-out; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         
         .section-title { font-size: 1.5rem; color: #0f172a; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); font-weight: 600; }
         
-        /* Form & Tables */
         .form-layout { background: #f8fafc; padding: 25px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 25px; }
         .form-row { display: flex; gap: 20px; margin-bottom: 15px; flex-wrap: wrap; }
         .form-group { flex: 1; min-width: 200px; display: flex; flex-direction: column; }
-        .form-group label { font-size: 0.85rem; color: #475569; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group label { font-size: 0.85rem; color: #475569; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; }
         
-        .form-select, .form-input { padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; color: #1e293b; background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }
-        .form-select:focus, .form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .form-select, .form-input { padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; color: #1e293b; background: #fff; }
+        .form-input:disabled { background: #e2e8f0; color: #64748b; cursor: not-allowed; }
         
-        .btn-action { background: var(--accent); color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: background 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-action { background: var(--accent); color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; }
         .btn-action:hover { background: var(--accent-hover); }
-        .btn-secondary { background: #64748b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s; }
-        .btn-secondary:hover { background: #475569; }
         
         .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .data-table th, .data-table td { border-bottom: 1px solid var(--border-color); padding: 16px 20px; text-align: left; }
-        .data-table th { background-color: #f8fafc; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
-        .data-table tbody tr:last-child td { border-bottom: none; }
-        .data-table tbody tr:hover { background-color: #f1f5f9; }
+        .data-table th { background-color: #f8fafc; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; }
         
-        .list-materias { list-style: none; margin-top: 15px; }
-        .list-materias li { background: #fff; margin-bottom: 10px; padding: 15px 20px; border-left: 4px solid var(--accent); border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;}
-        
-        /* Comunicados specific */
         .comunicado-card { padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 15px; background: #fff; }
-        .comunicado-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: #64748b; font-size: 0.85rem; }
-        .comunicado-title { color: #0f172a; font-weight: 600; font-size: 1.1rem; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -104,168 +91,174 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <h2>Portal Académico</h2>
-                <span style="font-size: 0.8rem; color: #94a3b8;">Gestión Docente (SYSACAD)</span>
+                <span style="font-size: 0.8rem; color: #94a3b8;">Gestión Escolar (SYSACAD)</span>
             </div>
             <ul class="sidebar-menu">
-                <li><a class="nav-link active" onclick="switchView('configurar', this)"><i class="fas fa-cogs"></i> Asignación de Materias</a></li>
-                <li><a class="nav-link" onclick="switchView('alumnos', this)"><i class="fas fa-users"></i> Gestión de Alumnos</a></li>
+                <li><a class="nav-link active" onclick="switchView('calificaciones', this)"><i class="fas fa-pen-square"></i> Cargar Calificaciones</a></li>
+                <li><a class="nav-link" onclick="switchView('configurar', this)"><i class="fas fa-cogs"></i> Mis Materias Asignadas</a></li>
                 <li><a class="nav-link" id="navAsistencia" onclick="switchView('asistencia', this)"><i class="fas fa-clipboard-check"></i> Asistencia Diaria</a></li>
                 <li><a class="nav-link" onclick="switchView('comunicados', this)"><i class="fas fa-bullhorn"></i> Comunicados</a></li>
             </ul>
         </aside>
 
         <main class="main-content">
-            <section id="configurar" class="view-section active">
-                <h3 class="section-title">Asignación de Carga Horaria (Alta de Materias)</h3>
+            <section id="calificaciones" class="view-section active">
+                <h3 class="section-title">Registro Oficial de Calificaciones (RF-8)</h3>
                 <div class="form-layout">
-                    <form onsubmit="agregarMateria(event)">
+                    <form onsubmit="registrarNota(event)">
                         <div class="form-row">
-                            <div class="form-group" style="flex: 2;">
-                                <label>Carrera / Especialidad</label>
-                                <select id="carreraSelect" class="form-select" required onchange="manejarCarrera()">
-                                    <option value="">Seleccione una carrera...</option>
-                                    <option value="tup">Tecnicatura Universitaria en Programación (TUP)</option>
-                                    <option value="sistemas">Ingeniería en Sistemas de Información</option>
-                                    <option value="matematica">Licenciatura en Matemática</option>
-                                    <option value="otra">Otra (Ingreso manual)</option>
+                            <div class="form-group">
+                                <label>Nivel Educativo</label>
+                                <select id="notaNivel" class="form-select" required onchange="actualizarMateriasCalificación()">
+                                    <option value="">Seleccione Nivel...</option>
+                                    <option value="primario">Nivel Primario</option>
+                                    <option value="secundario">Nivel Secundario</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Materia</label>
+                                <select id="notaMateria" class="form-select" required>
+                                    <option value="">Seleccione Asignatura...</option>
                                 </select>
                             </div>
                         </div>
-
-                        <div class="form-row">
-                            <div class="form-group" id="containerMateriaTUP" style="display: none; flex: 2;">
-                                <label>Materia del Plan de Estudios</label>
-                                <select id="materiaTUP" class="form-select">
-                                    <option value="">Seleccione la asignatura...</option>
-                                    </select>
-                            </div>
-                            
-                            <div class="form-group" id="containerMateriaManual" style="display: none; flex: 2;">
-                                <label>Nombre de la Materia (Manual)</label>
-                                <input type="text" id="materiaManual" class="form-input" placeholder="Ej: Seminario de Robótica">
-                            </div>
-
-                            <div class="form-group" style="flex: 1;">
-                                <label>Horario de Dictado</label>
-                                <input type="text" id="docenteHorario" class="form-input" placeholder="Ej: Lunes 18:00 a 20:15" required>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: right; margin-top: 10px;">
-                            <button type="submit" class="btn-action"><i class="fas fa-plus"></i> Registrar Asignación</button>
-                        </div>
-                    </form>
-                </div>
-
-                <h4 style="color: #475569; font-size: 1.1rem; margin-top: 35px; margin-bottom: 15px;">Mis Asignaturas Activas</h4>
-                <ul id="listaMaterias" class="list-materias">
-                    </ul>
-            </section>
-
-            <section id="alumnos" class="view-section">
-                <h3 class="section-title">Nómina de Alumnos y Cursado</h3>
-                <div class="form-layout">
-                    <form onsubmit="agregarAlumno(event)">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>N° Legajo</label>
-                                <input type="number" id="alLegajo" class="form-input" placeholder="Ej: 45892" required>
+                                <label>Alumno</label>
+                                <select id="notaAlumno" class="form-select" required>
+                                    <option value="">Seleccione Estudiante...</option>
+                                    <option value="Barrabino, Franco">Barrabino, Franco</option>
+                                    <option value="Pérez, Juan">Pérez, Juan</option>
+                                    <option value="Gómez, María">Gómez, María</option>
+                                </select>
                             </div>
-                            <div class="form-group" style="flex: 2;">
-                                <label>Nombre Completo del Alumno</label>
-                                <input type="text" id="alNombre" class="form-input" placeholder="Apellidos, Nombres" required>
+                            <div class="form-group">
+                                <label>Instancia de Evaluación</label>
+                                <select id="notaInstancia" class="form-select" required>
+                                    <option value="">Seleccione Período...</option>
+                                    <option value="1er Trimestre">1er Trimestre</option>
+                                    <option value="2do Trimestre">2do Trimestre</option>
+                                    <option value="3er Trimestre">3er Trimestre</option>
+                                    <option value="Examen Libre">Examen Libre</option>
+                                </select>
                             </div>
-                            <div class="form-group" style="justify-content: flex-end;">
-                                <button type="submit" class="btn-action"><i class="fas fa-user-plus"></i> Inscribir Alumno</button>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nota Numérica (1 al 10)</label>
+                                <input type="number" id="notaValor" class="form-input" min="1" max="10" placeholder="Ej: 8" required>
                             </div>
+                            <div class="form-group">
+                                <label>Fecha de Registro</label>
+                                <input type="date" id="notaFecha" class="form-input" required>
+                            </div>
+                        </div>
+                        <div style="text-align: right; margin-top: 10px;">
+                            <button type="submit" class="btn-action"><i class="fas fa-save"></i> Guardar Calificación</button>
                         </div>
                     </form>
                 </div>
-                
-                <table class="data-table" id="tablaAlumnos">
+
+                <h4 style="color: #475569; font-size: 1.1rem; margin-top: 35px; margin-bottom: 15px;">Últimas Notas Asentadas</h4>
+                <table class="data-table" id="tablaNotasHistorial">
                     <thead>
                         <tr>
-                            <th style="width: 15%;">Legajo</th>
-                            <th style="width: 50%;">Alumno Inscripto</th>
-                            <th style="width: 35%;">Control Académico</th>
+                            <th>Alumno</th>
+                            <th>Materia</th>
+                            <th>Instancia</th>
+                            <th>Nota</th>
+                            <th>Fecha</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td style="font-family: monospace; font-size: 1.1rem; color: #475569;">12045</td>
-                            <td style="font-weight: 500;">Barrabino, Franco</td>
-                            <td>
-                                <button class="btn-secondary" onclick="irAAsistencia()"><i class="fas fa-tasks"></i> Control Diario</button>
-                            </td>
-                        </tr>
-                    </tbody>
+                        </tbody>
+                </table>
+            </section>
+
+            <section id="configurar" class="view-section">
+                <h3 class="section-title">Visualización de Carga Horaria Institucional</h3>
+                <div class="form-layout">
+                    <form onsubmit="asociarMateriaDocente(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nivel General</label>
+                                <select id="carreraSelect" class="form-select" required onchange="manejarNivelEscolar()">
+                                    <option value="">Seleccione un nivel...</option>
+                                    <option value="primario">Nivel Primario</option>
+                                    <option value="secundario">Nivel Secundario</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Materia</label>
+                                <select id="materiaEscolar" class="form-select" required onchange="cargarHorarioFijo()">
+                                    <option value="">Seleccione asignatura...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Horario Asignado (Inmodificable)</label>
+                                <input type="text" id="docenteHorario" class="form-input" placeholder="Horario automático institucional" disabled>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <button type="submit" class="btn-action"><i class="fas fa-check"></i> Confirmar Dictado</button>
+                        </div>
+                    </form>
+                </div>
+                <h4 style="color: #475569; font-size: 1.1rem; margin-top: 25px;">Mis Secciones bajo responsabilidad</h4>
+                <table class="data-table" id="tablaMateriasDocente">
+                    <thead>
+                        <tr><th>Nivel</th><th>Materia</th><th>Horario Fijo</th></tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
                 </table>
             </section>
 
             <section id="asistencia" class="view-section">
-                <h3 class="section-title">Registro de Asistencia — <span style="color: var(--accent);" id="fechaHoy"></span></h3>
-                
-                <div style="background: #fffbe1; border: 1px solid #fef08a; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; color: #854d0e;">
-                    <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i> Recuerde que el cierre de la planilla es irreversible una vez impactado en el servidor central.
-                </div>
-
-                <table class="data-table" id="tablaAsistencia">
+                <h3 class="section-title">Registro de Asistencia Diaria por Curso</h3>
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>Legajo</th>
                             <th>Alumno</th>
-                            <th style="text-align: center; color: #15803d;"><i class="fas fa-check-circle"></i> Presente</th>
-                            <th style="text-align: center; color: #b91c1c;"><i class="fas fa-times-circle"></i> Ausente</th>
+                            <th style="text-align: center;">Presente</th>
+                            <th style="text-align: center;">Ausente</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td style="font-family: monospace; font-size: 1.1rem; color: #475569;">12045</td>
-                            <td style="font-weight: 500;">Barrabino, Franco</td>
-                            <td style="text-align: center; background: rgba(21, 128, 61, 0.05);"><input type="radio" name="ast_1" value="p" checked style="transform: scale(1.3);"></td>
-                            <td style="text-align: center; background: rgba(185, 28, 28, 0.05);"><input type="radio" name="ast_1" value="a" style="transform: scale(1.3);"></td>
-                        </tr>
+                        <tr><td>12045</td><td>Barrabino, Franco</td><td style="text-align:center;"><input type="radio" name="a1" checked></td><td style="text-align:center;"><input type="radio" name="a1"></td></tr>
+                        <tr><td>12046</td><td>Pérez, Juan</td><td style="text-align:center;"><input type="radio" name="a2" checked></td><td style="text-align:center;"><input type="radio" name="a2"></td></tr>
                     </tbody>
                 </table>
-                <div style="margin-top: 25px; text-align: right; border-top: 1px solid var(--border-color); padding-top: 20px;">
-                    <button class="btn-action" onclick="alert('Datos procesados. La planilla de asistencia ha sido firmada digitalmente y enviada a Bedelía.')"><i class="fas fa-cloud-upload-alt"></i> Firmar y Enviar Planilla</button>
-                </div>
+                <div style="margin-top: 20px; text-align: right;"><button class="btn-action" onclick="alert('Asistencia registrada.')">Firmar Planilla</button></div>
             </section>
 
             <section id="comunicados" class="view-section">
-                <h3 class="section-title">Avisos y Comunicados Institucionales</h3>
-                
+                <h3 class="section-title">Avisos de Dirección</h3>
                 <div class="comunicado-card">
-                    <div class="comunicado-header">
-                        <span><i class="fas fa-university"></i> Secretaría Académica</span>
-                        <span><i class="far fa-calendar-alt"></i> 28/05/2026</span>
-                    </div>
-                    <h4 class="comunicado-title">Apertura de actas de regularidad</h4>
-                    <p style="color: #475569; line-height: 1.6;">Estimado cuerpo docente, se informa que a partir de la próxima semana quedará habilitado el sistema SYSACAD para la carga de condiciones finales de regularidad correspondientes al primer cuatrimestre.</p>
-                </div>
-
-                <div class="comunicado-card">
-                    <div class="comunicado-header">
-                        <span><i class="fas fa-laptop-code"></i> Soporte Técnico</span>
-                        <span><i class="far fa-calendar-alt"></i> 25/05/2026</span>
-                    </div>
-                    <h4 class="comunicado-title">Mantenimiento de Servidores</h4>
-                    <p style="color: #475569; line-height: 1.6;">El día sábado se realizarán tareas de mantenimiento en la base de datos PostgreSQL, por lo cual la plataforma experimentará intermitencias entre las 02:00 hs y las 06:00 hs.</p>
+                    <h4>Cierre de Actas de Trimestre</h4>
+                    <p style="color:#475569; margin-top:5px;">Recuerden asentar todas las notas numéricas antes de la fecha límite institucional.</p>
                 </div>
             </section>
-
         </main>
     </div>
 
     <script>
-        // Array exacto del plan de TUP provisto en la imagen
-        const materiasTUP = [
-            "Arquitectura y Sistemas Operativos", "Base de Datos I", "Inglés I", "Matemática",
-            "Organización Empresarial", "Probabilidad y Estadística", "Programación I", "Programación II",
-            "Base de Datos II", "Gestión de Desarrollo de Software", "Ingles II", "Introducción al Análisis de Datos",
-            "Legislación", "Metodología de Sistemas I", "Metodología de Sistemas II", "Programación III",
-            "Programación IV", "Trabajo Final Integrador"
-        ];
+        const mapaMaterias = {
+            primario: [
+                { nombre: "Matemáticas", horario: "Lunes a Viernes — 08:00 a 09:30" },
+                { nombre: "Prácticas del Lenguaje", horario: "Lunes a Viernes — 09:30 a 11:00" },
+                { nombre: "Ciencias Naturales", horario: "Martes y Jueves — 11:15 a 12:45" },
+                { nombre: "Ciencias Sociales", horario: "Lunes y Miércoles — 11:15 a 12:45" }
+            ],
+            secundario: [
+                { nombre: "Álgebra y Geometría", horario: "Lunes y Miércoles — 07:30 a 09:30" },
+                { nombre: "Literatura", horario: "Lunes y Miércoles — 09:45 a 11:45" },
+                { nombre: "Física", horario: "Martes y Jueves — 07:30 a 09:30" },
+                { nombre: "Química", horario: "Martes y Jueves — 09:45 a 11:45" },
+                { nombre: "Metodología de Sistemas I", horario: "Viernes — 08:00 a 12:00" }
+            ]
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
             const user = JSON.parse(localStorage.getItem('usuarioActual'));
@@ -274,7 +267,8 @@
                 return; 
             }
             document.getElementById('userNameDisplay').textContent = user.nombre;
-            document.getElementById('fechaHoy').textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('notaFecha').valueAsDate = new Date();
+            cargarHistorialNotas();
         });
 
         function switchView(viewId, element) {
@@ -284,113 +278,77 @@
             if(element) element.classList.add('active');
         }
 
-        function manejarCarrera() {
-            const carrera = document.getElementById('carreraSelect').value;
-            const cntTUP = document.getElementById('containerMateriaTUP');
-            const cntManual = document.getElementById('containerMateriaManual');
-            
-            // Limpiar inputs
-            document.getElementById('materiaManual').value = '';
-            
-            if (carrera === 'tup') {
-                cntTUP.style.display = 'flex';
-                cntManual.style.display = 'none';
-                
-                // Poblar select si está vacío
-                const selectTup = document.getElementById('materiaTUP');
-                if (selectTup.options.length <= 1) {
-                    materiasTUP.forEach(m => {
-                        let opt = document.createElement('option');
-                        opt.value = m; 
-                        opt.textContent = m;
-                        selectTup.appendChild(opt);
-                    });
-                }
-            } else if (carrera !== '') {
-                cntTUP.style.display = 'none';
-                cntManual.style.display = 'flex';
-            } else {
-                cntTUP.style.display = 'none';
-                cntManual.style.display = 'none';
+        function actualizarMateriasCalificación() {
+            const nivel = document.getElementById('notaNivel').value;
+            const selectMateria = document.getElementById('notaMateria');
+            selectMateria.innerHTML = '<option value="">Seleccione Asignatura...</option>';
+            if(nivel && mapaMaterias[nivel]) {
+                mapaMaterias[nivel].forEach(m => {
+                    selectMateria.innerHTML += `<option value="${m.nombre}">${m.nombre}</option>`;
+                });
             }
         }
 
-        function agregarMateria(e) {
-            e.preventDefault();
-            const carrera = document.getElementById('carreraSelect');
-            if (carrera.value === '') {
-                alert("Debe seleccionar una carrera.");
-                return;
-            }
-
-            const carreraTexto = carrera.options[carrera.selectedIndex].text;
-            let materia = '';
-            
-            if (carrera.value === 'tup') {
-                materia = document.getElementById('materiaTUP').value;
-            } else {
-                materia = document.getElementById('materiaManual').value;
-            }
-
-            if (!materia) {
-                alert("Por favor, seleccione o ingrese el nombre de la materia.");
-                return;
-            }
-
-            const horario = document.getElementById('docenteHorario').value;
-            
-            const lista = document.getElementById('listaMaterias');
-            lista.innerHTML += `
-                <li>
-                    <div>
-                        <div style="font-weight: 600; color: #0f172a; font-size: 1.1rem; margin-bottom: 4px;">${materia}</div>
-                        <div style="color: #64748b; font-size: 0.85rem;"><i class="fas fa-graduation-cap" style="margin-right: 5px;"></i> ${carreraTexto}</div>
-                    </div>
-                    <div style="background: #f1f5f9; padding: 8px 12px; border-radius: 6px; color: #334155; font-weight: 500; font-size: 0.9rem;">
-                        <i class="far fa-clock" style="color: var(--accent); margin-right: 5px;"></i> ${horario}
-                    </div>
-                </li>`;
-            
+        function manejarNivelEscolar() {
+            const nivel = document.getElementById('carreraSelect').value;
+            const selectMateria = document.getElementById('materiaEscolar');
+            selectMateria.innerHTML = '<option value="">Seleccione asignatura...</option>';
             document.getElementById('docenteHorario').value = '';
-            alert(`Asignación completada: Se ha registrado la materia ${materia}.`);
+            if(nivel && mapaMaterias[nivel]) {
+                mapaMaterias[nivel].forEach(m => {
+                    selectMateria.innerHTML += `<option value="${m.nombre}">${m.nombre}</option>`;
+                });
+            }
         }
 
-        let astCount = 2;
-        function agregarAlumno(e) {
+        function cargarHorarioFijo() {
+            const nivel = document.getElementById('carreraSelect').value;
+            const materiaNombre = document.getElementById('materiaEscolar').value;
+            const inputHorario = document.getElementById('docenteHorario');
+            if(nivel && materiaNombre) {
+                const encontrada = mapaMaterias[nivel].find(m => m.nombre === materiaNombre);
+                if(encontrada) inputHorario.value = encontrada.horario;
+            }
+        }
+
+        function registrarNota(e) {
             e.preventDefault();
-            const nombre = document.getElementById('alNombre').value;
-            const legajo = document.getElementById('alLegajo').value;
-            
-            // Render en Gestión
-            document.querySelector('#tablaAlumnos tbody').innerHTML += `
-                <tr>
-                    <td style="font-family: monospace; font-size: 1.1rem; color: #475569;">${legajo}</td>
-                    <td style="font-weight: 500;">${nombre}</td>
-                    <td><button class="btn-secondary" onclick="irAAsistencia()"><i class="fas fa-tasks"></i> Control Diario</button></td>
-                </tr>`;
-            
-            // Render en Asistencia
-            document.querySelector('#tablaAsistencia tbody').innerHTML += `
-                <tr>
-                    <td style="font-family: monospace; font-size: 1.1rem; color: #475569;">${legajo}</td>
-                    <td style="font-weight: 500;">${nombre}</td>
-                    <td style="text-align: center; background: rgba(21, 128, 61, 0.05);"><input type="radio" name="ast_${astCount}" value="p" checked style="transform: scale(1.3);"></td>
-                    <td style="text-align: center; background: rgba(185, 28, 28, 0.05);"><input type="radio" name="ast_${astCount}" value="a" style="transform: scale(1.3);"></td>
-                </tr>`;
-            
-            astCount++;
-            document.getElementById('alNombre').value = '';
-            document.getElementById('alLegajo').value = '';
+            const nota = {
+                alumno: document.getElementById('notaAlumno').value,
+                materia: document.getElementById('notaMateria').value,
+                instancia: document.getElementById('notaInstancia').value,
+                valor: document.getElementById('notaValor').value,
+                fecha: document.getElementById('notaFecha').value
+            };
+            let notas = JSON.parse(localStorage.getItem('calificaciones_db')) || [];
+            notas.push(nota);
+            localStorage.setItem('calificaciones_db', JSON.stringify(notas));
+            alert('Calificación guardada exitosamente.');
+            document.getElementById('notaValor').value = '';
+            cargarHistorialNotas();
         }
 
-        function irAAsistencia() {
-            switchView('asistencia', document.getElementById('navAsistencia'));
+        function cargarHistorialNotas() {
+            const tbody = document.querySelector('#tablaNotasHistorial tbody');
+            tbody.innerHTML = '';
+            const notas = JSON.parse(localStorage.getItem('calificaciones_db')) || [];
+            notas.forEach(n => {
+                tbody.innerHTML += `<tr><td>${n.alumno}</td><td>${n.materia}</td><td>${n.instancia}</td><td><b>${n.valor}</b></td><td>${n.fecha}</td></tr>`;
+            });
         }
 
-        function logout() { 
-            localStorage.removeItem('usuarioActual'); 
-            window.location.href = 'index.html'; 
+        function asociarMateriaDocente(e) {
+            e.preventDefault();
+            const nivel = document.getElementById('carreraSelect').value;
+            const materia = document.getElementById('materiaEscolar').value;
+            const horario = document.getElementById('docenteHorario').value;
+            document.querySelector('#tablaMateriasDocente tbody').innerHTML += `<tr><td>${nivel.toUpperCase()}</td><td>${materia}</td><td>${horario}</td></tr>`;
+            document.getElementById('carreraSelect').selectedIndex = 0;
+            document.getElementById('materiaEscolar').innerHTML = '<option value="">Seleccione asignatura...</option>';
+            document.getElementById('docenteHorario').value = '';
         }
+
+        function logout() { localStorage.removeItem('usuarioActual'); window.location.href = 'index.html'; }
     </script>
 </body>
 </html>

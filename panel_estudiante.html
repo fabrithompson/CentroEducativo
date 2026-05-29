@@ -3,33 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Estudiante - Centro Educativo</title>
+    <title>Panel Estudiante - Sistema Académico</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* CSS Integrado para Layout Master-Detail */
         body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f4f6f9; }
         header { flex-shrink: 0; z-index: 100; }
         .app-wrapper { display: flex; flex: 1; overflow: hidden; }
         
-        .sidebar { width: 260px; background-color: #1a1c23; color: #e0e0e0; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar { width: 260px; background-color: #1a1c23; color: #e0e0e0; display: flex; flex-direction: column; }
         .sidebar-menu { list-style: none; padding-top: 10px; }
         .sidebar-menu li a { display: flex; align-items: center; padding: 15px 20px; color: #e0e0e0; text-decoration: none; cursor: pointer; border-left: 3px solid transparent; }
         .sidebar-menu li a:hover, .sidebar-menu li a.active { background-color: #2d303e; border-left-color: #3498db; color: #fff; }
         .sidebar-menu li a i { margin-right: 15px; width: 20px; text-align: center; }
         
         .main-content { flex: 1; padding: 30px; overflow-y: auto; background: #eaedf1; }
-        .view-section { display: none; background: #fff; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 4px solid #3498db; animation: fadeIn 0.3s; }
+        .view-section { display: none; background: #fff; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 4px solid #3498db; }
         .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .section-title { font-size: 1.4rem; color: #2c3e50; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.95rem; }
+        .section-title { font-size: 1.4rem; color: #2c3e50; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; font-weight: 600; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         .data-table th, .data-table td { border: 1px solid #d1d8e0; padding: 12px 15px; text-align: left; }
-        .data-table th { background-color: #f4f6f7; color: #2c3e50; }
+        .data-table th { background-color: #f4f6f7; color: #2c3e50; font-weight: 600; }
         
         .form-controls { display: flex; gap: 15px; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .form-select, .form-input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; }
+        .form-select { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; }
         .btn-action { background: #3498db; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
@@ -49,11 +47,8 @@
                     <span class="logo-icon">🎓</span>
                     <h1 style="margin:0; font-size: 1.3rem;">Educar Para Transformar</h1>
                 </div>
-                <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; margin: 0; list-style: none;">
+                <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none;">
                     <li><a href="index.html#inicio">Inicio</a></li>
-                    <li><a href="index.html#nosotros">Nosotros</a></li>
-                    <li><a href="index.html#niveles">Niveles</a></li>
-                    <li><a href="index.html#contacto">Contacto</a></li>
                     <li class="user-menu">
                         <a href="#" style="color: #3498db; font-weight: bold;"><i class="fas fa-user"></i> <span id="userNameDisplay">Estudiante</span> <i class="fas fa-chevron-down"></i></a>
                         <div class="dropdown-content">
@@ -68,40 +63,22 @@
     <div class="app-wrapper">
         <aside class="sidebar">
             <ul class="sidebar-menu">
-                <li><a class="nav-link active" onclick="switchView('inscripcion', this)"><i class="fas fa-edit"></i> Inscripción a Materias</a></li>
-                <li><a class="nav-link" onclick="switchView('cursado', this)"><i class="fas fa-book-open"></i> Mi Cursado Actual</a></li>
-                <li><a class="nav-link" onclick="switchView('estado', this)"><i class="fas fa-chart-line"></i> Estado Académico</a></li>
+                <li><a class="nav-link active" onclick="switchView('boletin', this)"><i class="fas fa-file-invoice"></i> Boletín Oficial (RF-8)</a></li>
+                <li><a class="nav-link" onclick="switchView('cursado', this)"><i class="fas fa-calendar-alt"></i> Horarios de Cursado</a></li>
+                <li><a class="nav-link" onclick="switchView('libres', this)"><i class="fas fa-edit"></i> Inscripción a Examen Libre</a></li>
             </ul>
         </aside>
 
         <main class="main-content">
-            <section id="inscripcion" class="view-section active">
-                <h3 class="section-title">Inscripción a Cursado (Ciclo 2026)</h3>
-                <form id="formInscripcion" onsubmit="inscribirMateria(event)">
-                    <div class="form-controls">
-                        <select id="materiaSelect" class="form-select" required>
-                            <option value="">Seleccione Materia a Inscribirse...</option>
-                            <option value="Programación III|Lunes y Jueves 13:45">Programación III</option>
-                            <option value="Base de Datos II|Martes 13:45">Base de Datos II</option>
-                            <option value="Metodología de Sistemas I|Viernes 13:45">Metodología de Sistemas I</option>
-                        </select>
-                        <button type="submit" class="btn-action"><i class="fas fa-plus"></i> Inscribirse</button>
-                    </div>
-                </form>
-                <div style="background: #e8f4fd; padding: 15px; border-left: 4px solid #3498db;">
-                    Las materias inscriptas aparecerán automáticamente en "Mi Cursado Actual".
-                </div>
-            </section>
-
-            <section id="cursado" class="view-section">
-                <h3 class="section-title">Materias que cursa actualmente</h3>
-                <table class="data-table" id="tablaCursado">
+            <section id="boletin" class="view-section active">
+                <h3 class="section-title">Mi Boletín de Calificaciones (Solo Lectura)</h3>
+                <table class="data-table" id="boletinEstudiante">
                     <thead>
                         <tr>
                             <th>Materia</th>
-                            <th>Comisión</th>
-                            <th>Horarios</th>
-                            <th>Estado</th>
+                            <th>Instancia de Evaluación</th>
+                            <th>Calificación</th>
+                            <th>Fecha de Registro</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -109,16 +86,41 @@
                 </table>
             </section>
 
-            <section id="estado" class="view-section">
-                <h3 class="section-title">Historial y Notas</h3>
+            <section id="cursado" class="view-section">
+                <h3 class="section-title">Cronograma y Grilla de Cursado Obligatorio</h3>
                 <table class="data-table">
                     <thead>
-                        <tr><th>Año</th><th>Materia</th><th>Nota Final</th><th>Libro/Folio</th></tr>
+                        <tr><th>Asignatura</th><th>Nivel / División</th><th>Horario Semanal Fijo</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>1</td><td>Programación I</td><td>8</td><td>L: 45 F: 12</td></tr>
-                        <tr><td>1</td><td>Matemática</td><td>7</td><td>L: 45 F: 89</td></tr>
+                        <tr><td>Álgebra y Geometría</td><td>Secundario — 1er Año</td><td>Lunes y Miércoles — 07:30 a 09:30</td></tr>
+                        <tr><td>Literatura</td><td>Secundario — 1er Año</td><td>Lunes y Miércoles — 09:45 a 11:45</td></tr>
+                        <tr><td>Física</td><td>Secundario — 1er Año</td><td>Martes y Jueves — 07:30 a 09:30</td></tr>
+                        <tr><td>Química</td><td>Secundario — 1er Año</td><td>Martes y Jueves — 09:45 a 11:45</td></tr>
+                        <tr><td>Metodología de Sistemas I</td><td>Secundario — 1er Año</td><td>Viernes — 08:00 a 12:00</td></tr>
                     </tbody>
+                </table>
+            </section>
+
+            <section id="libres" class="view-section">
+                <h3 class="section-title">Inscripción a Mesas de Exámenes Libres</h3>
+                <form onsubmit="registrarExamenLibre(event)">
+                    <div class="form-controls">
+                        <select id="selectLibre" class="form-select" required>
+                            <option value="">Seleccione Asignatura a Rendir...</option>
+                            <option value="Matemáticas Avanzadas">Matemáticas Avanzadas (Mesa Especial)</option>
+                            <option value="Historia Argentina">Historia Argentina (Mesa Libre)</option>
+                            <option value="Física Aplicada">Física Aplicada (Mesa Especial)</option>
+                        </select>
+                        <button type="submit" class="btn-action"><i class="fas fa-file-signature"></i> Confirmar Inscripción</button>
+                    </div>
+                </form>
+                <table class="data-table" id="tablaLibres">
+                    <thead>
+                        <tr><th>Materia Especial/Libre</th><th>Estado de la Solicitud</th></tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
                 </table>
             </section>
         </main>
@@ -129,6 +131,7 @@
             const user = JSON.parse(localStorage.getItem('usuarioActual'));
             if (!user || user.tipo !== 'estudiante') { window.location.href = 'index.html'; return; }
             document.getElementById('userNameDisplay').textContent = user.nombre;
+            renderizarBoletin();
         });
 
         function switchView(viewId, element) {
@@ -138,20 +141,27 @@
             element.classList.add('active');
         }
 
-        function inscribirMateria(e) {
+        function renderizarBoletin() {
+            const tbody = document.querySelector('#boletinEstudiante tbody');
+            tbody.innerHTML = '';
+            const notas = JSON.parse(localStorage.getItem('calificaciones_db')) || [];
+            
+            if(notas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">No hay calificaciones registradas por el cuerpo docente.</td></tr>';
+                return;
+            }
+            
+            notas.forEach(n => {
+                tbody.innerHTML += `<tr><td>${n.materia}</td><td>${n.instancia}</td><td><b>${n.valor}</b></td><td>${n.fecha}</td></tr>`;
+            });
+        }
+
+        function registrarExamenLibre(e) {
             e.preventDefault();
-            const select = document.getElementById('materiaSelect');
-            if(!select.value) return;
-            const datos = select.value.split('|');
-            const tbody = document.querySelector('#tablaCursado tbody');
-            
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${datos[0]}</td><td>1 (T2.1)</td><td>${datos[1]}</td><td><span style="color: green; font-weight: bold;">Inscripto</span></td>`;
-            tbody.appendChild(tr);
-            
-            alert(`Inscripción a ${datos[0]} procesada con éxito.`);
-            select.selectedIndex = 0;
-            switchView('cursado', document.querySelectorAll('.nav-link')[1]);
+            const materia = document.getElementById('selectLibre').value;
+            document.querySelector('#tablaLibres tbody').innerHTML += `<tr><td>${materia}</td><td><span style="color:#f39c12; font-weight:bold;">Pendiente de Aprobación por Bedelía</span></td></tr>`;
+            document.getElementById('selectLibre').selectedIndex = 0;
+            alert('Solicitud de examen libre enviada correctamente.');
         }
 
         function logout() { localStorage.removeItem('usuarioActual'); window.location.href = 'index.html'; }
