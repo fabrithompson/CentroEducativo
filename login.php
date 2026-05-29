@@ -6,18 +6,15 @@ require 'conexion.php';
 $datos = json_decode(file_get_contents("php://input"), true);
 
 if (!$datos) {
-    echo json_encode(["exito" => false, "mensaje" => "No se recibieron datos."]);
+    echo json_encode(["exito" => false, "mensaje" => "Datos vacíos."]);
     exit;
 }
 
+// RF-4: 2 campos a rellenar
 $usuario = $datos['usuario'];
 $password_ingresada = $datos['password'];
 
-// Buscar el usuario y su rol
-$stmt = $conn->prepare("SELECT u.id, u.nombre_completo, u.email, u.usuario, u.contrasenia, r.nombre as rol 
-                        FROM usuarios u 
-                        JOIN roles r ON u.rol_id = r.id 
-                        WHERE u.usuario = ?");
+$stmt = $conn->prepare("SELECT u.id, u.nombre_completo, u.contrasenia, r.nombre as rol FROM usuarios u JOIN roles r ON u.rol_id = r.id WHERE u.usuario = ?");
 $stmt->bind_param("s", $usuario);
 $stmt->execute();
 $resultado = $stmt->get_result();
@@ -25,19 +22,24 @@ $resultado = $stmt->get_result();
 if ($resultado->num_rows > 0) {
     $user_db = $resultado->fetch_assoc();
     
-    // RNF-11: Verificar que la contraseña plana coincida con el hash bcrypt guardado
     if (password_verify($password_ingresada, $user_db['contrasenia'])) {
         
-        // Creamos la "sesión" para devolverle a JavaScript (sin la contraseña)
+        $header = base64_encode(json_encode(['alg' => 'HS256', 'typ' => 'JWT']));
+        $payload = base64_encode(json_encode([
+            'id' => $user_db['id'],
+            'rol' => $user_db['rol'],
+            'exp' => time() + (24 * 60 * 60) // 24 horas en segundos
+        ]));
+        $signature = base64_encode(hash_hmac('sha256', "$header.$payload", 'clave_secreta_tp2', true));
+        $token_jwt = "$header.$payload.$signature";
+
         $usuario_sesion = [
-            "id" => $user_db['id'],
             "nombre" => $user_db['nombre_completo'],
-            "email" => $user_db['email'],
-            "usuario" => $user_db['usuario'],
-            "tipo" => $user_db['rol']
+            "tipo" => $user_db['rol'],
+            "token" => $token_jwt
         ];
         
-        echo json_encode(["exito" => true, "mensaje" => "Login correcto", "usuario" => $usuario_sesion]);
+        echo json_encode(["exito" => true, "mensaje" => "Bienvenido", "usuario" => $usuario_sesion]);
     } else {
         echo json_encode(["exito" => false, "mensaje" => "Contraseña incorrecta."]);
     }
