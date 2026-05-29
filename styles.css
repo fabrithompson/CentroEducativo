@@ -746,7 +746,9 @@ ul {
 
 /* Modal */
 .modal {
-    display: none;
+    display: none; 
+    justify-content: center; 
+    align-items: center;
     position: fixed;
     z-index: 10000;
     left: 0;
@@ -771,6 +773,8 @@ ul {
     position: relative;
     animation: slideDown 0.4s ease;
     box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    max-height: 90vh; 
+    overflow-y: auto; 
 }
 
 @keyframes slideDown {
