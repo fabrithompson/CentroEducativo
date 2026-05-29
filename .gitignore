@@ -1,0 +1,20 @@
+# Dependencias
+node_modules/
+
+# Build
+dist/
+build/
+
+# Variables de entorno (nunca subir credenciales reales)
+.env
+backend/.env
+frontend/.env
+
+# Subidas de usuarios (mantener la carpeta, no los archivos)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Logs y sistema
+*.log
+npm-debug.log*
+.DS_Store
