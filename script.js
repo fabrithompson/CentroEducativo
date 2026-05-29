@@ -147,78 +147,79 @@ function updateRegisterFields() {
     }
 }
 
-// Registro de usuarios
+// Registro de usuarios conectado a PHP
 document.getElementById('registerForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    const tipo = document.getElementById('reg-tipo').value;
-    const nombre = document.getElementById('reg-nombre').value;
-    const email = document.getElementById('reg-email').value;
-    const usuario = document.getElementById('reg-usuario').value;
-    const password = document.getElementById('reg-password').value;
-    const dni = document.getElementById('reg-dni').value;
-    const curso = document.getElementById('reg-curso').value;
-    
-    let users = JSON.parse(localStorage.getItem('usuarios')) || [];
-    
-    if (users.some(u => u.usuario === usuario)) {
-        alert('El nombre de usuario ya esta en uso. Por favor elige otro.');
-        return;
-    }
-    
-    if (users.some(u => u.email === email)) {
-        alert('El email ya esta registrado.');
-        return;
-    }
-    
-    const nuevoUsuario = {
-        id: Date.now(),
-        tipo: tipo,
-        nombre: nombre,
-        email: email,
-        usuario: usuario,
-        password: password,
-        dni: dni,
-        curso: curso,
-        fechaRegistro: new Date().toLocaleDateString()
+    // Recolectar datos
+    const datosRegistro = {
+        tipo: document.getElementById('reg-tipo').value,
+        nombre: document.getElementById('reg-nombre').value,
+        email: document.getElementById('reg-email').value,
+        usuario: document.getElementById('reg-usuario').value,
+        password: document.getElementById('reg-password').value,
+        dni: document.getElementById('reg-dni').value,
+        curso: document.getElementById('reg-curso').value
     };
     
-    users.push(nuevoUsuario);
-    localStorage.setItem('usuarios', JSON.stringify(users));
-    
-    alert('Registro exitoso! Bienvenido a tu panel.');
-    closeRegisterModal();
-    this.reset();
-    
-    loginUser(usuario, password);
-    setTimeout(() => showUserPanel(), 500);
+    // Enviar a PHP mediante Fetch API
+    fetch('registro.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datosRegistro)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.exito) {
+            alert('¡Registro exitoso! Ya puedes iniciar sesión.');
+            closeRegisterModal();
+            document.getElementById('registerForm').reset();
+            // Ya no hacemos auto-login, lo obligamos a loguearse para probar el flujo completo
+            openLoginModal();
+        } else {
+            alert('Error: ' + data.mensaje);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrió un error al conectar con el servidor.');
+    });
 });
 
-// Login de usuarios
+// Login de usuarios conectado a PHP
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const usuario = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     
-    loginUser(usuario, password);
+    fetch('login.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario: usuario, password: password })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.exito) {
+            // Si el backend dice que está OK, guardamos el perfil devuelto en el localStorage
+            // (Para que tu panel.html lo siga usando igual que antes)
+            localStorage.setItem('usuarioActual', JSON.stringify(data.usuario));
+            checkUserStatus();
+            closeModal();
+            document.getElementById('loginForm').reset();
+            alert('¡Bienvenido, ' + data.usuario.nombre + '!');
+            showUserPanel();
+        } else {
+            alert('Error: ' + data.mensaje);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al conectar con la base de datos.');
+    });
 });
 
-function loginUser(usuario, password) {
-    const users = JSON.parse(localStorage.getItem('usuarios')) || [];
-    const user = users.find(u => u.usuario === usuario && u.password === password);
-    
-    if (user) {
-        localStorage.setItem('usuarioActual', JSON.stringify(user));
-        checkUserStatus();
-        closeModal();
-        document.getElementById('loginForm').reset();
-        alert('Bienvenido, ' + user.nombre + '!');
-        showUserPanel();
-    } else {
-        alert('Usuario o contrasena incorrectos.');
-    }
-}
+
 
 // Verificar estado del usuario
 function checkUserStatus() {
