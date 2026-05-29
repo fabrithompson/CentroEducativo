@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Panel - Centro Educativo</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #f5f7fa;
+        }
+        .panel-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .panel-header h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        .panel-back {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .panel-back:hover {
+            color: var(--secondary-color);
+        }
+        .user-welcome {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-welcome h2 {
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+        }
+        .user-welcome p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-card i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        .stat-card .label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .panel-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .panel-section h3 {
+            color: var(--primary-color);
+            margin: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .quick-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 25px;
+            border: 2px solid #eee;
+            border-radius: 15px;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: all 0.3s;
+        }
+        .quick-link:hover {
+            border-color: var(--primary-color);
+            background: #f8f9fa;
+        }
+        .quick-link i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        .quick-link span {
+            font-weight: 500;
+        }
+        .recent-activity {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .recent-activity li {
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .recent-activity li:last-child {
+            border-bottom: none;
+        }
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            background: #e8f4fc;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+        }
+        .activity-content h4 {
+            margin: 0 0 5px 0;
+            font-size: 1rem;
+        }
+        .activity-content p {
+            margin: 0;
+            color: #666;
+            font-size: 0.85rem;
+        }
+        .activity-date {
+            color: var(--primary-color);
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        @media (max-width: 900px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .quick-links {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 600px) {
+            .panel-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            .user-welcome {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .quick-links {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container">
+                <div class="contact-info">
+                    <span><i class="fas fa-phone"></i> (011) 1234-5678</span>
+                    <span><i class="fas fa-envelope"></i> info@centromixto.edu</span>
+                </div>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <div class="container">
+                <div class="logo">
+                    <span class="logo-icon">🎓</span>
+                    <h1>Educar Para Transformar</h1>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="index.html#inicio">Inicio</a></li>
+                    <li><a href="index.html#nosotros">Nosotros</a></li>
+                    <li><a href="index.html#niveles">Niveles</a></li>
+                    <li><a href="index.html#bienestar">Bienestar</a></li>
+                    <li><a href="index.html#noticias">Noticias</a></li>
+                    <li><a href="index.html#contacto">Contacto</a></li>
+                    <li class="user-menu" id="userMenu">
+                        <a href="#" class="dropbtn"><i class="fas fa-user"></i> <span id="userName"></span> <i class="fas fa-chevron-down"></i></a>
+                        <div class="dropdown-content">
+                            <a href="panel.html"><i class="fas fa-tachometer-alt"></i> Mi Panel</a>
+                            <a href="#" onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                        </div>
+                    </li>
+                </ul>
+                <div class="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="panel-container">
+        <div class="panel-header">
+            <h1><i class="fas fa-tachometer-alt"></i> Mi Panel</h1>
+            <a href="index.html" class="panel-back"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
+        </div>
+
+        <div class="user-welcome" id="userWelcome">
+            <div>
+                <h2>Bienvenido, <span id="welcomeName"></span></h2>
+                <p id="welcomeType"></p>
+            </div>
+            <button class="btn-logout" onclick="logout()" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;padding:12px 25px;border-radius:8px;cursor:pointer;font-size:1rem;">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+            </button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-calendar-alt"></i>
+                <div class="value">2026</div>
+                <div class="label">Ciclo Lectivo</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-envelope"></i>
+                <div class="value">0</div>
+                <div class="label">Mensajes Nuevos</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-bell"></i>
+                <div class="value">3</div>
+                <div class="label">Notificaciones</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-check-circle"></i>
+                <div class="value">Activo</div>
+                <div class="label">Estado</div>
+            </div>
+        </div>
+
+        <div class="panel-section">
+            <h3><i class="fas fa-bolt"></i> Acceso Rápido</h3>
+            <div class="quick-links">
+                <a href="#" class="quick-link" onclick="alert('Proximamente: Mis Cursos')">
+                    <i class="fas fa-book"></i>
+                    <span>Mis Cursos</span>
+                </a>
+                <a href="#" class="quick-link" onclick="alert('Proximamente: Notas')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Mis Notas</span>
+                </a>
+                <a href="#" class="quick-link" onclick="alert('Proximamente: Asistencia')">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Asistencia</span>
+                </a>
+                <a href="#" class="quick-link" onclick="alert('Proximamente: Horario')">
+                    <i class="fas fa-clock"></i>
+                    <span>Horario</span>
+                </a>
+                <a href="#" class="quick-link" onclick="alert('Proximamente: Tareas')">
+                    <i class="fas fa-tasks"></i>
+                    <span>Tareas</span>
+                </a>
+                <a href="#" class="quick-link" onclick="alert('Proximamente: Comunicados')">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Comunicados</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="panel-section">
+            <h3><i class="fas fa-newspaper"></i> Últimas Noticias</h3>
+            <ul class="recent-activity">
+                <li>
+                    <div class="activity-icon"><i class="fas fa-calendar"></i></div>
+                    <div class="activity-content">
+                        <h4>Comenzó el ciclo lectivo 2026</h4>
+                        <p>Les damos la bienvenida a todos los estudiantes y familias.</p>
+                    </div>
+                    <div class="activity-date">05/05/2026</div>
+                </li>
+                <li>
+                    <div class="activity-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <div class="activity-content">
+                        <h4>Jornada de orientación vocacional</h4>
+                        <p>Se realizará una jornada especial para estudiantes de 5° año.</p>
+                    </div>
+                    <div class="activity-date">28/04/2026</div>
+                </li>
+                <li>
+                    <div class="activity-icon"><i class="fas fa-flask"></i></div>
+                    <div class="activity-content">
+                        <h4>Festival de ciencias y tecnología</h4>
+                        <p>Invitamos a toda la comunidad a participar de nuestro festival anual.</p>
+                    </div>
+                    <div class="activity-date">20/04/2026</div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="panel-section">
+            <h3><i class="fas fa-phone-alt"></i> Contacto</h3>
+            <p><i class="fas fa-phone"></i> Teléfono: (011) 1234-5678</p>
+            <p><i class="fas fa-envelope"></i> Email: info@centromixto.edu</p>
+            <p><i class="fab fa-whatsapp"></i> WhatsApp: +54 11 1234-5678</p>
+            <p><i class="fas fa-map-marker-alt"></i> Dirección: Av. Educación 1234, CABA, Argentina</p>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Centro Educativo</h3>
+                    <p>Formando personas integrales para un futuro mejor.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Enlaces rápidos</h3>
+                    <ul>
+                        <li><a href="index.html#nosotros">Nosotros</a></li>
+                        <li><a href="index.html#niveles">Niveles</a></li>
+                        <li><a href="index.html#contacto">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contacto</h3>
+                    <p><i class="fas fa-phone"></i> (011) 1234-5678</p>
+                    <p><i class="fas fa-envelope"></i> info@centromixto.edu</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Centro Educativo. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = JSON.parse(localStorage.getItem('usuarioActual'));
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            document.getElementById('userName').textContent = user.nombre.split(' ')[0];
+            document.getElementById('welcomeName').textContent = user.nombre;
+            
+            const tipoTexto = {
+                'docente': 'Docente/Autoridad/Personal',
+                'padre': 'Padre/Madre',
+                'estudiante': 'Estudiante'
+            };
+            document.getElementById('welcomeType').textContent = tipoTexto[user.tipo] || user.tipo;
+        });
+
+        function logout() {
+            localStorage.removeItem('usuarioActual');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
