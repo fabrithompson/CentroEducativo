@@ -103,20 +103,18 @@ window.addEventListener('click', function (e) {
 
 function updateRegisterFields() {
     const tipo = document.getElementById('reg-tipo').value;
-    const dniInput = document.getElementById('dni-group');
-    const cursoInput = document.getElementById('curso-group');
-
-    if (dniInput && cursoInput) {
-        if (tipo === 'estudiante') {
-            dniInput.style.display = 'block';
-            cursoInput.style.display = 'block';
-        } else if (tipo === 'docente' || tipo === 'padre') {
-            dniInput.style.display = 'block';
-            cursoInput.style.display = 'none';
-        } else {
-            dniInput.style.display = 'none';
-            cursoInput.style.display = 'none';
-        }
+    const cursoGroup = document.getElementById('curso-group');
+    const cursoInput = document.getElementById('reg-curso');
+    
+    // Si eligen "estudiante", mostramos el curso y lo hacemos obligatorio
+    if (tipo === 'estudiante') {
+        cursoGroup.style.display = 'block';
+        cursoInput.required = true;
+    } else {
+        // Para docentes o padres, lo volvemos a ocultar
+        cursoGroup.style.display = 'none';
+        cursoInput.required = false;
+        cursoInput.value = ''; // Limpiamos lo que haya escrito por error
     }
 }
 
@@ -215,7 +213,7 @@ if (registerForm) {
             email: document.getElementById('reg-email').value,
             usuario: document.getElementById('reg-usuario').value,
             password: document.getElementById('reg-password').value,
-            dni: document.getElementById('reg-dni') ? document.getElementById('reg-dni').value : null,
+            dni: document.getElementById('reg-dni').value, 
             curso: document.getElementById('reg-curso') ? document.getElementById('reg-curso').value : null
         };
 
@@ -241,3 +239,41 @@ if (registerForm) {
             });
     });
 }
+
+// =========================================================
+// CIERRE DE SESIÓN AUTOMÁTICO POR INACTIVIDAD
+// =========================================================
+
+let temporizadorInactividad;
+
+function resetearTemporizador() {
+    // Limpiamos el contador anterior
+    clearTimeout(temporizadorInactividad);
+    
+    // 30 minutos * 60 segundos * 1000 milisegundos = 1.800.000
+    temporizadorInactividad = setTimeout(cerrarSesionPorInactividad, 1800000);
+}
+
+function cerrarSesionPorInactividad() {
+    // Verificamos si el usuario realmente tiene una sesión iniciada
+    if (sessionStorage.getItem('token') || localStorage.getItem('usuarioActual')) {
+        alert("⏱️ Tu sesión ha caducado por 30 minutos de inactividad. Por tu seguridad, vuelve a iniciar sesión.");
+        
+        // Destruimos las credenciales
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('usuarioActual');
+        localStorage.removeItem('usuarioActual');
+        
+        // Lo redirigimos a la página principal
+        window.location.href = 'index.html';
+    }
+}
+
+// Empezar a contar cuando la página carga
+window.onload = resetearTemporizador;
+
+// Reiniciar el contador si el usuario hace cualquier de estas acciones:
+document.onmousemove = resetearTemporizador; // Mover el mouse
+document.onkeypress = resetearTemporizador;  // Tocar una tecla
+document.onclick = resetearTemporizador;     // Hacer clic
+document.onscroll = resetearTemporizador;    // Bajar o subir la página

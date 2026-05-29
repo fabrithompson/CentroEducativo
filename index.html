@@ -457,11 +457,11 @@
             <form id="loginForm">
                 <div class="form-group">
                     <label for="username">Usuario</label>
-                    <input type="text" id="username" name="username" required>
+                    <input type="text" id="username" name="username" maxlength="50" required>
                 </div>
                 <div class="form-group">
                     <label for="password">Contraseña</label>
-                    <input type="password" id="password" name="password" required>
+                    <input type="password" id="password" name="password" minlength="6" maxlength="50" required>
                 </div>
                 <button type="submit" class="btn-primary">Iniciar Sesión</button>
             </form>
@@ -485,27 +485,33 @@
                 </div>
                 <div class="form-group">
                     <label for="reg-nombre">Nombre completo *</label>
-                    <input type="text" id="reg-nombre" name="nombre" required>
+                    <input type="text" id="reg-nombre" name="nombre" maxlength="100" required>
                 </div>
                 <div class="form-group">
                     <label for="reg-email">Email *</label>
-                    <input type="email" id="reg-email" name="email" required>
+                    <input type="email" id="reg-email" name="email" maxlength="100" required>
+                    <small class="form-ayuda">Formato requerido: usuario@dominio.com</small>
                 </div>
-                <div class="form-group" id="dni-group" style="display: none;">
+                
+                <div class="form-group" id="dni-group">
                     <label for="reg-dni">DNI *</label>
-                    <input type="text" id="reg-dni" name="dni">
+                    <input type="text" id="reg-dni" name="dni" required pattern="[0-9]{7,8}" title="Debe contener entre 7 y 8 números enteros, sin puntos ni espacios.">
+                    <small class="form-ayuda">Ingrese su DNI sin puntos ni espacios (Ej: 12345678).</small>
                 </div>
+                
                 <div class="form-group" id="curso-group" style="display: none;">
-                    <label for="reg-curso">Curso/Año</label>
-                    <input type="text" id="reg-curso" name="curso">
+                    <label for="reg-curso">Curso/Año *</label>
+                    <input type="text" id="reg-curso" name="curso" maxlength="50">
                 </div>
+                
                 <div class="form-group">
                     <label for="reg-usuario">Usuario *</label>
-                    <input type="text" id="reg-usuario" name="usuario" required>
+                    <input type="text" id="reg-usuario" name="usuario" maxlength="50" required>
                 </div>
                 <div class="form-group">
                     <label for="reg-password">Contraseña *</label>
-                    <input type="password" id="reg-password" name="password" required>
+                    <input type="password" id="reg-password" name="password" required minlength="6" maxlength="50">
+                    <small class="form-ayuda">Debe tener al menos 6 caracteres.</small>
                 </div>
                 <button type="submit" class="btn-primary">Registrarse</button>
             </form>
