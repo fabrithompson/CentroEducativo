@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Build output
+dist/
+build/
+.vite/
+.next/
+out/
+
+# Prisma
+backend/prisma/migrations/dev.db*
+*.sqlite
+*.sqlite-journal
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Tests
+coverage/
+.nyc_output/
+
+# Uploads (archivos subidos por usuarios)
+backend/uploads/
+!backend/uploads/.gitkeep
+
+# Cache
+.cache/
+.turbo/
+.eslintcache
