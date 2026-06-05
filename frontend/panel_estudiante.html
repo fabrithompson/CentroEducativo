@@ -120,12 +120,15 @@
                         <tr><th>Materia Especial/Libre</th><th>Estado de la Solicitud</th></tr>
                     </thead>
                     <tbody>
-                        </tbody>
+                        <tr><td>Geografía Argentina</td><td><span style="background:#d1fae5; color:#065f46; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">Aprobada por Bedelía</span></td></tr>
+                        <tr><td>Historia Contemporánea</td><td><span style="background:#fef3c7; color:#92400e; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">Pendiente</span></td></tr>
+                    </tbody>
                 </table>
             </section>
         </main>
     </div>
 
+    <script src="toast.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const user = JSON.parse(localStorage.getItem('usuarioActual'));
@@ -178,7 +181,7 @@
             const materia = document.getElementById('selectLibre').value;
             document.querySelector('#tablaLibres tbody').innerHTML += `<tr><td>${materia}</td><td><span style="color:#f39c12; font-weight:bold;">Pendiente de Aprobación por Bedelía</span></td></tr>`;
             document.getElementById('selectLibre').selectedIndex = 0;
-            alert('Solicitud de examen libre enviada correctamente.');
+            toastSuccess('Solicitud de examen libre enviada correctamente.');
         }
 
         function logout() { localStorage.removeItem('usuarioActual'); window.location.href = 'index.html'; }

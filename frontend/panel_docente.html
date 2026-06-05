@@ -207,39 +207,63 @@
                         <tr><th>Nivel</th><th>Materia</th><th>Horario Fijo</th></tr>
                     </thead>
                     <tbody>
-                        </tbody>
+                        <tr><td>SECUNDARIO</td><td>Álgebra y Geometría</td><td>Lunes y Miércoles — 07:30 a 09:30</td></tr>
+                        <tr><td>SECUNDARIO</td><td>Literatura</td><td>Lunes y Miércoles — 09:45 a 11:45</td></tr>
+                        <tr><td>PRIMARIO</td><td>Matemáticas</td><td>Lunes a Viernes — 08:00 a 09:30</td></tr>
+                    </tbody>
                 </table>
             </section>
 
             <section id="asistencia" class="view-section">
                 <h3 class="section-title">Registro de Asistencia Diaria por Curso</h3>
-                <table class="data-table">
+                <div style="margin-bottom: 15px; color: #475569; font-size: 0.92rem;">
+                    <i class="fas fa-calendar-day" style="color:#3498db;"></i> Fecha: <strong id="asistenciaFecha"></strong>
+                </div>
+                <table class="data-table" id="tablaAsistencia">
                     <thead>
                         <tr>
-                            <th>Legajo</th>
+                            <th>DNI</th>
                             <th>Alumno</th>
+                            <th>Curso</th>
                             <th style="text-align: center;">Presente</th>
                             <th style="text-align: center;">Ausente</th>
+                            <th style="text-align: center;">Tarde</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>12045</td><td>Barrabino, Franco</td><td style="text-align:center;"><input type="radio" name="a1" checked></td><td style="text-align:center;"><input type="radio" name="a1"></td></tr>
-                        <tr><td>12046</td><td>Pérez, Juan</td><td style="text-align:center;"><input type="radio" name="a2" checked></td><td style="text-align:center;"><input type="radio" name="a2"></td></tr>
+                        <tr><td colspan="6" style="text-align:center; color:#64748b;">Cargando lista de alumnos...</td></tr>
                     </tbody>
                 </table>
-                <div style="margin-top: 20px; text-align: right;"><button class="btn-action" onclick="alert('Asistencia registrada.')">Firmar Planilla</button></div>
+                <div style="margin-top: 20px; text-align: right;"><button class="btn-action" onclick="firmarAsistencia()"><i class="fas fa-signature"></i> Firmar Planilla</button></div>
             </section>
 
             <section id="comunicados" class="view-section">
                 <h3 class="section-title">Avisos de Dirección</h3>
                 <div class="comunicado-card">
-                    <h4>Cierre de Actas de Trimestre</h4>
-                    <p style="color:#475569; margin-top:5px;">Recuerden asentar todas las notas numéricas antes de la fecha límite institucional.</p>
+                    <h4><i class="fas fa-bullhorn" style="color:#e74c3c;"></i> Cierre de Actas de Trimestre</h4>
+                    <p style="color:#475569; margin-top:5px;">Recuerden asentar todas las notas numéricas antes del <strong>30 de junio</strong>. Pasado ese plazo el sistema bloquea automáticamente la carga.</p>
+                    <small style="color:#94a3b8;">Publicado por Dirección Académica</small>
+                </div>
+                <div class="comunicado-card" style="margin-top: 15px;">
+                    <h4><i class="fas fa-calendar-alt" style="color:#3498db;"></i> Reunión de Personal Docente</h4>
+                    <p style="color:#475569; margin-top:5px;">Convocatoria a reunión institucional el <strong>viernes 12 de junio a las 18:00 hs</strong> en el SUM. Asistencia obligatoria.</p>
+                    <small style="color:#94a3b8;">Publicado por Rectoría</small>
+                </div>
+                <div class="comunicado-card" style="margin-top: 15px;">
+                    <h4><i class="fas fa-book-open" style="color:#10b981;"></i> Nueva Resolución del Consejo Federal</h4>
+                    <p style="color:#475569; margin-top:5px;">Se incorporan las pautas del Ministerio sobre evaluación formativa. Disponible en la biblioteca institucional para consulta.</p>
+                    <small style="color:#94a3b8;">Publicado por Vicedirección</small>
+                </div>
+                <div class="comunicado-card" style="margin-top: 15px;">
+                    <h4><i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i> Recreo Escalonado en Nivel Primario</h4>
+                    <p style="color:#475569; margin-top:5px;">Desde el lunes próximo, los recreos del nivel primario serán escalonados para evitar aglomeración. Consultar grilla actualizada.</p>
+                    <small style="color:#94a3b8;">Publicado por Coordinación de Primaria</small>
                 </div>
             </section>
         </main>
     </div>
 
+    <script src="toast.js"></script>
     <script>
         const mapaMaterias = {
             primario: [
@@ -265,8 +289,11 @@
             }
             document.getElementById('userNameDisplay').textContent = user.nombre;
             document.getElementById('notaFecha').valueAsDate = new Date();
+            const hoy = new Date();
+            document.getElementById('asistenciaFecha').textContent = hoy.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             cargarEstudiantes();
             cargarHistorialNotas();
+            cargarAsistencia();
         });
 
         function authHeaders() {
@@ -354,16 +381,16 @@
             .then(res => res.json())
             .then(data => {
                 if (data.exito) {
-                    alert('¡Calificación guardada correctamente!');
+                    toastSuccess('¡Calificación guardada correctamente!');
                     document.getElementById('notaValor').value = '';
                     cargarHistorialNotas();
                 } else {
-                    alert('Error: ' + (data.mensaje || 'No se pudo guardar la nota.'));
+                    toastError(data.mensaje || 'No se pudo guardar la nota.');
                 }
             })
             .catch(err => {
                 console.error(err);
-                alert('Error al conectar con el servidor.');
+                toastError('Error al conectar con el servidor.');
             });
         }
 
@@ -397,6 +424,66 @@
             document.getElementById('carreraSelect').selectedIndex = 0;
             document.getElementById('materiaEscolar').innerHTML = '<option value="">Seleccione asignatura...</option>';
             document.getElementById('docenteHorario').value = '';
+            toastSuccess('Materia agregada a tu carga horaria.');
+        }
+
+        function cargarAsistencia() {
+            const tbody = document.querySelector('#tablaAsistencia tbody');
+            fetch('/api/students', { headers: authHeaders() })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.exito || !data.estudiantes || data.estudiantes.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">No hay alumnos cargados.</td></tr>';
+                        return;
+                    }
+                    const hoy = new Date().toISOString().slice(0, 10);
+                    const guardado = JSON.parse(localStorage.getItem('asistencia_' + hoy)) || {};
+                    tbody.innerHTML = '';
+                    data.estudiantes.forEach(e => {
+                        const estado = guardado[e.id] || 'presente';
+                        const radioName = 'asist_' + e.id;
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${e.dni}</td>
+                                <td>${e.nombre}</td>
+                                <td>${e.curso || '—'}</td>
+                                <td style="text-align:center;"><input type="radio" name="${radioName}" value="presente" ${estado === 'presente' ? 'checked' : ''}></td>
+                                <td style="text-align:center;"><input type="radio" name="${radioName}" value="ausente" ${estado === 'ausente' ? 'checked' : ''}></td>
+                                <td style="text-align:center;"><input type="radio" name="${radioName}" value="tarde" ${estado === 'tarde' ? 'checked' : ''}></td>
+                            </tr>
+                        `;
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#c0392b;">Error al cargar la lista de alumnos.</td></tr>';
+                });
+        }
+
+        function firmarAsistencia() {
+            const hoy = new Date().toISOString().slice(0, 10);
+            const datos = {};
+            let total = 0, presentes = 0, ausentes = 0, tardes = 0;
+            document.querySelectorAll('#tablaAsistencia tbody tr').forEach(tr => {
+                const inputs = tr.querySelectorAll('input[type=radio]');
+                if (inputs.length === 0) return;
+                const name = inputs[0].name;
+                const id = name.replace('asist_', '');
+                const sel = tr.querySelector(`input[name="${name}"]:checked`);
+                if (sel) {
+                    datos[id] = sel.value;
+                    total++;
+                    if (sel.value === 'presente') presentes++;
+                    if (sel.value === 'ausente') ausentes++;
+                    if (sel.value === 'tarde') tardes++;
+                }
+            });
+            if (total === 0) {
+                toastWarning('No hay alumnos para registrar.');
+                return;
+            }
+            localStorage.setItem('asistencia_' + hoy, JSON.stringify(datos));
+            toastSuccess(`Planilla firmada — ${presentes} presentes, ${ausentes} ausentes, ${tardes} tardes.`);
         }
 
         function logout() { localStorage.removeItem('usuarioActual'); window.location.href = 'index.html'; }

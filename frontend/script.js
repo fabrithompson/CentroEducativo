@@ -192,12 +192,12 @@ if (loginForm) {
                     this.reset();
                     showUserPanel();
                 } else {
-                    alert('Error: ' + (data.mensaje || 'No se pudo iniciar sesión.'));
+                    toastError(data.mensaje || 'No se pudo iniciar sesión.');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error al conectar con el servidor.');
+                toastError('Error al conectar con el servidor.');
             });
     });
 }
@@ -226,17 +226,17 @@ if (registerForm) {
             .then(response => response.json())
             .then(data => {
                 if (data.exito) {
-                    alert('¡Registro exitoso! Ya puedes iniciar sesión.');
+                    toastSuccess('¡Registro exitoso! Ya puedes iniciar sesión.');
                     closeRegisterModal();
                     this.reset();
                     openLoginModal();
                 } else {
-                    alert('Error: ' + data.mensaje);
+                    toastError(data.mensaje || 'No se pudo completar el registro.');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Ocurrió un error al registrar en el servidor.');
+                toastError('Ocurrió un error al registrar en el servidor.');
             });
     });
 }
@@ -274,13 +274,16 @@ if (formCalificaciones) {
         .then(res => res.json())
         .then(data => {
             if(data.exito) {
-                alert('¡Nota guardada correctamente en la Base de Datos!');
+                toastSuccess('¡Nota guardada correctamente en la base de datos!');
                 formCalificaciones.reset();
             } else {
-                alert('Error: ' + data.mensaje);
+                toastError(data.mensaje || 'No se pudo guardar la nota.');
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error:', error);
+            toastError('Error al conectar con el servidor.');
+        });
     });
 }
 
@@ -354,15 +357,17 @@ function resetearTemporizador() {
 function cerrarSesionPorInactividad() {
     // Verificamos si el usuario realmente tiene una sesión iniciada
     if (sessionStorage.getItem('token') || localStorage.getItem('usuarioActual')) {
-        alert("⏱️ Tu sesión ha caducado por 30 minutos de inactividad. Por tu seguridad, vuelve a iniciar sesión.");
-        
+        if (typeof toastWarning === 'function') {
+            toastWarning('Tu sesión caducó por 30 minutos de inactividad. Por tu seguridad, vuelve a iniciar sesión.', 5000);
+        }
+
         // Destruimos las credenciales
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('usuarioActual');
         localStorage.removeItem('usuarioActual');
-        
-        // Lo redirigimos a la página principal
-        window.location.href = 'index.html';
+
+        // Demoramos la redirección para que se vea el toast
+        setTimeout(() => { window.location.href = 'index.html'; }, 2000);
     }
 }
 
