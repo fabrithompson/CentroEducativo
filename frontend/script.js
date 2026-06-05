@@ -164,6 +164,8 @@ function showUserPanel() {
         window.location.href = 'panel_docente.html';
     } else if (user.tipo === 'padre') {
         window.location.href = 'panel_padre.html';
+    } else if (user.tipo === 'admin') {
+        window.location.href = 'panel_admin.html';
     } else {
         window.location.href = 'index.html';
     }

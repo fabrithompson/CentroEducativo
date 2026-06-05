@@ -78,6 +78,8 @@ model User {
   actividadesCreadas    Activity[]     @relation("ActivityDocente")
   entregas              Submission[]
   planesDeEstudio       StudyPlan[]
+  forumPosts            ForumPost[]
+  forumReplies          ForumReply[]
 
   @@index([role])
 }
@@ -216,6 +218,34 @@ model Submission {
 
   @@unique([activityId, estudianteId])
   @@index([estudianteId])
+}
+
+model ForumPost {
+  id        Int          @id @default(autoincrement())
+  authorId  Int
+  author    User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  materia   String
+  titulo    String
+  contenido String
+  isPinned  Boolean      @default(false)
+  createdAt DateTime     @default(now())
+
+  replies   ForumReply[]
+
+  @@index([materia])
+  @@index([createdAt])
+}
+
+model ForumReply {
+  id        Int       @id @default(autoincrement())
+  postId    Int
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  Int
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  contenido String
+  createdAt DateTime  @default(now())
+
+  @@index([postId])
 }
 
 model StudyPlan {

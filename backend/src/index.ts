@@ -4,6 +4,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { env } from './config/env';
 import { createApp } from './app';
 import { logger } from './utils/logger';
+import { attachSockets } from './sockets/io';
 
 async function bootstrap() {
   const app = createApp();
@@ -16,10 +17,7 @@ async function bootstrap() {
     },
   });
 
-  io.on('connection', (socket) => {
-    logger.debug(`Socket conectado: ${socket.id}`);
-    socket.on('disconnect', () => logger.debug(`Socket desconectado: ${socket.id}`));
-  });
+  attachSockets(io);
 
   server.listen(env.PORT, () => {
     logger.info(

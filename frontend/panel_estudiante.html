@@ -49,6 +49,7 @@
                 </div>
                 <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none;">
                     <li><a href="index.html#inicio">Inicio</a></li>
+                    <li><button id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button></li>
                     <li class="bell-container" id="bellContainer"></li>
                     <li class="user-menu">
                         <a href="#" style="color: #3498db; font-weight: bold;"><i class="fas fa-user"></i> <span id="userNameDisplay">Estudiante</span> <i class="fas fa-chevron-down"></i></a>
@@ -70,6 +71,7 @@
                 <li><a class="nav-link" onclick="switchView('asistencias', this); cargarMisAsistencias();"><i class="fas fa-clipboard-check"></i> Mis Asistencias</a></li>
                 <li><a class="nav-link" onclick="switchView('anuncios', this); cargarAnuncios();"><i class="fas fa-bullhorn"></i> Anuncios</a></li>
                 <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments"></i> Mensajes</a></li>
+                <li><a class="nav-link" onclick="switchView('foros', this); cargarForos();"><i class="fas fa-comments-dollar"></i> Foros</a></li>
                 <li><a class="nav-link" onclick="switchView('cursado', this)"><i class="fas fa-calendar-alt"></i> Horarios de Cursado</a></li>
                 <li><a class="nav-link" onclick="switchView('libres', this)"><i class="fas fa-edit"></i> Examen Libre</a></li>
             </ul>
@@ -114,6 +116,21 @@
             <section id="anuncios" class="view-section">
                 <h3 class="section-title">Anuncios institucionales</h3>
                 <div id="listaAnunciosEst"><p style="color:#94a3b8; text-align:center;">Cargando anuncios...</p></div>
+            </section>
+
+            <section id="foros" class="view-section">
+                <h3 class="section-title">Foros de discusión</h3>
+                <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                    <summary style="cursor: pointer; font-weight: 600;"><i class="fas fa-plus-circle" style="color:#3498db;"></i> Abrir un tema</summary>
+                    <form onsubmit="crearTemaForo(event)" style="margin-top: 15px; display: grid; gap: 10px;">
+                        <input type="text" id="foroMateria" placeholder="Materia / canal" required class="form-input">
+                        <input type="text" id="foroTitulo" placeholder="Título" required class="form-input">
+                        <textarea id="foroContenido" placeholder="Contenido..." rows="3" required class="form-input"></textarea>
+                        <button type="submit" class="btn-action" style="justify-self:end;">Publicar</button>
+                    </form>
+                </details>
+                <div id="forosLista"></div>
+                <div id="foroDetalle"></div>
             </section>
 
             <section id="mensajes" class="view-section">
@@ -176,6 +193,7 @@
     </div>
 
     <script src="toast.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="campus.js"></script>
     <script>
         const ME = JSON.parse(localStorage.getItem('usuarioActual') || 'null');
@@ -184,6 +202,11 @@
             document.getElementById('userNameDisplay').textContent = ME.nombre;
             renderizarBoletin();
             window.initBell();
+            window.connectSocket && window.connectSocket();
+            window.onIncomingMessage = function (m) {
+                if (currentChatId === m.from) openChat(m.from);
+                if (typeof cargarContactos === 'function') cargarContactos();
+            };
         });
 
         function switchView(viewId, element) {

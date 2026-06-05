@@ -74,6 +74,7 @@
                 </div>
                 <ul class="nav-links" style="display: flex; gap: 25px; align-items: center; margin: 0; list-style: none;">
                     <li><a href="index.html#inicio">Inicio</a></li>
+                    <li><button id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button></li>
                     <li class="bell-container" id="bellContainer"></li>
                     <li class="user-menu">
                         <a href="#" style="color: var(--accent); font-weight: 600; padding: 8px 15px; border-radius: 6px; background: #f1f5f9;">
@@ -102,6 +103,7 @@
                 <li><a class="nav-link" id="navAsistencia" onclick="switchView('asistencia', this)"><i class="fas fa-clipboard-check"></i> Asistencia Diaria</a></li>
                 <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments"></i> Mensajes</a></li>
                 <li><a class="nav-link" onclick="switchView('comunicados', this); cargarComunicados();"><i class="fas fa-bullhorn"></i> Comunicados</a></li>
+                <li><a class="nav-link" onclick="switchView('foros', this); cargarForos();"><i class="fas fa-comments-dollar"></i> Foros</a></li>
             </ul>
         </aside>
 
@@ -354,6 +356,21 @@
                 <div id="listaPlanes"><p style="color:#94a3b8; text-align:center;">Cargando planes...</p></div>
             </section>
 
+            <section id="foros" class="view-section">
+                <h3 class="section-title">Foros de discusión</h3>
+                <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#3498db;"></i> Abrir un tema nuevo</summary>
+                    <form onsubmit="crearTemaForo(event)" style="margin-top: 15px; display: grid; gap: 10px;">
+                        <input type="text" id="foroMateria" placeholder="Materia / canal" required class="form-input">
+                        <input type="text" id="foroTitulo" placeholder="Título del tema" required class="form-input">
+                        <textarea id="foroContenido" placeholder="Contenido inicial..." rows="3" required class="form-input"></textarea>
+                        <button type="submit" class="btn-action" style="justify-self: end;"><i class="fas fa-paper-plane"></i> Publicar tema</button>
+                    </form>
+                </details>
+                <div id="forosLista"><p style="color:#94a3b8; text-align:center;">Cargando temas...</p></div>
+                <div id="foroDetalle"></div>
+            </section>
+
             <section id="mensajes" class="view-section">
                 <h3 class="section-title">Mensajes</h3>
                 <div class="chat-wrapper">
@@ -374,6 +391,7 @@
     </div>
 
     <script src="toast.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="campus.js"></script>
     <script>
         const mapaMaterias = {
@@ -413,6 +431,11 @@
             cargarHistorialNotas();
             cargarAsistencia();
             window.initBell();
+            window.connectSocket && window.connectSocket();
+            window.onIncomingMessage = function (m) {
+                if (currentChatId === m.from) openChat(m.from);
+                if (typeof cargarContactos === 'function') cargarContactos();
+            };
         });
 
         function cargarEstudiantes() {

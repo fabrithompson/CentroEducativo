@@ -5,6 +5,7 @@ import { Role } from '@prisma/client';
 import { prisma } from '../db/prisma';
 import { HttpError } from '../utils/httpError';
 import { requireAuth } from '../middleware/auth';
+import { emitToUser } from '../sockets/io';
 
 const router = Router();
 
@@ -161,6 +162,13 @@ router.post('/', requireAuth, async (req, res, next) => {
         titulo: 'Nuevo mensaje de ' + (me.usuario),
         contenido: data.contenido.slice(0, 120),
       },
+    });
+
+    emitToUser(data.receiverId, 'new-message', {
+      from: me.id,
+      mensajeId: created.id,
+      contenido: data.contenido,
+      createdAt: created.createdAt.toISOString(),
     });
 
     res.json({ exito: true, mensaje: { id: created.id, createdAt: created.createdAt.toISOString() } });

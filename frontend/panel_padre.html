@@ -46,6 +46,7 @@
                     <h1 style="margin:0; font-size: 1.3rem;">Educar Para Transformar</h1>
                 </div>
                 <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none;">
+                    <li><button id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button></li>
                     <li class="bell-container" id="bellContainer"></li>
                     <li><a href="index.html#inicio">Inicio</a></li>
                     <li class="user-menu">
@@ -178,6 +179,7 @@
     </div>
 
     <script src="toast.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="campus.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -186,6 +188,11 @@
             document.getElementById('userNameDisplay').textContent = user.nombre;
             cargarHijos();
             window.initBell();
+            window.connectSocket && window.connectSocket();
+            window.onIncomingMessage = function (m) {
+                if (currentChatId === m.from) openChat(m.from);
+                if (typeof cargarContactos === 'function') cargarContactos();
+            };
         });
 
         function switchView(viewId, element) {

@@ -11,6 +11,8 @@ import { notificationsRouter } from './notifications.routes';
 import { messagesRouter } from './messages.routes';
 import { activitiesRouter } from './activities.routes';
 import { studyPlansRouter } from './studyPlans.routes';
+import { forumRouter } from './forum.routes';
+import { adminRouter } from './admin.routes';
 
 const router = Router();
 
@@ -32,5 +34,7 @@ router.use('/notifications', notificationsRouter);
 router.use('/messages', messagesRouter);
 router.use('/activities', activitiesRouter);
 router.use('/study-plans', studyPlansRouter);
+router.use('/forum', forumRouter);
+router.use('/admin', adminRouter);
 
 export { router as apiRouter };
