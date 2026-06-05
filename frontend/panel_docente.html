@@ -74,6 +74,8 @@
                 </div>
                 <ul class="nav-links" style="display: flex; gap: 25px; align-items: center; margin: 0; list-style: none;">
                     <li><a href="index.html#inicio">Inicio</a></li>
+                    <li><button id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button></li>
+                    <li class="bell-container" id="bellContainer"></li>
                     <li class="user-menu">
                         <a href="#" style="color: var(--accent); font-weight: 600; padding: 8px 15px; border-radius: 6px; background: #f1f5f9;">
                             <i class="fas fa-user-tie"></i> <span id="userNameDisplay">Docente</span> <i class="fas fa-chevron-down" style="font-size: 0.8rem; margin-left: 5px;"></i>
@@ -95,9 +97,13 @@
             </div>
             <ul class="sidebar-menu">
                 <li><a class="nav-link active" onclick="switchView('calificaciones', this)"><i class="fas fa-pen-square"></i> Cargar Calificaciones</a></li>
+                <li><a class="nav-link" onclick="switchView('actividades', this); cargarActividades();"><i class="fas fa-tasks"></i> Actividades</a></li>
+                <li><a class="nav-link" onclick="switchView('planes', this); cargarPlanes();"><i class="fas fa-book"></i> Planes de Estudio</a></li>
                 <li><a class="nav-link" onclick="switchView('configurar', this)"><i class="fas fa-cogs"></i> Mis Materias Asignadas</a></li>
                 <li><a class="nav-link" id="navAsistencia" onclick="switchView('asistencia', this)"><i class="fas fa-clipboard-check"></i> Asistencia Diaria</a></li>
-                <li><a class="nav-link" onclick="switchView('comunicados', this)"><i class="fas fa-bullhorn"></i> Comunicados</a></li>
+                <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments"></i> Mensajes</a></li>
+                <li><a class="nav-link" onclick="switchView('comunicados', this); cargarComunicados();"><i class="fas fa-bullhorn"></i> Comunicados</a></li>
+                <li><a class="nav-link" onclick="switchView('foros', this); cargarForos();"><i class="fas fa-comments-dollar"></i> Foros</a></li>
             </ul>
         </aside>
 
@@ -240,32 +246,153 @@
             </section>
 
             <section id="comunicados" class="view-section">
-                <h3 class="section-title">Avisos de Dirección</h3>
-                <div class="comunicado-card">
-                    <h4><i class="fas fa-bullhorn" style="color:#e74c3c;"></i> Cierre de Actas de Trimestre</h4>
-                    <p style="color:#475569; margin-top:5px;">Recuerden asentar todas las notas numéricas antes del <strong>30 de junio</strong>. Pasado ese plazo el sistema bloquea automáticamente la carga.</p>
-                    <small style="color:#94a3b8;">Publicado por Dirección Académica</small>
+                <h3 class="section-title">Anuncios y Avisos</h3>
+
+                <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#3498db;"></i> Publicar un nuevo anuncio</summary>
+                    <form onsubmit="crearAnuncio(event)" style="margin-top: 15px; display: grid; gap: 10px;">
+                        <input type="text" id="anuncioTitulo" placeholder="Título del anuncio" required style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <textarea id="anuncioContenido" placeholder="Contenido del anuncio..." rows="3" required style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; resize: vertical;"></textarea>
+                        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                            <label>Dirigido a:</label>
+                            <select id="anuncioTarget" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                                <option value="ALL">Toda la comunidad</option>
+                                <option value="ESTUDIANTE">Solo estudiantes</option>
+                                <option value="DOCENTE">Solo docentes</option>
+                                <option value="PADRE">Solo padres</option>
+                            </select>
+                            <button type="submit" class="btn-action" style="margin-left:auto;"><i class="fas fa-paper-plane"></i> Publicar</button>
+                        </div>
+                    </form>
+                </details>
+
+                <div id="listaComunicados">
+                    <p style="color:#94a3b8; text-align:center;">Cargando anuncios...</p>
                 </div>
-                <div class="comunicado-card" style="margin-top: 15px;">
-                    <h4><i class="fas fa-calendar-alt" style="color:#3498db;"></i> Reunión de Personal Docente</h4>
-                    <p style="color:#475569; margin-top:5px;">Convocatoria a reunión institucional el <strong>viernes 12 de junio a las 18:00 hs</strong> en el SUM. Asistencia obligatoria.</p>
-                    <small style="color:#94a3b8;">Publicado por Rectoría</small>
-                </div>
-                <div class="comunicado-card" style="margin-top: 15px;">
-                    <h4><i class="fas fa-book-open" style="color:#10b981;"></i> Nueva Resolución del Consejo Federal</h4>
-                    <p style="color:#475569; margin-top:5px;">Se incorporan las pautas del Ministerio sobre evaluación formativa. Disponible en la biblioteca institucional para consulta.</p>
-                    <small style="color:#94a3b8;">Publicado por Vicedirección</small>
-                </div>
-                <div class="comunicado-card" style="margin-top: 15px;">
-                    <h4><i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i> Recreo Escalonado en Nivel Primario</h4>
-                    <p style="color:#475569; margin-top:5px;">Desde el lunes próximo, los recreos del nivel primario serán escalonados para evitar aglomeración. Consultar grilla actualizada.</p>
-                    <small style="color:#94a3b8;">Publicado por Coordinación de Primaria</small>
+            </section>
+
+            <section id="actividades" class="view-section">
+                <h3 class="section-title">Actividades y Trabajos</h3>
+
+                <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#3498db;"></i> Crear actividad / trabajo</summary>
+                    <form onsubmit="crearActividad(event)" enctype="multipart/form-data" style="margin-top: 15px; display: grid; gap: 12px;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Materia</label>
+                                <input type="text" id="actMateria" required class="form-input" placeholder="Ej: Álgebra y Geometría">
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select id="actTipo" class="form-select">
+                                    <option value="TAREA">Tarea</option>
+                                    <option value="ACTIVIDAD">Actividad</option>
+                                    <option value="TRABAJO">Trabajo Práctico</option>
+                                    <option value="PARCIAL">Parcial</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Título</label>
+                            <input type="text" id="actTitulo" required class="form-input" placeholder="Ej: TP3 - Funciones cuadráticas">
+                        </div>
+                        <div class="form-group">
+                            <label>Consigna / Descripción</label>
+                            <textarea id="actDescripcion" required class="form-input" rows="3" placeholder="Detalles de la actividad..."></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Fecha de entrega</label>
+                                <input type="date" id="actFecha" required class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Puntaje máximo</label>
+                                <input type="number" id="actMax" value="10" min="1" max="100" class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Archivo adjunto (opcional)</label>
+                            <input type="file" id="actFile" class="form-input">
+                        </div>
+                        <button type="submit" class="btn-action" style="justify-self:end;"><i class="fas fa-save"></i> Publicar actividad</button>
+                    </form>
+                </details>
+
+                <div id="listaActividades"><p style="color:#94a3b8; text-align:center;">Cargando actividades...</p></div>
+            </section>
+
+            <section id="planes" class="view-section">
+                <h3 class="section-title">Planes de Estudio</h3>
+
+                <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#3498db;"></i> Cargar nuevo plan de estudios</summary>
+                    <form onsubmit="crearPlan(event)" enctype="multipart/form-data" style="margin-top: 15px; display: grid; gap: 12px;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Materia</label>
+                                <input type="text" id="planMateria" required class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Título</label>
+                                <input type="text" id="planTitulo" required class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Objetivos</label>
+                            <textarea id="planObjetivos" required class="form-input" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Contenidos / Unidades</label>
+                            <textarea id="planContenidos" required class="form-input" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Archivo adjunto (PDF u otro)</label>
+                            <input type="file" id="planFile" class="form-input">
+                        </div>
+                        <button type="submit" class="btn-action" style="justify-self:end;"><i class="fas fa-save"></i> Publicar plan</button>
+                    </form>
+                </details>
+
+                <div id="listaPlanes"><p style="color:#94a3b8; text-align:center;">Cargando planes...</p></div>
+            </section>
+
+            <section id="foros" class="view-section">
+                <h3 class="section-title">Foros de discusión</h3>
+                <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#3498db;"></i> Abrir un tema nuevo</summary>
+                    <form onsubmit="crearTemaForo(event)" style="margin-top: 15px; display: grid; gap: 10px;">
+                        <input type="text" id="foroMateria" placeholder="Materia / canal" required class="form-input">
+                        <input type="text" id="foroTitulo" placeholder="Título del tema" required class="form-input">
+                        <textarea id="foroContenido" placeholder="Contenido inicial..." rows="3" required class="form-input"></textarea>
+                        <button type="submit" class="btn-action" style="justify-self: end;"><i class="fas fa-paper-plane"></i> Publicar tema</button>
+                    </form>
+                </details>
+                <div id="forosLista"><p style="color:#94a3b8; text-align:center;">Cargando temas...</p></div>
+                <div id="foroDetalle"></div>
+            </section>
+
+            <section id="mensajes" class="view-section">
+                <h3 class="section-title">Mensajes</h3>
+                <div class="chat-wrapper">
+                    <div class="chat-sidebar">
+                        <div class="chat-sidebar-header">Conversaciones</div>
+                        <ul class="chat-list" id="chatList"><li class="bell-empty">Cargando...</li></ul>
+                        <details style="border-top: 1px solid #e2e8f0;">
+                            <summary style="padding: 10px 16px; cursor: pointer; font-weight: 600; font-size: 0.85rem; color: #3498db;"><i class="fas fa-plus"></i> Nueva conversación</summary>
+                            <ul class="chat-list" id="chatContacts" style="max-height: 200px;"></ul>
+                        </details>
+                    </div>
+                    <div class="chat-main" id="chatMain">
+                        <div class="chat-empty">Elegí una conversación de la izquierda</div>
+                    </div>
                 </div>
             </section>
         </main>
     </div>
 
     <script src="toast.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="campus.js"></script>
     <script>
         const mapaMaterias = {
             inicial: [
@@ -303,14 +430,13 @@
             cargarEstudiantes();
             cargarHistorialNotas();
             cargarAsistencia();
-        });
-
-        function authHeaders() {
-            return {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+            window.initBell();
+            window.connectSocket && window.connectSocket();
+            window.onIncomingMessage = function (m) {
+                if (currentChatId === m.from) openChat(m.from);
+                if (typeof cargarContactos === 'function') cargarContactos();
             };
-        }
+        });
 
         function cargarEstudiantes() {
             const select = document.getElementById('notaAlumno');
@@ -436,66 +562,336 @@
             toastSuccess('Materia agregada a tu carga horaria.');
         }
 
-        function cargarAsistencia() {
+        async function cargarAsistencia() {
             const tbody = document.querySelector('#tablaAsistencia tbody');
-            fetch('/api/students', { headers: authHeaders() })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.exito || !data.estudiantes || data.estudiantes.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">No hay alumnos cargados.</td></tr>';
-                        return;
-                    }
-                    const hoy = new Date().toISOString().slice(0, 10);
-                    const guardado = JSON.parse(localStorage.getItem('asistencia_' + hoy)) || {};
-                    tbody.innerHTML = '';
-                    data.estudiantes.forEach(e => {
-                        const estado = guardado[e.id] || 'presente';
-                        const radioName = 'asist_' + e.id;
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${e.dni}</td>
-                                <td>${e.nombre}</td>
-                                <td>${e.curso || '—'}</td>
-                                <td style="text-align:center;"><input type="radio" name="${radioName}" value="presente" ${estado === 'presente' ? 'checked' : ''}></td>
-                                <td style="text-align:center;"><input type="radio" name="${radioName}" value="ausente" ${estado === 'ausente' ? 'checked' : ''}></td>
-                                <td style="text-align:center;"><input type="radio" name="${radioName}" value="tarde" ${estado === 'tarde' ? 'checked' : ''}></td>
-                            </tr>
-                        `;
-                    });
-                })
-                .catch(err => {
-                    console.error(err);
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#c0392b;">Error al cargar la lista de alumnos.</td></tr>';
+            const hoy = new Date().toISOString().slice(0, 10);
+            try {
+                const sData = await window.apiGet('/api/students');
+                if (!sData.exito || !sData.estudiantes.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">No hay alumnos cargados.</td></tr>';
+                    return;
+                }
+                const aData = await window.apiGet('/api/attendance/by-date?fecha=' + hoy);
+                const existente = {};
+                (aData.asistencias || []).forEach(a => { existente[a.estudiante_id] = a.status.toLowerCase(); });
+                tbody.innerHTML = '';
+                sData.estudiantes.forEach(e => {
+                    const estado = existente[e.id] || 'presente';
+                    const radioName = 'asist_' + e.id;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${e.dni}</td>
+                            <td>${window.escapeHtml(e.nombre)}</td>
+                            <td>${window.escapeHtml(e.curso || '—')}</td>
+                            <td style="text-align:center;"><input type="radio" name="${radioName}" value="presente" ${estado === 'presente' ? 'checked' : ''}></td>
+                            <td style="text-align:center;"><input type="radio" name="${radioName}" value="ausente" ${estado === 'ausente' ? 'checked' : ''}></td>
+                            <td style="text-align:center;"><input type="radio" name="${radioName}" value="tarde" ${estado === 'tarde' ? 'checked' : ''}></td>
+                        </tr>
+                    `;
                 });
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#c0392b;">Error al cargar la lista de alumnos.</td></tr>';
+            }
         }
 
-        function firmarAsistencia() {
-            const hoy = new Date().toISOString().slice(0, 10);
-            const datos = {};
-            let total = 0, presentes = 0, ausentes = 0, tardes = 0;
+        async function firmarAsistencia() {
+            const fecha = new Date().toISOString().slice(0, 10);
+            const records = [];
+            let presentes = 0, ausentes = 0, tardes = 0;
             document.querySelectorAll('#tablaAsistencia tbody tr').forEach(tr => {
                 const inputs = tr.querySelectorAll('input[type=radio]');
                 if (inputs.length === 0) return;
                 const name = inputs[0].name;
-                const id = name.replace('asist_', '');
+                const id = parseInt(name.replace('asist_', ''), 10);
                 const sel = tr.querySelector(`input[name="${name}"]:checked`);
                 if (sel) {
-                    datos[id] = sel.value;
-                    total++;
+                    const status = sel.value.toUpperCase();
+                    records.push({ estudiante_id: id, status });
                     if (sel.value === 'presente') presentes++;
                     if (sel.value === 'ausente') ausentes++;
                     if (sel.value === 'tarde') tardes++;
                 }
             });
-            if (total === 0) {
+            if (records.length === 0) {
                 toastWarning('No hay alumnos para registrar.');
                 return;
             }
-            localStorage.setItem('asistencia_' + hoy, JSON.stringify(datos));
-            toastSuccess(`Planilla firmada — ${presentes} presentes, ${ausentes} ausentes, ${tardes} tardes.`);
+            const res = await window.apiPost('/api/attendance/bulk', { fecha, records });
+            if (res.exito) {
+                toastSuccess(`Planilla firmada — ${presentes} presentes, ${ausentes} ausentes, ${tardes} tardes.`);
+            } else {
+                toastError(res.mensaje || 'No se pudo guardar la planilla.');
+            }
         }
 
-        function logout() { localStorage.removeItem('usuarioActual'); window.location.href = 'index.html'; }
+        /* ============================================================
+           ANUNCIOS
+           ============================================================ */
+        const TARGET_LABELS = { ALL: 'Toda la comunidad', ESTUDIANTE: 'Estudiantes', DOCENTE: 'Docentes', PADRE: 'Padres' };
+        const TARGET_COLORS = { ALL: '#3498db', ESTUDIANTE: '#10b981', DOCENTE: '#8b5cf6', PADRE: '#f59e0b' };
+
+        async function cargarComunicados() {
+            const cont = document.getElementById('listaComunicados');
+            try {
+                const data = await window.apiGet('/api/announcements');
+                if (!data.exito || !data.anuncios.length) {
+                    cont.innerHTML = '<p style="color:#94a3b8; text-align:center;">No hay anuncios publicados.</p>';
+                    return;
+                }
+                cont.innerHTML = data.anuncios.map(a => `
+                    <div class="campus-card" style="border-left: 4px solid ${TARGET_COLORS[a.targetRole] || '#3498db'};">
+                        <h4 class="campus-card-title"><i class="fas fa-bullhorn" style="color:${TARGET_COLORS[a.targetRole]};"></i> ${window.escapeHtml(a.titulo)}</h4>
+                        <div class="campus-card-meta">
+                            <span><i class="fas fa-user"></i> ${window.escapeHtml(a.autor)}</span>
+                            <span><i class="fas fa-users"></i> ${TARGET_LABELS[a.targetRole] || a.targetRole}</span>
+                            <span><i class="fas fa-clock"></i> ${window.formatFecha(a.createdAt)}</span>
+                        </div>
+                        <div class="campus-card-body">${window.escapeHtml(a.contenido)}</div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                cont.innerHTML = '<p style="color:#c0392b; text-align:center;">Error al cargar anuncios.</p>';
+            }
+        }
+
+        async function crearAnuncio(e) {
+            e.preventDefault();
+            const body = {
+                titulo: document.getElementById('anuncioTitulo').value,
+                contenido: document.getElementById('anuncioContenido').value,
+                targetRole: document.getElementById('anuncioTarget').value,
+            };
+            const res = await window.apiPost('/api/announcements', body);
+            if (res.exito) {
+                toastSuccess('Anuncio publicado correctamente.');
+                e.target.reset();
+                cargarComunicados();
+            } else {
+                toastError(res.mensaje || 'No se pudo publicar el anuncio.');
+            }
+        }
+
+        /* ============================================================
+           ACTIVIDADES
+           ============================================================ */
+        async function cargarActividades() {
+            const cont = document.getElementById('listaActividades');
+            try {
+                const data = await window.apiGet('/api/activities?mias=1');
+                if (!data.exito || !data.actividades.length) {
+                    cont.innerHTML = '<p style="color:#94a3b8; text-align:center;">No hay actividades creadas todavía.</p>';
+                    return;
+                }
+                cont.innerHTML = data.actividades.map(a => `
+                    <div class="campus-card">
+                        <h4 class="campus-card-title">${window.escapeHtml(a.titulo)} <span class="campus-badge campus-badge-entregado">${a.tipo}</span></h4>
+                        <div class="campus-card-meta">
+                            <span><i class="fas fa-book"></i> ${window.escapeHtml(a.materia)}</span>
+                            <span><i class="fas fa-calendar"></i> Entrega: ${window.formatFecha(a.fechaEntrega)}</span>
+                            <span><i class="fas fa-users"></i> ${a.totalEntregas} entregas</span>
+                            <span><i class="fas fa-star"></i> Máx: ${a.maxScore}</span>
+                        </div>
+                        <div class="campus-card-body">${window.escapeHtml(a.descripcion)}</div>
+                        ${a.fileUrl ? `<div style="margin-top:8px;"><a href="${a.fileUrl}" target="_blank" style="color:#3498db;"><i class="fas fa-paperclip"></i> Material adjunto</a></div>` : ''}
+                        <button onclick="verEntregas(${a.id})" class="btn-action" style="margin-top:10px; font-size:0.85rem; padding:6px 12px;"><i class="fas fa-clipboard-check"></i> Ver entregas (${a.totalEntregas})</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                cont.innerHTML = '<p style="color:#c0392b;">Error al cargar actividades.</p>';
+            }
+        }
+
+        async function crearActividad(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('materia', document.getElementById('actMateria').value);
+            fd.append('titulo', document.getElementById('actTitulo').value);
+            fd.append('descripcion', document.getElementById('actDescripcion').value);
+            fd.append('tipo', document.getElementById('actTipo').value);
+            fd.append('fechaEntrega', document.getElementById('actFecha').value);
+            fd.append('maxScore', document.getElementById('actMax').value);
+            const fileInput = document.getElementById('actFile');
+            if (fileInput.files.length > 0) fd.append('file', fileInput.files[0]);
+            const res = await window.apiUpload('/api/activities', fd);
+            if (res.exito) {
+                toastSuccess('Actividad publicada.');
+                e.target.reset();
+                cargarActividades();
+            } else {
+                toastError(res.mensaje || 'Error al publicar.');
+            }
+        }
+
+        async function verEntregas(activityId) {
+            const data = await window.apiGet('/api/activities/' + activityId + '/submissions');
+            if (!data.exito) { toastError(data.mensaje || 'Error'); return; }
+            const html = data.entregas.length === 0
+                ? 'No hay entregas todavía.'
+                : data.entregas.map(s => `
+                    <div style="background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:10px;">
+                        <strong>${window.escapeHtml(s.estudiante)}</strong>
+                        <span class="campus-badge campus-badge-${s.status.toLowerCase()}" style="margin-left:8px;">${s.status}</span>
+                        <div style="font-size:0.85rem; color:#64748b; margin-top:4px;">Entregado: ${window.formatFechaHora(s.entregadoEn)}</div>
+                        ${s.textContent ? `<div style="margin-top:8px; font-size:0.9rem;">${window.escapeHtml(s.textContent)}</div>` : ''}
+                        ${s.fileUrl ? `<div style="margin-top:6px;"><a href="${s.fileUrl}" target="_blank" style="color:#3498db;"><i class="fas fa-paperclip"></i> Archivo</a></div>` : ''}
+                        ${s.status === 'CALIFICADO' ? `<div style="margin-top:6px;"><b>Nota:</b> ${s.score} ${s.feedback ? ' — ' + window.escapeHtml(s.feedback) : ''}</div>` : `
+                            <form onsubmit="calificarEntrega(event, ${s.id})" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                                <input type="number" min="1" max="10" required placeholder="Nota" style="width:80px; padding:6px;">
+                                <input type="text" placeholder="Devolución (opcional)" style="flex:1; padding:6px;">
+                                <button class="btn-action" style="padding:6px 12px;">Calificar</button>
+                            </form>
+                        `}
+                    </div>
+                `).join('');
+            const w = window.open('', '_blank', 'width=700,height=600');
+            w.document.write(`<html><head><title>Entregas</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body style="padding:20px; font-family:'Segoe UI';"><h2>Entregas</h2>${html}<script>window.opener.attachCalificarHandlers && window.opener.attachCalificarHandlers(window);</script></body></html>`);
+        }
+
+        async function calificarEntrega(e, submissionId) {
+            e.preventDefault();
+            const inputs = e.target.querySelectorAll('input');
+            const score = parseInt(inputs[0].value, 10);
+            const feedback = inputs[1].value;
+            const res = await window.apiPost('/api/activities/submissions/' + submissionId + '/grade', { score, feedback });
+            if (res.exito) {
+                toastSuccess('Entrega calificada.');
+                window.close ? window.close() : null;
+                cargarActividades();
+            } else {
+                toastError(res.mensaje || 'Error al calificar.');
+            }
+        }
+        window.calificarEntrega = calificarEntrega;
+
+        /* ============================================================
+           PLANES
+           ============================================================ */
+        async function cargarPlanes() {
+            const cont = document.getElementById('listaPlanes');
+            try {
+                const data = await window.apiGet('/api/study-plans');
+                if (!data.exito || !data.planes.length) {
+                    cont.innerHTML = '<p style="color:#94a3b8; text-align:center;">No hay planes cargados todavía.</p>';
+                    return;
+                }
+                cont.innerHTML = data.planes.map(p => `
+                    <div class="campus-card">
+                        <h4 class="campus-card-title">${window.escapeHtml(p.titulo)}</h4>
+                        <div class="campus-card-meta">
+                            <span><i class="fas fa-book"></i> ${window.escapeHtml(p.materia)}</span>
+                            <span><i class="fas fa-user"></i> ${window.escapeHtml(p.docente)}</span>
+                            <span><i class="fas fa-clock"></i> ${window.formatFecha(p.createdAt)}</span>
+                        </div>
+                        <div class="campus-card-body">
+                            <strong>Objetivos:</strong> ${window.escapeHtml(p.objetivos)}<br>
+                            <strong>Contenidos:</strong> ${window.escapeHtml(p.contenidos)}
+                        </div>
+                        ${p.fileUrl ? `<div style="margin-top:8px;"><a href="${p.fileUrl}" target="_blank" style="color:#3498db;"><i class="fas fa-paperclip"></i> Descargar plan</a></div>` : ''}
+                    </div>
+                `).join('');
+            } catch (err) {
+                cont.innerHTML = '<p style="color:#c0392b;">Error al cargar planes.</p>';
+            }
+        }
+
+        async function crearPlan(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('materia', document.getElementById('planMateria').value);
+            fd.append('titulo', document.getElementById('planTitulo').value);
+            fd.append('objetivos', document.getElementById('planObjetivos').value);
+            fd.append('contenidos', document.getElementById('planContenidos').value);
+            const f = document.getElementById('planFile');
+            if (f.files.length > 0) fd.append('file', f.files[0]);
+            const res = await window.apiUpload('/api/study-plans', fd);
+            if (res.exito) {
+                toastSuccess('Plan publicado.');
+                e.target.reset();
+                cargarPlanes();
+            } else {
+                toastError(res.mensaje || 'Error al publicar.');
+            }
+        }
+
+        /* ============================================================
+           MENSAJES
+           ============================================================ */
+        let currentChatId = null;
+        const ROLE_LABEL = { ESTUDIANTE: 'Estudiante', DOCENTE: 'Docente', PADRE: 'Padre', ADMIN: 'Admin' };
+
+        async function cargarContactos() {
+            const [hilos, contactos] = await Promise.all([
+                window.apiGet('/api/messages/threads'),
+                window.apiGet('/api/messages/contacts'),
+            ]);
+            const list = document.getElementById('chatList');
+            const conts = document.getElementById('chatContacts');
+            if (hilos.exito && hilos.hilos.length) {
+                list.innerHTML = hilos.hilos.map(h => `
+                    <li class="chat-list-item" onclick="openChat(${h.contactId})" data-id="${h.contactId}">
+                        <div class="chat-list-name">${window.escapeHtml(h.contactNombre)} ${h.noLeidos ? `<span class="chat-list-unread">${h.noLeidos}</span>` : ''}</div>
+                        <div class="chat-list-role">${ROLE_LABEL[h.contactRol] || h.contactRol}</div>
+                        <div class="chat-list-last">${window.escapeHtml(h.ultimoMensaje)}</div>
+                    </li>
+                `).join('');
+            } else {
+                list.innerHTML = '<li class="bell-empty">Sin conversaciones</li>';
+            }
+            if (contactos.exito) {
+                conts.innerHTML = contactos.contactos.map(c => `
+                    <li class="chat-list-item" onclick="openChat(${c.id})">
+                        <div class="chat-list-name">${window.escapeHtml(c.nombre)}</div>
+                        <div class="chat-list-role">${ROLE_LABEL[c.role] || c.role}${c.curso ? ' · ' + window.escapeHtml(c.curso) : ''}</div>
+                    </li>
+                `).join('');
+            }
+        }
+
+        async function openChat(contactId) {
+            currentChatId = contactId;
+            document.querySelectorAll('#chatList .chat-list-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.id == contactId);
+            });
+            const main = document.getElementById('chatMain');
+            main.innerHTML = '<div class="chat-empty">Cargando...</div>';
+            const data = await window.apiGet('/api/messages/thread/' + contactId);
+            if (!data.exito) { main.innerHTML = '<div class="chat-empty">Error</div>'; return; }
+            const msgsHtml = data.mensajes.map(m => `
+                <div class="chat-bubble ${m.deMi ? 'chat-bubble-mine' : 'chat-bubble-other'}">
+                    ${window.escapeHtml(m.contenido)}
+                    <div class="chat-bubble-meta">${window.formatFechaHora(m.createdAt)}</div>
+                </div>
+            `).join('');
+            main.innerHTML = `
+                <div class="chat-main-header"><i class="fas fa-user"></i> ${window.escapeHtml(data.contacto.nombre)} <span style="font-size:0.8rem; color:#94a3b8; font-weight:normal;">(${ROLE_LABEL[data.contacto.role]})</span></div>
+                <div class="chat-messages" id="chatMessages">${msgsHtml || '<div class="chat-empty">Sin mensajes — escribí el primero</div>'}</div>
+                <form class="chat-composer" onsubmit="enviarMensaje(event)">
+                    <textarea id="chatInput" rows="2" placeholder="Escribí tu mensaje..." required></textarea>
+                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            `;
+            const mEl = document.getElementById('chatMessages');
+            mEl.scrollTop = mEl.scrollHeight;
+            window.refreshBell();
+        }
+
+        async function enviarMensaje(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || !currentChatId) return;
+            const res = await window.apiPost('/api/messages', { receiverId: currentChatId, contenido: text });
+            if (res.exito) {
+                input.value = '';
+                openChat(currentChatId);
+                cargarContactos();
+            } else {
+                toastError(res.mensaje || 'No se pudo enviar.');
+            }
+        }
+
+        function logout() { localStorage.removeItem('usuarioActual'); sessionStorage.removeItem('token'); window.location.href = 'index.html'; }
     </script>
 </body>
 </html>

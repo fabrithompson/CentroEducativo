@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin — Educar Para Transformar</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --accent: #8b5cf6; }
+        body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f4f6f9; }
+        header { flex-shrink: 0; z-index: 100; }
+        .app-wrapper { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { width: 260px; background-color: #1e1b4b; color: #e0e7ff; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px 16px 14px; border-bottom: 1px solid #312e81; }
+        .sidebar-header h2 { font-size: 1.1rem; color: #fff; margin: 0 0 4px; }
+        .sidebar-menu { list-style: none; padding-top: 10px; }
+        .sidebar-menu li a { display: flex; align-items: center; padding: 14px 20px; color: #c7d2fe; text-decoration: none; cursor: pointer; border-left: 3px solid transparent; font-size: 0.95rem; }
+        .sidebar-menu li a:hover, .sidebar-menu li a.active { background-color: #312e81; border-left-color: #a78bfa; color: #fff; }
+        .sidebar-menu li a i { margin-right: 14px; width: 18px; text-align: center; }
+
+        .main-content { flex: 1; padding: 28px; overflow-y: auto; background: #f1f5f9; }
+        .view-section { display: none; background: #fff; border-radius: 10px; padding: 26px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-top: 4px solid #8b5cf6; }
+        .view-section.active { display: block; }
+
+        .section-title { font-size: 1.4rem; color: #0f172a; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0; font-weight: 600; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .data-table th, .data-table td { border: 1px solid #d1d8e0; padding: 10px 14px; text-align: left; font-size: 0.9rem; }
+        .data-table th { background-color: #f4f6f7; color: #0f172a; font-weight: 600; }
+
+        .form-input, .form-select { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 0.92rem; width: 100%; }
+        .btn-action { background: #8b5cf6; color: #fff; border: none; padding: 8px 18px; border-radius: 5px; cursor: pointer; font-weight: 600; }
+        .btn-action:hover { background: #7c3aed; }
+        .btn-danger { background: #ef4444; color: #fff; border: none; padding: 5px 11px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
+        .btn-secondary { background: #64748b; color: #fff; border: none; padding: 5px 11px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div class="contact-info">
+                    <span><i class="fas fa-phone"></i> (011) 1234-5678</span>
+                    <span><i class="fas fa-envelope"></i> info@centromixto.edu</span>
+                </div>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
+                <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+                    <span class="logo-icon">🎓</span>
+                    <h1 style="margin:0; font-size: 1.3rem; color: #0f172a;">Educar Para Transformar — Admin</h1>
+                </div>
+                <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none; margin: 0;">
+                    <li><a href="index.html#inicio">Inicio</a></li>
+                    <li><button id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button></li>
+                    <li class="bell-container" id="bellContainer"></li>
+                    <li class="user-menu">
+                        <a href="#" style="color: #8b5cf6; font-weight: 600;"><i class="fas fa-user-shield"></i> <span id="userNameDisplay">Admin</span> <i class="fas fa-chevron-down"></i></a>
+                        <div class="dropdown-content">
+                            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="app-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Administración</h2>
+                <span style="font-size: 0.78rem; color: #a5b4fc;">Panel de control institucional</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a class="nav-link active" onclick="switchView('dashboard', this); cargarStats();"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a class="nav-link" onclick="switchView('usuarios', this); cargarUsuarios();"><i class="fas fa-users"></i> Usuarios</a></li>
+                <li><a class="nav-link" onclick="switchView('vinculos', this); cargarLinks();"><i class="fas fa-link"></i> Vínculos Padre-Hijo</a></li>
+                <li><a class="nav-link" onclick="switchView('cuotas', this); cargarUsuarios();"><i class="fas fa-money-bill"></i> Cargar Cuota</a></li>
+                <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments"></i> Mensajes</a></li>
+                <li><a class="nav-link" onclick="switchView('anuncios', this); cargarAnuncios();"><i class="fas fa-bullhorn"></i> Anuncios</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <section id="dashboard" class="view-section active">
+                <h3 class="section-title">Dashboard institucional</h3>
+                <div id="statsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;"></div>
+            </section>
+
+            <section id="usuarios" class="view-section">
+                <h3 class="section-title">Gestión de Usuarios</h3>
+
+                <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#8b5cf6;"></i> Crear nuevo usuario</summary>
+                    <form onsubmit="crearUsuario(event)" style="margin-top: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+                        <input type="text" id="newUsuario" placeholder="Usuario" required class="form-input">
+                        <input type="email" id="newEmail" placeholder="Email" required class="form-input">
+                        <input type="text" id="newDni" placeholder="DNI (7-8 dígitos)" required class="form-input">
+                        <input type="text" id="newNombre" placeholder="Nombre completo" required class="form-input">
+                        <select id="newRole" required class="form-select">
+                            <option value="">Rol...</option>
+                            <option value="ESTUDIANTE">Estudiante</option>
+                            <option value="DOCENTE">Docente</option>
+                            <option value="PADRE">Padre</option>
+                            <option value="ADMIN">Admin</option>
+                        </select>
+                        <input type="text" id="newCurso" placeholder="Curso (solo estudiante)" class="form-input">
+                        <input type="password" id="newPassword" placeholder="Contraseña inicial" required minlength="6" class="form-input">
+                        <button type="submit" class="btn-action" style="grid-column: 1 / -1; justify-self: end;"><i class="fas fa-user-plus"></i> Crear</button>
+                    </form>
+                </details>
+
+                <div style="display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
+                    <input type="text" id="filtroUsuarios" placeholder="Buscar por nombre / usuario / DNI / email..." oninput="cargarUsuarios()" class="form-input" style="flex:1; min-width: 220px;">
+                    <select id="filtroRole" onchange="cargarUsuarios()" class="form-select" style="max-width: 200px;">
+                        <option value="">Todos los roles</option>
+                        <option value="ESTUDIANTE">Estudiantes</option>
+                        <option value="DOCENTE">Docentes</option>
+                        <option value="PADRE">Padres</option>
+                        <option value="ADMIN">Admin</option>
+                    </select>
+                </div>
+                <table class="data-table" id="tablaUsuarios">
+                    <thead><tr><th>ID</th><th>Usuario</th><th>Nombre</th><th>Rol</th><th>DNI</th><th>Email</th><th>Curso</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <tbody><tr><td colspan="9" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
+                </table>
+            </section>
+
+            <section id="vinculos" class="view-section">
+                <h3 class="section-title">Vínculos Padre-Hijo</h3>
+
+                <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#8b5cf6;"></i> Crear vínculo</summary>
+                    <form onsubmit="crearVinculo(event)" style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;">
+                        <div>
+                            <label style="font-size:0.85rem; font-weight:600;">Padre</label>
+                            <select id="vincPadre" required class="form-select"></select>
+                        </div>
+                        <div>
+                            <label style="font-size:0.85rem; font-weight:600;">Estudiante</label>
+                            <select id="vincEstudiante" required class="form-select"></select>
+                        </div>
+                        <button type="submit" class="btn-action">Vincular</button>
+                    </form>
+                </details>
+
+                <table class="data-table" id="tablaVinculos">
+                    <thead><tr><th>ID</th><th>Padre</th><th>DNI</th><th>Estudiante</th><th>DNI</th><th>Curso</th><th>Acciones</th></tr></thead>
+                    <tbody><tr><td colspan="7" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
+                </table>
+            </section>
+
+            <section id="cuotas" class="view-section">
+                <h3 class="section-title">Cargar nueva cuota</h3>
+                <form onsubmit="crearCuota(event)" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; max-width: 800px;">
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600;">Estudiante</label>
+                        <select id="cuotaEst" required class="form-select"></select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600;">Concepto</label>
+                        <input type="text" id="cuotaConcepto" required class="form-input" placeholder="Cuota Mensual - Julio">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600;">Monto</label>
+                        <input type="number" id="cuotaMonto" required min="1" step="0.01" class="form-input" placeholder="45000">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600;">Vencimiento</label>
+                        <input type="date" id="cuotaVenc" required class="form-input">
+                    </div>
+                    <button type="submit" class="btn-action" style="grid-column: 1 / -1; justify-self: end;"><i class="fas fa-money-check"></i> Cargar cuota</button>
+                </form>
+            </section>
+
+            <section id="anuncios" class="view-section">
+                <h3 class="section-title">Anuncios publicados</h3>
+                <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#8b5cf6;"></i> Publicar anuncio</summary>
+                    <form onsubmit="crearAnuncio(event)" style="margin-top: 15px; display: grid; gap: 10px;">
+                        <input type="text" id="anuncioTitulo" placeholder="Título" required class="form-input">
+                        <textarea id="anuncioContenido" placeholder="Contenido..." rows="3" required class="form-input"></textarea>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <label>Para:</label>
+                            <select id="anuncioTarget" class="form-select" style="flex:1;">
+                                <option value="ALL">Toda la comunidad</option>
+                                <option value="ESTUDIANTE">Estudiantes</option>
+                                <option value="DOCENTE">Docentes</option>
+                                <option value="PADRE">Padres</option>
+                            </select>
+                            <button type="submit" class="btn-action"><i class="fas fa-paper-plane"></i> Publicar</button>
+                        </div>
+                    </form>
+                </details>
+                <div id="listaAnuncios"><p style="color:#94a3b8; text-align:center;">Cargando...</p></div>
+            </section>
+
+            <section id="mensajes" class="view-section">
+                <h3 class="section-title">Mensajes</h3>
+                <div class="chat-wrapper">
+                    <div class="chat-sidebar">
+                        <div class="chat-sidebar-header">Conversaciones</div>
+                        <ul class="chat-list" id="chatList"><li class="bell-empty">Cargando...</li></ul>
+                        <details style="border-top: 1px solid #e2e8f0;">
+                            <summary style="padding: 10px 16px; cursor: pointer; font-weight: 600; font-size: 0.85rem; color: #8b5cf6;"><i class="fas fa-plus"></i> Nueva conversación</summary>
+                            <ul class="chat-list" id="chatContacts" style="max-height: 200px;"></ul>
+                        </details>
+                    </div>
+                    <div class="chat-main" id="chatMain">
+                        <div class="chat-empty">Elegí una conversación de la izquierda</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="toast.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="campus.js"></script>
+    <script>
+        const ROLE_LABEL = { ESTUDIANTE: 'Estudiante', DOCENTE: 'Docente', PADRE: 'Padre', ADMIN: 'Admin' };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('usuarioActual') || 'null');
+            if (!user || user.tipo !== 'admin') { window.location.href = 'index.html'; return; }
+            document.getElementById('userNameDisplay').textContent = user.nombre;
+            cargarStats();
+            window.initBell();
+            window.connectSocket && window.connectSocket();
+            window.onIncomingMessage = function (m) {
+                if (currentChatId === m.from) openChat(m.from);
+                if (typeof cargarContactos === 'function') cargarContactos();
+            };
+        });
+
+        function switchView(viewId, element) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            if (element) element.classList.add('active');
+        }
+
+        /* ============================================================
+           DASHBOARD
+           ============================================================ */
+        async function cargarStats() {
+            const data = await window.apiGet('/api/admin/stats');
+            if (!data.exito) return;
+            const s = data.stats;
+            const fmt = (n) => Number(n).toLocaleString('es-AR');
+            document.getElementById('statsGrid').innerHTML = `
+                <div style="background:#ede9fe; border:1px solid #ddd6fe; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#5b21b6; font-weight:600;">USUARIOS TOTALES</div><div style="font-size:2rem; font-weight:700; color:#7c3aed;">${fmt(s.totalUsuarios)}</div></div>
+                <div style="background:#dbeafe; border:1px solid #bfdbfe; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#1e40af; font-weight:600;">ESTUDIANTES ACTIVOS</div><div style="font-size:2rem; font-weight:700; color:#2563eb;">${fmt(s.estudiantesActivos)}</div></div>
+                <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#92400e; font-weight:600;">DOCENTES ACTIVOS</div><div style="font-size:2rem; font-weight:700; color:#d97706;">${fmt(s.docentesActivos)}</div></div>
+                <div style="background:#fce7f3; border:1px solid #fbcfe8; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#9d174d; font-weight:600;">PADRES ACTIVOS</div><div style="font-size:2rem; font-weight:700; color:#db2777;">${fmt(s.padresActivos)}</div></div>
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#065f46; font-weight:600;">NOTAS REGISTRADAS</div><div style="font-size:2rem; font-weight:700; color:#10b981;">${fmt(s.notasRegistradas)}</div></div>
+                <div style="background:#fef9c3; border:1px solid #fde047; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#854d0e; font-weight:600;">RECAUDADO</div><div style="font-size:2rem; font-weight:700; color:#ca8a04;">$ ${fmt(Math.round(s.totalRecaudado))}</div></div>
+                <div style="background:#fee2e2; border:1px solid #fecaca; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#991b1b; font-weight:600;">ANUNCIOS</div><div style="font-size:2rem; font-weight:700; color:#ef4444;">${fmt(s.anuncios)}</div></div>
+                <div style="background:#cffafe; border:1px solid #a5f3fc; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#155e75; font-weight:600;">ACTIVIDADES</div><div style="font-size:2rem; font-weight:700; color:#0891b2;">${fmt(s.actividades)}</div></div>
+                <div style="background:#ede9fe; border:1px solid #ddd6fe; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#5b21b6; font-weight:600;">TEMAS DEL FORO</div><div style="font-size:2rem; font-weight:700; color:#7c3aed;">${fmt(s.temasForo)}</div></div>
+                <div style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#334155; font-weight:600;">MENSAJES</div><div style="font-size:2rem; font-weight:700; color:#475569;">${fmt(s.mensajesIntercambiados)}</div></div>
+            `;
+        }
+
+        /* ============================================================
+           USUARIOS
+           ============================================================ */
+        let _usuariosCache = [];
+
+        async function cargarUsuarios() {
+            const tbody = document.querySelector('#tablaUsuarios tbody');
+            const q = (document.getElementById('filtroUsuarios') || {}).value || '';
+            const role = (document.getElementById('filtroRole') || {}).value || '';
+            const params = new URLSearchParams();
+            if (q) params.set('q', q);
+            if (role) params.set('role', role);
+            const data = await window.apiGet('/api/admin/users?' + params.toString());
+            if (!data.exito) return;
+            _usuariosCache = data.usuarios;
+            tbody.innerHTML = data.usuarios.length === 0
+                ? '<tr><td colspan="9" style="text-align:center; color:#64748b;">Sin resultados.</td></tr>'
+                : data.usuarios.map(u => `
+                    <tr style="${u.isActive ? '' : 'opacity:0.55;'}">
+                        <td>${u.id}</td>
+                        <td><b>${window.escapeHtml(u.usuario)}</b></td>
+                        <td>${window.escapeHtml(u.nombre)}</td>
+                        <td>${ROLE_LABEL[u.role] || u.role}</td>
+                        <td>${u.dni}</td>
+                        <td>${window.escapeHtml(u.email)}</td>
+                        <td>${window.escapeHtml(u.curso || '—')}</td>
+                        <td>${u.isActive ? '<span style="color:#10b981;">Activo</span>' : '<span style="color:#ef4444;">Inactivo</span>'}</td>
+                        <td>
+                            <button class="btn-secondary" onclick="editarUsuario(${u.id})">Editar</button>
+                            <button class="btn-danger" onclick="desactivarUsuario(${u.id})" ${u.isActive ? '' : 'disabled style="opacity:0.5;"'}>Desactivar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            // tambien refresca selects que dependen de usuarios
+            llenarSelectsConUsuarios();
+        }
+
+        function llenarSelectsConUsuarios() {
+            const padres = _usuariosCache.filter(u => u.role === 'PADRE' && u.isActive);
+            const estudiantes = _usuariosCache.filter(u => u.role === 'ESTUDIANTE' && u.isActive);
+            const sp = document.getElementById('vincPadre');
+            const se = document.getElementById('vincEstudiante');
+            const sec = document.getElementById('cuotaEst');
+            if (sp) sp.innerHTML = padres.map(p => `<option value="${p.id}">${p.nombre} (DNI ${p.dni})</option>`).join('');
+            if (se) se.innerHTML = estudiantes.map(e => `<option value="${e.id}">${e.nombre} — ${e.curso || ''}</option>`).join('');
+            if (sec) sec.innerHTML = estudiantes.map(e => `<option value="${e.id}">${e.nombre} — ${e.curso || ''}</option>`).join('');
+        }
+
+        async function crearUsuario(e) {
+            e.preventDefault();
+            const body = {
+                usuario: document.getElementById('newUsuario').value,
+                email: document.getElementById('newEmail').value,
+                dni: document.getElementById('newDni').value,
+                nombre: document.getElementById('newNombre').value,
+                role: document.getElementById('newRole').value,
+                curso: document.getElementById('newCurso').value || null,
+                password: document.getElementById('newPassword').value,
+            };
+            const r = await window.apiPost('/api/admin/users', body);
+            if (r.exito) {
+                toastSuccess('Usuario creado: ' + r.usuario.usuario);
+                e.target.reset();
+                cargarUsuarios();
+            } else {
+                toastError(r.mensaje || 'No se pudo crear.');
+            }
+        }
+
+        async function editarUsuario(id) {
+            const u = _usuariosCache.find(x => x.id === id);
+            if (!u) return;
+            const nombre = prompt('Nombre completo:', u.nombre);
+            if (nombre === null) return;
+            const email = prompt('Email:', u.email);
+            if (email === null) return;
+            const curso = u.role === 'ESTUDIANTE' ? prompt('Curso:', u.curso || '') : null;
+            const r = await window.apiPatch('/api/admin/users/' + id, { nombre, email, curso });
+            if (r.exito) { toastSuccess('Usuario actualizado.'); cargarUsuarios(); }
+            else toastError(r.mensaje || 'Error.');
+        }
+
+        async function desactivarUsuario(id) {
+            if (!confirm('¿Desactivar este usuario?')) return;
+            const r = await window.apiDelete('/api/admin/users/' + id);
+            if (r.exito) { toastSuccess('Usuario desactivado.'); cargarUsuarios(); }
+            else toastError(r.mensaje || 'Error.');
+        }
+
+        /* ============================================================
+           VINCULOS
+           ============================================================ */
+        async function cargarLinks() {
+            await cargarUsuarios();
+            const data = await window.apiGet('/api/admin/links');
+            const tbody = document.querySelector('#tablaVinculos tbody');
+            if (!data.exito) return;
+            tbody.innerHTML = data.links.length === 0
+                ? '<tr><td colspan="7" style="text-align:center; color:#64748b;">Sin vínculos cargados.</td></tr>'
+                : data.links.map(l => `
+                    <tr>
+                        <td>${l.id}</td>
+                        <td><b>${window.escapeHtml(l.padre.nombre)}</b></td>
+                        <td>${l.padre.dni}</td>
+                        <td><b>${window.escapeHtml(l.estudiante.nombre)}</b></td>
+                        <td>${l.estudiante.dni}</td>
+                        <td>${window.escapeHtml(l.estudiante.curso || '—')}</td>
+                        <td><button class="btn-danger" onclick="borrarVinculo(${l.id})">Eliminar</button></td>
+                    </tr>
+                `).join('');
+        }
+
+        async function crearVinculo(e) {
+            e.preventDefault();
+            const r = await window.apiPost('/api/admin/links', {
+                padreId: document.getElementById('vincPadre').value,
+                estudianteId: document.getElementById('vincEstudiante').value,
+            });
+            if (r.exito) { toastSuccess('Vínculo creado.'); cargarLinks(); }
+            else toastError(r.mensaje || 'Error.');
+        }
+
+        async function borrarVinculo(id) {
+            if (!confirm('¿Eliminar este vínculo?')) return;
+            const r = await window.apiDelete('/api/admin/links/' + id);
+            if (r.exito) { toastSuccess('Vínculo eliminado.'); cargarLinks(); }
+            else toastError(r.mensaje || 'Error.');
+        }
+
+        /* ============================================================
+           CUOTAS
+           ============================================================ */
+        async function crearCuota(e) {
+            e.preventDefault();
+            const r = await window.apiPost('/api/admin/payments', {
+                estudianteId: document.getElementById('cuotaEst').value,
+                concepto: document.getElementById('cuotaConcepto').value,
+                monto: document.getElementById('cuotaMonto').value,
+                vencimiento: document.getElementById('cuotaVenc').value,
+            });
+            if (r.exito) { toastSuccess('Cuota cargada.'); e.target.reset(); }
+            else toastError(r.mensaje || 'Error.');
+        }
+
+        /* ============================================================
+           ANUNCIOS
+           ============================================================ */
+        async function cargarAnuncios() {
+            const data = await window.apiGet('/api/announcements');
+            const cont = document.getElementById('listaAnuncios');
+            if (!data.exito || !data.anuncios.length) {
+                cont.innerHTML = '<p style="color:#94a3b8; text-align:center;">No hay anuncios.</p>';
+                return;
+            }
+            cont.innerHTML = data.anuncios.map(a => `
+                <div class="campus-card" style="border-left: 4px solid #8b5cf6;">
+                    <h4 class="campus-card-title">${window.escapeHtml(a.titulo)}</h4>
+                    <div class="campus-card-meta">
+                        <span><i class="fas fa-user"></i> ${window.escapeHtml(a.autor)}</span>
+                        <span><i class="fas fa-users"></i> ${a.targetRole}</span>
+                        <span><i class="fas fa-clock"></i> ${window.formatFecha(a.createdAt)}</span>
+                    </div>
+                    <div class="campus-card-body">${window.escapeHtml(a.contenido)}</div>
+                    <button class="btn-danger" style="margin-top:10px;" onclick="borrarAnuncio(${a.id})">Borrar</button>
+                </div>
+            `).join('');
+        }
+
+        async function crearAnuncio(e) {
+            e.preventDefault();
+            const body = {
+                titulo: document.getElementById('anuncioTitulo').value,
+                contenido: document.getElementById('anuncioContenido').value,
+                targetRole: document.getElementById('anuncioTarget').value,
+            };
+            const r = await window.apiPost('/api/announcements', body);
+            if (r.exito) { toastSuccess('Anuncio publicado.'); e.target.reset(); cargarAnuncios(); }
+            else toastError(r.mensaje || 'Error.');
+        }
+
+        async function borrarAnuncio(id) {
+            if (!confirm('¿Borrar este anuncio?')) return;
+            const r = await window.apiDelete('/api/announcements/' + id);
+            if (r.exito) { toastSuccess('Anuncio borrado.'); cargarAnuncios(); }
+            else toastError(r.mensaje || 'Error.');
+        }
+
+        /* ============================================================
+           MENSAJES (reusa la misma lógica que docente)
+           ============================================================ */
+        let currentChatId = null;
+
+        async function cargarContactos() {
+            const [hilos, contactos] = await Promise.all([
+                window.apiGet('/api/messages/threads'),
+                window.apiGet('/api/messages/contacts'),
+            ]);
+            const list = document.getElementById('chatList');
+            const conts = document.getElementById('chatContacts');
+            if (hilos.exito && hilos.hilos.length) {
+                list.innerHTML = hilos.hilos.map(h => `
+                    <li class="chat-list-item" onclick="openChat(${h.contactId})" data-id="${h.contactId}">
+                        <div class="chat-list-name">${window.escapeHtml(h.contactNombre)} ${h.noLeidos ? `<span class="chat-list-unread">${h.noLeidos}</span>` : ''}</div>
+                        <div class="chat-list-role">${ROLE_LABEL[h.contactRol]}</div>
+                        <div class="chat-list-last">${window.escapeHtml(h.ultimoMensaje)}</div>
+                    </li>
+                `).join('');
+            } else {
+                list.innerHTML = '<li class="bell-empty">Sin conversaciones</li>';
+            }
+            if (contactos.exito) {
+                conts.innerHTML = contactos.contactos.map(c => `
+                    <li class="chat-list-item" onclick="openChat(${c.id})">
+                        <div class="chat-list-name">${window.escapeHtml(c.nombre)}</div>
+                        <div class="chat-list-role">${ROLE_LABEL[c.role]}</div>
+                    </li>
+                `).join('');
+            }
+        }
+
+        async function openChat(contactId) {
+            currentChatId = contactId;
+            document.querySelectorAll('#chatList .chat-list-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.id == contactId);
+            });
+            const main = document.getElementById('chatMain');
+            main.innerHTML = '<div class="chat-empty">Cargando...</div>';
+            const data = await window.apiGet('/api/messages/thread/' + contactId);
+            if (!data.exito) { main.innerHTML = '<div class="chat-empty">Error</div>'; return; }
+            const msgsHtml = data.mensajes.map(m => `
+                <div class="chat-bubble ${m.deMi ? 'chat-bubble-mine' : 'chat-bubble-other'}">
+                    ${window.escapeHtml(m.contenido)}
+                    <div class="chat-bubble-meta">${window.formatFechaHora(m.createdAt)}</div>
+                </div>
+            `).join('');
+            main.innerHTML = `
+                <div class="chat-main-header"><i class="fas fa-user"></i> ${window.escapeHtml(data.contacto.nombre)} <span style="font-size:0.8rem; color:#94a3b8; font-weight:normal;">(${ROLE_LABEL[data.contacto.role]})</span></div>
+                <div class="chat-messages" id="chatMessages">${msgsHtml || '<div class="chat-empty">Sin mensajes</div>'}</div>
+                <form class="chat-composer" onsubmit="enviarMensaje(event)">
+                    <textarea id="chatInput" rows="2" placeholder="Escribí tu mensaje..." required></textarea>
+                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            `;
+            const mEl = document.getElementById('chatMessages');
+            mEl.scrollTop = mEl.scrollHeight;
+            window.refreshBell();
+        }
+
+        async function enviarMensaje(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || !currentChatId) return;
+            const res = await window.apiPost('/api/messages', { receiverId: currentChatId, contenido: text });
+            if (res.exito) {
+                input.value = '';
+                openChat(currentChatId);
+                cargarContactos();
+            } else {
+                toastError(res.mensaje || 'No se pudo enviar.');
+            }
+        }
+
+        function logout() {
+            fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+            localStorage.removeItem('usuarioActual');
+            sessionStorage.removeItem('token');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

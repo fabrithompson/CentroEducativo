@@ -5,7 +5,17 @@ import { Role } from '@prisma/client';
 
 import { prisma } from '../db/prisma';
 import { HttpError } from '../utils/httpError';
-import { requireAuth, signAccessToken } from '../middleware/auth';
+import { requireAuth, signAccessToken, signRefreshToken, verifyRefreshToken } from '../middleware/auth';
+import { env } from '../config/env';
+
+const REFRESH_COOKIE = 'et_refresh';
+const refreshCookieOpts = {
+  httpOnly: true,
+  sameSite: 'lax' as const,
+  secure: env.NODE_ENV === 'production',
+  path: '/api/auth',
+  maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+};
 
 const router = Router();
 
@@ -97,6 +107,8 @@ router.post('/login', async (req, res, next) => {
       usuario: user.usuario,
       role: user.role,
     });
+    const refresh = signRefreshToken({ id: user.id, v: 1 });
+    res.cookie(REFRESH_COOKIE, refresh, refreshCookieOpts);
 
     res.json({
       exito: true,
@@ -111,6 +123,42 @@ router.post('/login', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+router.post('/refresh', async (req, res, next) => {
+  try {
+    const token = req.cookies?.[REFRESH_COOKIE];
+    if (!token) throw HttpError.unauthorized('No hay refresh token.');
+    let payload;
+    try {
+      payload = verifyRefreshToken(token);
+    } catch {
+      throw HttpError.unauthorized('Refresh token inválido o expirado.');
+    }
+    const user = await prisma.user.findUnique({ where: { id: payload.id } });
+    if (!user || !user.isActive) throw HttpError.unauthorized('Cuenta deshabilitada.');
+
+    const access = signAccessToken({ id: user.id, usuario: user.usuario, role: user.role });
+    const newRefresh = signRefreshToken({ id: user.id, v: payload.v + 1 });
+    res.cookie(REFRESH_COOKIE, newRefresh, refreshCookieOpts);
+
+    res.json({
+      exito: true,
+      usuario: {
+        id: user.id,
+        nombre: user.nombre,
+        tipo: roleToTipo[user.role],
+        token: access,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/logout', (_req, res) => {
+  res.clearCookie(REFRESH_COOKIE, { path: '/api/auth' });
+  res.json({ exito: true });
 });
 
 router.get('/me', requireAuth, async (req, res, next) => {

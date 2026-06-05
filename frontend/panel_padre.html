@@ -46,6 +46,8 @@
                     <h1 style="margin:0; font-size: 1.3rem;">Educar Para Transformar</h1>
                 </div>
                 <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none;">
+                    <li><button id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button></li>
+                    <li class="bell-container" id="bellContainer"></li>
                     <li><a href="index.html#inicio">Inicio</a></li>
                     <li class="user-menu">
                         <a href="#" style="color: #f39c12; font-weight: bold;"><i class="fas fa-users"></i> <span id="userNameDisplay">Tutor</span> <i class="fas fa-chevron-down"></i></a>
@@ -64,7 +66,9 @@
                 <li><a class="nav-link active" onclick="switchView('boletin', this)"><i class="fas fa-file-invoice"></i> Boletín e Historial</a></li>
                 <li><a class="nav-link" onclick="switchView('materias', this)"><i class="fas fa-book-open"></i> Materias del Hijo</a></li>
                 <li><a class="nav-link" onclick="switchView('asistencias', this)"><i class="fas fa-clipboard-user"></i> Asistencias</a></li>
-                <li><a class="nav-link" onclick="switchView('finanzas', this)"><i class="fas fa-file-invoice-dollar"></i> Estado de Cuenta</a></li>
+                <li><a class="nav-link" onclick="switchView('finanzas', this); cargarPagos();"><i class="fas fa-file-invoice-dollar"></i> Estado de Cuenta</a></li>
+                <li><a class="nav-link" onclick="switchView('anuncios', this); cargarAnuncios();"><i class="fas fa-bullhorn"></i> Anuncios</a></li>
+                <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments"></i> Mensajes</a></li>
             </ul>
         </aside>
 
@@ -141,47 +145,54 @@
 
             <section id="finanzas" class="view-section">
                 <h3 class="section-title">Estado de Cuenta Arancelario</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px;">
-                    <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:15px;">
-                        <div style="color:#065f46; font-size:0.85rem; font-weight:600;">CUOTAS AL DÍA</div>
-                        <div style="font-size:1.8rem; font-weight:700; color:#10b981; margin-top:5px;">3</div>
+                <div id="pagosStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px;"></div>
+                <table class="data-table" id="tablaPagos">
+                    <thead>
+                        <tr><th>Alumno</th><th>Concepto</th><th>Vencimiento</th><th>Monto</th><th>Estado</th><th>Acción</th></tr>
+                    </thead>
+                    <tbody><tr><td colspan="6" style="text-align:center; color:#64748b;">Cargando cuotas...</td></tr></tbody>
+                </table>
+            </section>
+
+            <section id="anuncios" class="view-section">
+                <h3 class="section-title">Anuncios institucionales</h3>
+                <div id="listaAnunciosPadre"><p style="color:#94a3b8; text-align:center;">Cargando anuncios...</p></div>
+            </section>
+
+            <section id="mensajes" class="view-section">
+                <h3 class="section-title">Mensajes con docentes</h3>
+                <div class="chat-wrapper">
+                    <div class="chat-sidebar">
+                        <div class="chat-sidebar-header">Conversaciones</div>
+                        <ul class="chat-list" id="chatList"><li class="bell-empty">Cargando...</li></ul>
+                        <details style="border-top: 1px solid #e2e8f0;">
+                            <summary style="padding: 10px 16px; cursor: pointer; font-weight: 600; font-size: 0.85rem; color: #3498db;"><i class="fas fa-plus"></i> Escribir a un docente</summary>
+                            <ul class="chat-list" id="chatContacts" style="max-height: 200px;"></ul>
+                        </details>
                     </div>
-                    <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:8px; padding:15px;">
-                        <div style="color:#92400e; font-size:0.85rem; font-weight:600;">CUOTAS PENDIENTES</div>
-                        <div style="font-size:1.8rem; font-weight:700; color:#f59e0b; margin-top:5px;">1</div>
-                    </div>
-                    <div style="background:#fee2e2; border:1px solid #fecaca; border-radius:8px; padding:15px;">
-                        <div style="color:#991b1b; font-size:0.85rem; font-weight:600;">VENCIDAS</div>
-                        <div style="font-size:1.8rem; font-weight:700; color:#ef4444; margin-top:5px;">1</div>
-                    </div>
-                    <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:15px;">
-                        <div style="color:#1e3a8a; font-size:0.85rem; font-weight:600;">SALDO ACTUAL</div>
-                        <div style="font-size:1.8rem; font-weight:700; color:#3498db; margin-top:5px;">$ 90.000</div>
+                    <div class="chat-main" id="chatMain">
+                        <div class="chat-empty">Elegí una conversación de la izquierda</div>
                     </div>
                 </div>
-                <table class="data-table">
-                    <thead>
-                        <tr><th>Concepto</th><th>Vencimiento</th><th>Monto</th><th>Estado</th><th>Acción</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Matrícula Ciclo 2026</td><td>15/02/2026</td><td>$50.000</td><td><span style="background:#d1fae5; color:#065f46; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">Abonado</span></td><td><a href="#" onclick="event.preventDefault(); toastInfo('Comprobante descargado.');" style="color:#3498db;"><i class="fas fa-file-download"></i> Recibo</a></td></tr>
-                        <tr><td>Cuota Mensual — Marzo</td><td>10/03/2026</td><td>$45.000</td><td><span style="background:#d1fae5; color:#065f46; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">Abonado</span></td><td><a href="#" onclick="event.preventDefault(); toastInfo('Comprobante descargado.');" style="color:#3498db;"><i class="fas fa-file-download"></i> Recibo</a></td></tr>
-                        <tr><td>Cuota Mensual — Abril</td><td>10/04/2026</td><td>$45.000</td><td><span style="background:#fee2e2; color:#991b1b; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">Vencida</span></td><td><button onclick="pagarCuota('Abril', 45000)" style="background:#ef4444; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-weight:600; font-size:0.85rem;"><i class="fas fa-credit-card"></i> Pagar</button></td></tr>
-                        <tr><td>Cuota Mensual — Mayo</td><td>10/05/2026</td><td>$45.000</td><td><span style="background:#d1fae5; color:#065f46; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">Abonado</span></td><td><a href="#" onclick="event.preventDefault(); toastInfo('Comprobante descargado.');" style="color:#3498db;"><i class="fas fa-file-download"></i> Recibo</a></td></tr>
-                        <tr><td>Cuota Mensual — Junio</td><td>10/06/2026</td><td>$45.000</td><td><span style="background:#fef3c7; color:#92400e; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">Pendiente</span></td><td><button onclick="pagarCuota('Junio', 45000)" style="background:#3498db; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-weight:600; font-size:0.85rem;"><i class="fas fa-credit-card"></i> Pagar</button></td></tr>
-                    </tbody>
-                </table>
             </section>
         </main>
     </div>
 
     <script src="toast.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="campus.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const user = JSON.parse(localStorage.getItem('usuarioActual'));
             if (!user || user.tipo !== 'padre') { window.location.href = 'index.html'; return; }
             document.getElementById('userNameDisplay').textContent = user.nombre;
             cargarHijos();
+            window.initBell();
+            window.connectSocket && window.connectSocket();
+            window.onIncomingMessage = function (m) {
+                if (currentChatId === m.from) openChat(m.from);
+                if (typeof cargarContactos === 'function') cargarContactos();
+            };
         });
 
         function switchView(viewId, element) {
@@ -412,19 +423,7 @@
             });
         }
 
-        function asistenciaDeterminada(hijoId, fechaIso) {
-            const overrides = JSON.parse(localStorage.getItem('asistencia_' + fechaIso) || '{}');
-            if (overrides[hijoId]) return overrides[hijoId];
-            // mock estable: hash de id + fecha
-            const d = new Date(fechaIso);
-            const seed = (Number(hijoId) * 31 + d.getDate() + d.getMonth() * 100 + d.getFullYear() * 13) % 22;
-            if (seed === 0) return 'ausente';
-            if (seed === 1) return 'tarde';
-            if (seed === 2) return 'justificado';
-            return 'presente';
-        }
-
-        function renderAsistencias(hijoId) {
+        async function renderAsistencias(hijoId) {
             const stats = document.getElementById('asistenciaStats');
             const tbody = document.querySelector('#tablaAsistenciasPadre tbody');
             if (!hijoId) {
@@ -432,56 +431,176 @@
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">Seleccioná un hijo para ver sus asistencias.</td></tr>';
                 return;
             }
-            const dias = [];
-            const hoy = new Date();
-            for (let i = 0; i < 30; i++) {
-                const d = new Date(hoy);
-                d.setDate(hoy.getDate() - i);
-                const dow = d.getDay();
-                if (dow === 0 || dow === 6) continue;
-                const iso = d.toISOString().slice(0, 10);
-                dias.push({ fecha: iso, dia: d.toLocaleDateString('es-AR', { weekday: 'long' }), status: asistenciaDeterminada(hijoId, iso) });
+            const data = await window.apiGet('/api/attendance?estudiante_id=' + hijoId);
+            if (!data.exito) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#c0392b;">${data.mensaje || 'Error'}</td></tr>`;
+                return;
             }
-            const contadores = { presente: 0, ausente: 0, tarde: 0, justificado: 0 };
-            dias.forEach(d => contadores[d.status]++);
-            const pctPresente = ((contadores.presente / dias.length) * 100).toFixed(0);
-
+            const rows = data.asistencias || [];
+            const cont = { PRESENTE: 0, AUSENTE: 0, TARDE: 0, JUSTIFICADO: 0 };
+            rows.forEach(r => { cont[r.status] = (cont[r.status] || 0) + 1; });
+            const pct = rows.length ? ((cont.PRESENTE / rows.length) * 100).toFixed(0) : 0;
             stats.innerHTML = `
-                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:15px;">
-                    <div style="color:#065f46; font-size:0.82rem; font-weight:600;">% PRESENTES</div>
-                    <div style="font-size:1.8rem; font-weight:700; color:#10b981; margin-top:5px;">${pctPresente}%</div>
-                </div>
-                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:15px;">
-                    <div style="color:#065f46; font-size:0.82rem; font-weight:600;">DÍAS PRESENTES</div>
-                    <div style="font-size:1.8rem; font-weight:700; color:#10b981; margin-top:5px;">${contadores.presente}</div>
-                </div>
-                <div style="background:#fee2e2; border:1px solid #fecaca; border-radius:8px; padding:15px;">
-                    <div style="color:#991b1b; font-size:0.82rem; font-weight:600;">AUSENCIAS</div>
-                    <div style="font-size:1.8rem; font-weight:700; color:#ef4444; margin-top:5px;">${contadores.ausente}</div>
-                </div>
-                <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:8px; padding:15px;">
-                    <div style="color:#92400e; font-size:0.82rem; font-weight:600;">LLEGADAS TARDE</div>
-                    <div style="font-size:1.8rem; font-weight:700; color:#f59e0b; margin-top:5px;">${contadores.tarde}</div>
-                </div>
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:15px;"><div style="color:#065f46; font-size:0.82rem; font-weight:600;">% PRESENTES</div><div style="font-size:1.8rem; font-weight:700; color:#10b981;">${pct}%</div></div>
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:15px;"><div style="color:#065f46; font-size:0.82rem; font-weight:600;">DÍAS PRESENTES</div><div style="font-size:1.8rem; font-weight:700; color:#10b981;">${cont.PRESENTE}</div></div>
+                <div style="background:#fee2e2; border:1px solid #fecaca; border-radius:8px; padding:15px;"><div style="color:#991b1b; font-size:0.82rem; font-weight:600;">AUSENCIAS</div><div style="font-size:1.8rem; font-weight:700; color:#ef4444;">${cont.AUSENTE}</div></div>
+                <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:8px; padding:15px;"><div style="color:#92400e; font-size:0.82rem; font-weight:600;">LLEGADAS TARDE</div><div style="font-size:1.8rem; font-weight:700; color:#f59e0b;">${cont.TARDE}</div></div>
             `;
-
             const COLORES = {
-                presente: { bg: '#d1fae5', fg: '#065f46', label: 'Presente' },
-                ausente: { bg: '#fee2e2', fg: '#991b1b', label: 'Ausente' },
-                tarde: { bg: '#fef3c7', fg: '#92400e', label: 'Tarde' },
-                justificado: { bg: '#dbeafe', fg: '#1e3a8a', label: 'Justificada' }
+                PRESENTE: { bg: '#d1fae5', fg: '#065f46', label: 'Presente' },
+                AUSENTE: { bg: '#fee2e2', fg: '#991b1b', label: 'Ausente' },
+                TARDE: { bg: '#fef3c7', fg: '#92400e', label: 'Tarde' },
+                JUSTIFICADO: { bg: '#dbeafe', fg: '#1e3a8a', label: 'Justificada' }
             };
-            tbody.innerHTML = '';
-            dias.forEach(d => {
-                const c = COLORES[d.status];
-                const obs = d.status === 'ausente' ? 'Ausencia sin aviso' : d.status === 'justificado' ? 'Certificado médico' : d.status === 'tarde' ? 'Ingresó después del primer módulo' : '—';
-                const fechaFormat = new Date(d.fecha + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                tbody.innerHTML += `<tr><td>${fechaFormat}</td><td style="text-transform:capitalize;">${d.dia}</td><td style="text-align:center;"><span style="background:${c.bg}; color:${c.fg}; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">${c.label}</span></td><td style="color:#64748b;">${obs}</td></tr>`;
-            });
+            tbody.innerHTML = rows.length === 0
+                ? '<tr><td colspan="4" style="text-align:center; color:#64748b;">No hay registros.</td></tr>'
+                : rows.map(r => {
+                    const c = COLORES[r.status];
+                    const d = new Date(r.fecha + 'T00:00:00');
+                    return `<tr><td>${window.formatFecha(r.fecha)}</td><td style="text-transform:capitalize;">${d.toLocaleDateString('es-AR', { weekday: 'long' })}</td><td style="text-align:center;"><span style="background:${c.bg}; color:${c.fg}; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">${c.label}</span></td><td style="color:#64748b;">${window.escapeHtml(r.observacion || '—')}</td></tr>`;
+                }).join('');
         }
 
-        function pagarCuota(mes, monto) {
-            toastSuccess(`Pago de cuota ${mes} ($${monto.toLocaleString('es-AR')}) registrado correctamente.`);
+        /* ============================================================
+           PAGOS
+           ============================================================ */
+        const STATUS_PAGO_COLOR = {
+            PAGADO: { bg: '#d1fae5', fg: '#065f46', label: 'Abonado' },
+            PENDIENTE: { bg: '#fef3c7', fg: '#92400e', label: 'Pendiente' },
+            VENCIDO: { bg: '#fee2e2', fg: '#991b1b', label: 'Vencida' }
+        };
+
+        async function cargarPagos() {
+            const stats = document.getElementById('pagosStats');
+            const tbody = document.querySelector('#tablaPagos tbody');
+            const data = await window.apiGet('/api/payments');
+            if (!data.exito) { tbody.innerHTML = `<tr><td colspan="6">${data.mensaje}</td></tr>`; return; }
+            const t = data.totales;
+            const fmt = (n) => '$ ' + Math.round(n).toLocaleString('es-AR');
+            stats.innerHTML = `
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:15px;"><div style="color:#065f46; font-size:0.85rem; font-weight:600;">PAGADO</div><div style="font-size:1.6rem; font-weight:700; color:#10b981;">${fmt(t.pagado)}</div></div>
+                <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:8px; padding:15px;"><div style="color:#92400e; font-size:0.85rem; font-weight:600;">PENDIENTE</div><div style="font-size:1.6rem; font-weight:700; color:#f59e0b;">${fmt(t.pendiente)}</div></div>
+                <div style="background:#fee2e2; border:1px solid #fecaca; border-radius:8px; padding:15px;"><div style="color:#991b1b; font-size:0.85rem; font-weight:600;">VENCIDO</div><div style="font-size:1.6rem; font-weight:700; color:#ef4444;">${fmt(t.vencido)}</div></div>
+                <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:15px;"><div style="color:#1e3a8a; font-size:0.85rem; font-weight:600;">SALDO TOTAL</div><div style="font-size:1.6rem; font-weight:700; color:#3498db;">${fmt(t.total)}</div></div>
+            `;
+            tbody.innerHTML = data.pagos.length === 0
+                ? '<tr><td colspan="6" style="text-align:center; color:#64748b;">No hay cuotas registradas.</td></tr>'
+                : data.pagos.map(p => {
+                    const c = STATUS_PAGO_COLOR[p.status];
+                    const accion = p.status === 'PAGADO'
+                        ? `<a href="#" onclick="event.preventDefault(); toastInfo('Comprobante descargado.');" style="color:#3498db;"><i class="fas fa-file-download"></i> Recibo</a>`
+                        : `<button onclick="pagarCuota(${p.id})" style="background:${p.status === 'VENCIDO' ? '#ef4444' : '#3498db'}; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-weight:600; font-size:0.85rem;"><i class="fas fa-credit-card"></i> Pagar</button>`;
+                    return `<tr><td>${window.escapeHtml(p.estudiante)}</td><td>${window.escapeHtml(p.concepto)}</td><td>${window.formatFecha(p.vencimiento)}</td><td>${fmt(p.monto)}</td><td><span style="background:${c.bg}; color:${c.fg}; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">${c.label}</span></td><td>${accion}</td></tr>`;
+                }).join('');
+        }
+
+        async function pagarCuota(id) {
+            const res = await window.apiPost('/api/payments/' + id + '/pay');
+            if (res.exito) {
+                toastSuccess('Pago registrado correctamente.');
+                cargarPagos();
+            } else {
+                toastError(res.mensaje || 'No se pudo procesar el pago.');
+            }
+        }
+
+        /* ============================================================
+           ANUNCIOS
+           ============================================================ */
+        async function cargarAnuncios() {
+            const cont = document.getElementById('listaAnunciosPadre');
+            const data = await window.apiGet('/api/announcements');
+            if (!data.exito || !data.anuncios.length) {
+                cont.innerHTML = '<p style="color:#94a3b8; text-align:center;">No hay anuncios publicados.</p>';
+                return;
+            }
+            cont.innerHTML = data.anuncios.map(a => `
+                <div class="campus-card" style="border-left: 4px solid #f39c12;">
+                    <h4 class="campus-card-title"><i class="fas fa-bullhorn" style="color:#f39c12;"></i> ${window.escapeHtml(a.titulo)}</h4>
+                    <div class="campus-card-meta">
+                        <span><i class="fas fa-user"></i> ${window.escapeHtml(a.autor)}</span>
+                        <span><i class="fas fa-clock"></i> ${window.formatFecha(a.createdAt)}</span>
+                    </div>
+                    <div class="campus-card-body">${window.escapeHtml(a.contenido)}</div>
+                </div>
+            `).join('');
+        }
+
+        /* ============================================================
+           MENSAJES
+           ============================================================ */
+        let currentChatId = null;
+        const ROLE_LABEL = { ESTUDIANTE: 'Estudiante', DOCENTE: 'Docente', PADRE: 'Padre', ADMIN: 'Admin' };
+
+        async function cargarContactos() {
+            const [hilos, contactos] = await Promise.all([
+                window.apiGet('/api/messages/threads'),
+                window.apiGet('/api/messages/contacts'),
+            ]);
+            const list = document.getElementById('chatList');
+            const conts = document.getElementById('chatContacts');
+            if (hilos.exito && hilos.hilos.length) {
+                list.innerHTML = hilos.hilos.map(h => `
+                    <li class="chat-list-item" onclick="openChat(${h.contactId})" data-id="${h.contactId}">
+                        <div class="chat-list-name">${window.escapeHtml(h.contactNombre)} ${h.noLeidos ? `<span class="chat-list-unread">${h.noLeidos}</span>` : ''}</div>
+                        <div class="chat-list-role">${ROLE_LABEL[h.contactRol]}</div>
+                        <div class="chat-list-last">${window.escapeHtml(h.ultimoMensaje)}</div>
+                    </li>
+                `).join('');
+            } else {
+                list.innerHTML = '<li class="bell-empty">Sin conversaciones</li>';
+            }
+            if (contactos.exito) {
+                conts.innerHTML = contactos.contactos.map(c => `
+                    <li class="chat-list-item" onclick="openChat(${c.id})">
+                        <div class="chat-list-name">${window.escapeHtml(c.nombre)}</div>
+                        <div class="chat-list-role">${ROLE_LABEL[c.role]}</div>
+                    </li>
+                `).join('');
+            }
+        }
+
+        async function openChat(contactId) {
+            currentChatId = contactId;
+            document.querySelectorAll('#chatList .chat-list-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.id == contactId);
+            });
+            const main = document.getElementById('chatMain');
+            main.innerHTML = '<div class="chat-empty">Cargando...</div>';
+            const data = await window.apiGet('/api/messages/thread/' + contactId);
+            if (!data.exito) { main.innerHTML = '<div class="chat-empty">Error</div>'; return; }
+            const msgsHtml = data.mensajes.map(m => `
+                <div class="chat-bubble ${m.deMi ? 'chat-bubble-mine' : 'chat-bubble-other'}">
+                    ${window.escapeHtml(m.contenido)}
+                    <div class="chat-bubble-meta">${window.formatFechaHora(m.createdAt)}</div>
+                </div>
+            `).join('');
+            main.innerHTML = `
+                <div class="chat-main-header"><i class="fas fa-user"></i> ${window.escapeHtml(data.contacto.nombre)} <span style="font-size:0.8rem; color:#94a3b8; font-weight:normal;">(${ROLE_LABEL[data.contacto.role]})</span></div>
+                <div class="chat-messages" id="chatMessages">${msgsHtml || '<div class="chat-empty">Sin mensajes — escribí el primero</div>'}</div>
+                <form class="chat-composer" onsubmit="enviarMensaje(event)">
+                    <textarea id="chatInput" rows="2" placeholder="Escribí tu mensaje..." required></textarea>
+                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            `;
+            const mEl = document.getElementById('chatMessages');
+            mEl.scrollTop = mEl.scrollHeight;
+            window.refreshBell();
+        }
+
+        async function enviarMensaje(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || !currentChatId) return;
+            const res = await window.apiPost('/api/messages', { receiverId: currentChatId, contenido: text });
+            if (res.exito) {
+                input.value = '';
+                openChat(currentChatId);
+                cargarContactos();
+            } else {
+                toastError(res.mensaje || 'No se pudo enviar.');
+            }
         }
 
         function logout() { localStorage.removeItem('usuarioActual'); window.location.href = 'index.html'; }
