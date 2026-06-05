@@ -61,40 +61,81 @@
     <div class="app-wrapper">
         <aside class="sidebar">
             <ul class="sidebar-menu">
-                <li><a class="nav-link active" onclick="switchView('boletin', this)"><i class="fas fa-file-invoice"></i> Boletín e Historial (RF-8)</a></li>
+                <li><a class="nav-link active" onclick="switchView('boletin', this)"><i class="fas fa-file-invoice"></i> Boletín e Historial</a></li>
+                <li><a class="nav-link" onclick="switchView('materias', this)"><i class="fas fa-book-open"></i> Materias del Hijo</a></li>
+                <li><a class="nav-link" onclick="switchView('asistencias', this)"><i class="fas fa-clipboard-user"></i> Asistencias</a></li>
                 <li><a class="nav-link" onclick="switchView('finanzas', this)"><i class="fas fa-file-invoice-dollar"></i> Estado de Cuenta</a></li>
             </ul>
         </aside>
 
         <main class="main-content">
+            <!-- Barra superior común: selector de hijo + vincular -->
+            <div style="margin-bottom: 20px; padding: 15px; background: #fff; border: 1px solid #d1d8e0; border-radius: 8px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                <i class="fas fa-child" style="color:#f39c12; font-size:1.4rem;"></i>
+                <label style="font-weight: bold; margin: 0;">Alumno a cargo:</label>
+                <select id="selectHijo" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; min-width: 200px;" onchange="onHijoChange()">
+                    <option value="">— Sin hijos vinculados —</option>
+                </select>
+                <form onsubmit="vincularHijo(event)" style="display: flex; gap: 8px;">
+                    <input type="text" id="dniHijo" placeholder="DNI de otro hijo" required style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; width: 160px;">
+                    <button type="submit" style="background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;"><i class="fas fa-link"></i> Vincular</button>
+                </form>
+            </div>
+
             <section id="boletin" class="view-section active">
-                <h3 class="section-title">Seguimiento de Calificaciones (Solo Lectura — RF-8)</h3>
+                <h3 class="section-title">Boletín e Historial Académico</h3>
 
-                <div style="margin-bottom: 20px; padding: 15px; background: #fdfefe; border: 1px solid #d1d8e0; border-radius: 6px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                    <label style="font-weight: bold; margin: 0;">Alumno a cargo:</label>
-                    <select id="selectHijo" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; min-width: 200px;" onchange="renderizarBoletinTutor()">
-                        <option value="">— Sin hijos vinculados —</option>
-                    </select>
-                </div>
+                <div id="boletinStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px;"></div>
 
-                <div style="margin-bottom: 25px; padding: 15px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px;">
-                    <label style="font-weight: bold; display: block; margin-bottom: 8px;">Vincular un nuevo hijo (por DNI):</label>
-                    <form onsubmit="vincularHijo(event)" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <input type="text" id="dniHijo" placeholder="DNI del estudiante" required style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; min-width: 180px;">
-                        <button type="submit" style="background: #3498db; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;"><i class="fas fa-link"></i> Vincular</button>
-                    </form>
-                </div>
+                <h4 style="color:#475569; font-size:1.05rem; margin: 18px 0 10px;">Notas por materia y trimestre</h4>
+                <table class="data-table" id="boletinAgrupado">
+                    <thead>
+                        <tr>
+                            <th>Materia</th>
+                            <th style="text-align:center;">1er Trim.</th>
+                            <th style="text-align:center;">2do Trim.</th>
+                            <th style="text-align:center;">3er Trim.</th>
+                            <th style="text-align:center;">Promedio</th>
+                            <th style="text-align:center;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+                <h4 style="color:#475569; font-size:1.05rem; margin: 25px 0 10px;">Historial completo (todas las evaluaciones)</h4>
                 <table class="data-table" id="boletinTutor">
                     <thead>
                         <tr>
                             <th>Materia</th>
                             <th>Instancia de Evaluación</th>
-                            <th>Calificación Asentada</th>
+                            <th>Calificación</th>
                             <th>Fecha</th>
+                            <th>Docente</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        </tbody>
+                    <tbody></tbody>
+                </table>
+            </section>
+
+            <section id="materias" class="view-section">
+                <h3 class="section-title">Materias que está cursando</h3>
+                <p style="color:#64748b; margin-bottom:18px;">Resumen de cada asignatura, con cantidad de evaluaciones registradas y promedio actual.</p>
+                <div id="materiasGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;"></div>
+            </section>
+
+            <section id="asistencias" class="view-section">
+                <h3 class="section-title">Asistencias — Últimos 30 días</h3>
+                <div id="asistenciaStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px;"></div>
+                <table class="data-table" id="tablaAsistenciasPadre">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Día</th>
+                            <th style="text-align:center;">Estado</th>
+                            <th>Observación</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
                 </table>
             </section>
 
@@ -167,8 +208,8 @@
                         return;
                     }
                     if (!data.hijos || data.hijos.length === 0) {
-                        select.innerHTML = '<option value="">— Sin hijos vinculados. Vinculá uno por DNI debajo. —</option>';
-                        renderizarBoletinTutor();
+                        select.innerHTML = '<option value="">— Sin hijos vinculados —</option>';
+                        renderHijo(null);
                         return;
                     }
                     select.innerHTML = '';
@@ -176,7 +217,7 @@
                         const label = h.curso ? `${h.nombre} (${h.curso})` : h.nombre;
                         select.innerHTML += `<option value="${h.id}">${label}</option>`;
                     });
-                    renderizarBoletinTutor();
+                    onHijoChange();
                 })
                 .catch(err => {
                     console.error(err);
@@ -209,34 +250,234 @@
             });
         }
 
-        function renderizarBoletinTutor() {
-            const tbody = document.querySelector('#boletinTutor tbody');
+        function onHijoChange() {
             const hijoId = document.getElementById('selectHijo').value;
             if (!hijoId) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">Seleccioná un hijo para ver su boletín.</td></tr>';
+                renderHijo(null);
                 return;
             }
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">Cargando boletín...</td></tr>';
             fetch(`/api/grades?estudiante_id=${hijoId}`, { headers: authHeaders() })
                 .then(res => res.json())
                 .then(data => {
-                    tbody.innerHTML = '';
                     if (!data.exito) {
-                        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#c0392b;">${data.mensaje || 'No se pudo obtener el boletín.'}</td></tr>`;
+                        toastError(data.mensaje || 'No se pudo cargar la información.');
+                        renderHijo({ notas: [] }, hijoId);
                         return;
                     }
-                    if (!data.notas || data.notas.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">No se registran calificaciones oficiales emitidas para el alumno.</td></tr>';
-                        return;
-                    }
-                    data.notas.forEach(n => {
-                        tbody.innerHTML += `<tr><td>${n.materia}</td><td>${n.instancia_evaluacion}</td><td><b>${n.nota}</b></td><td>${n.fecha}</td></tr>`;
-                    });
+                    renderHijo({ notas: data.notas || [] }, hijoId);
                 })
                 .catch(err => {
                     console.error(err);
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#c0392b;">Error al conectar con el servidor.</td></tr>';
+                    toastError('Error al conectar con el servidor.');
+                    renderHijo({ notas: [] }, hijoId);
                 });
+        }
+
+        function renderHijo(payload, hijoId) {
+            renderBoletin(payload);
+            renderMaterias(payload);
+            renderAsistencias(hijoId);
+        }
+
+        function renderBoletin(payload) {
+            const stats = document.getElementById('boletinStats');
+            const tbody = document.querySelector('#boletinTutor tbody');
+            const tbodyAgr = document.querySelector('#boletinAgrupado tbody');
+
+            if (!payload) {
+                stats.innerHTML = '';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b;">Seleccioná un hijo para ver su boletín.</td></tr>';
+                tbodyAgr.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">—</td></tr>';
+                return;
+            }
+            const notas = payload.notas || [];
+            if (notas.length === 0) {
+                stats.innerHTML = '';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b;">No se registran calificaciones emitidas para el alumno.</td></tr>';
+                tbodyAgr.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Sin notas disponibles.</td></tr>';
+                return;
+            }
+
+            // Stats
+            const materias = new Set(notas.map(n => n.materia));
+            const promedioGeneral = (notas.reduce((s, n) => s + Number(n.nota), 0) / notas.length).toFixed(2);
+            const aprobadas = Array.from(materias).filter(m => {
+                const ms = notas.filter(n => n.materia === m);
+                const prom = ms.reduce((s, n) => s + Number(n.nota), 0) / ms.length;
+                return prom >= 7;
+            }).length;
+            stats.innerHTML = `
+                <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:15px;">
+                    <div style="color:#1e3a8a; font-size:0.82rem; font-weight:600;">MATERIAS CURSANDO</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#3498db; margin-top:5px;">${materias.size}</div>
+                </div>
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:15px;">
+                    <div style="color:#065f46; font-size:0.82rem; font-weight:600;">PROMEDIO GENERAL</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#10b981; margin-top:5px;">${promedioGeneral}</div>
+                </div>
+                <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:15px;">
+                    <div style="color:#5b21b6; font-size:0.82rem; font-weight:600;">EVALUACIONES TOTALES</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#8b5cf6; margin-top:5px;">${notas.length}</div>
+                </div>
+                <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:8px; padding:15px;">
+                    <div style="color:#92400e; font-size:0.82rem; font-weight:600;">MATERIAS APROBADAS</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#f59e0b; margin-top:5px;">${aprobadas} / ${materias.size}</div>
+                </div>
+            `;
+
+            // Agrupado por materia × trimestre
+            const TRIMS = ['1er Trimestre', '2do Trimestre', '3er Trimestre'];
+            tbodyAgr.innerHTML = '';
+            Array.from(materias).sort().forEach(materia => {
+                const ms = notas.filter(n => n.materia === materia);
+                const porTrim = TRIMS.map(t => {
+                    const n = ms.find(x => x.instancia_evaluacion === t);
+                    return n ? n.nota : null;
+                });
+                const todas = ms.map(x => Number(x.nota));
+                const prom = (todas.reduce((s, n) => s + n, 0) / todas.length);
+                const aprobado = prom >= 7;
+                const estado = aprobado
+                    ? '<span style="background:#d1fae5; color:#065f46; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">Aprobado</span>'
+                    : prom >= 4
+                    ? '<span style="background:#fef3c7; color:#92400e; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">A recuperar</span>'
+                    : '<span style="background:#fee2e2; color:#991b1b; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">Desaprobado</span>';
+                const tdNota = v => v === null
+                    ? '<td style="text-align:center; color:#cbd5e1;">—</td>'
+                    : `<td style="text-align:center;"><b style="color:${Number(v)>=7?'#10b981':Number(v)>=4?'#f59e0b':'#ef4444'};">${v}</b></td>`;
+                tbodyAgr.innerHTML += `
+                    <tr>
+                        <td><b>${materia}</b></td>
+                        ${tdNota(porTrim[0])}
+                        ${tdNota(porTrim[1])}
+                        ${tdNota(porTrim[2])}
+                        <td style="text-align:center;"><b>${prom.toFixed(2)}</b></td>
+                        <td style="text-align:center;">${estado}</td>
+                    </tr>
+                `;
+            });
+
+            // Historial completo
+            tbody.innerHTML = '';
+            notas.forEach(n => {
+                tbody.innerHTML += `<tr><td>${n.materia}</td><td>${n.instancia_evaluacion}</td><td><b style="color:${Number(n.nota)>=7?'#10b981':Number(n.nota)>=4?'#f59e0b':'#ef4444'};">${n.nota}</b></td><td>${n.fecha}</td><td>${n.nombre_docente}</td></tr>`;
+            });
+        }
+
+        function renderMaterias(payload) {
+            const grid = document.getElementById('materiasGrid');
+            if (!payload || !payload.notas || payload.notas.length === 0) {
+                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#64748b; padding:30px;">No hay materias registradas para el alumno seleccionado.</div>';
+                return;
+            }
+            const map = new Map();
+            payload.notas.forEach(n => {
+                if (!map.has(n.materia)) map.set(n.materia, []);
+                map.get(n.materia).push(n);
+            });
+            const colores = ['#3498db', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#f97316', '#84cc16'];
+            grid.innerHTML = '';
+            Array.from(map.entries()).sort().forEach(([materia, evals], idx) => {
+                const color = colores[idx % colores.length];
+                const prom = (evals.reduce((s, e) => s + Number(e.nota), 0) / evals.length).toFixed(2);
+                const ultima = evals[0]; // ya viene desc
+                const docente = ultima.nombre_docente;
+                const aprobado = prom >= 7;
+                grid.innerHTML += `
+                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.04); transition: transform 0.15s;">
+                        <div style="background:${color}; color:#fff; padding:14px 16px; display:flex; align-items:center; gap:10px;">
+                            <i class="fas fa-book" style="font-size:1.2rem;"></i>
+                            <strong style="flex:1;">${materia}</strong>
+                        </div>
+                        <div style="padding:14px 16px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <span style="color:#64748b; font-size:0.85rem;">Docente</span>
+                                <span style="font-weight:600;">${docente}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <span style="color:#64748b; font-size:0.85rem;">Evaluaciones</span>
+                                <span style="font-weight:600;">${evals.length}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <span style="color:#64748b; font-size:0.85rem;">Última nota</span>
+                                <span style="font-weight:600;">${ultima.nota} (${ultima.instancia_evaluacion})</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid #f1f5f9;">
+                                <span style="color:#64748b; font-size:0.85rem;">Promedio</span>
+                                <span style="font-size:1.6rem; font-weight:700; color:${aprobado ? '#10b981' : prom >= 4 ? '#f59e0b' : '#ef4444'};">${prom}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function asistenciaDeterminada(hijoId, fechaIso) {
+            const overrides = JSON.parse(localStorage.getItem('asistencia_' + fechaIso) || '{}');
+            if (overrides[hijoId]) return overrides[hijoId];
+            // mock estable: hash de id + fecha
+            const d = new Date(fechaIso);
+            const seed = (Number(hijoId) * 31 + d.getDate() + d.getMonth() * 100 + d.getFullYear() * 13) % 22;
+            if (seed === 0) return 'ausente';
+            if (seed === 1) return 'tarde';
+            if (seed === 2) return 'justificado';
+            return 'presente';
+        }
+
+        function renderAsistencias(hijoId) {
+            const stats = document.getElementById('asistenciaStats');
+            const tbody = document.querySelector('#tablaAsistenciasPadre tbody');
+            if (!hijoId) {
+                stats.innerHTML = '';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">Seleccioná un hijo para ver sus asistencias.</td></tr>';
+                return;
+            }
+            const dias = [];
+            const hoy = new Date();
+            for (let i = 0; i < 30; i++) {
+                const d = new Date(hoy);
+                d.setDate(hoy.getDate() - i);
+                const dow = d.getDay();
+                if (dow === 0 || dow === 6) continue;
+                const iso = d.toISOString().slice(0, 10);
+                dias.push({ fecha: iso, dia: d.toLocaleDateString('es-AR', { weekday: 'long' }), status: asistenciaDeterminada(hijoId, iso) });
+            }
+            const contadores = { presente: 0, ausente: 0, tarde: 0, justificado: 0 };
+            dias.forEach(d => contadores[d.status]++);
+            const pctPresente = ((contadores.presente / dias.length) * 100).toFixed(0);
+
+            stats.innerHTML = `
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:15px;">
+                    <div style="color:#065f46; font-size:0.82rem; font-weight:600;">% PRESENTES</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#10b981; margin-top:5px;">${pctPresente}%</div>
+                </div>
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:15px;">
+                    <div style="color:#065f46; font-size:0.82rem; font-weight:600;">DÍAS PRESENTES</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#10b981; margin-top:5px;">${contadores.presente}</div>
+                </div>
+                <div style="background:#fee2e2; border:1px solid #fecaca; border-radius:8px; padding:15px;">
+                    <div style="color:#991b1b; font-size:0.82rem; font-weight:600;">AUSENCIAS</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#ef4444; margin-top:5px;">${contadores.ausente}</div>
+                </div>
+                <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:8px; padding:15px;">
+                    <div style="color:#92400e; font-size:0.82rem; font-weight:600;">LLEGADAS TARDE</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#f59e0b; margin-top:5px;">${contadores.tarde}</div>
+                </div>
+            `;
+
+            const COLORES = {
+                presente: { bg: '#d1fae5', fg: '#065f46', label: 'Presente' },
+                ausente: { bg: '#fee2e2', fg: '#991b1b', label: 'Ausente' },
+                tarde: { bg: '#fef3c7', fg: '#92400e', label: 'Tarde' },
+                justificado: { bg: '#dbeafe', fg: '#1e3a8a', label: 'Justificada' }
+            };
+            tbody.innerHTML = '';
+            dias.forEach(d => {
+                const c = COLORES[d.status];
+                const obs = d.status === 'ausente' ? 'Ausencia sin aviso' : d.status === 'justificado' ? 'Certificado médico' : d.status === 'tarde' ? 'Ingresó después del primer módulo' : '—';
+                const fechaFormat = new Date(d.fecha + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                tbody.innerHTML += `<tr><td>${fechaFormat}</td><td style="text-transform:capitalize;">${d.dia}</td><td style="text-align:center;"><span style="background:${c.bg}; color:${c.fg}; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">${c.label}</span></td><td style="color:#64748b;">${obs}</td></tr>`;
+            });
         }
 
         function pagarCuota(mes, monto) {

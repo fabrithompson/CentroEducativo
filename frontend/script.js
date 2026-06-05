@@ -242,7 +242,106 @@ if (registerForm) {
 }
 
 // ==========================================
-// 4. MÓDULO DE CALIFICACIONES
+// 4. FORMULARIOS DE LA LANDING (toast feedback)
+// ==========================================
+
+// Helper para el input de archivo del CV
+function updateFileName(input) {
+    const el = document.getElementById('fileName');
+    if (!el) return;
+    if (input.files && input.files.length > 0) {
+        el.textContent = input.files[0].name;
+    } else {
+        el.textContent = 'Seleccionar archivo';
+    }
+}
+
+
+// A) Solicitud de Inscripción
+const inscriptionForm = document.getElementById('inscriptionForm');
+if (inscriptionForm) {
+    inscriptionForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const nombreEst = document.getElementById('nombre_estudiante').value;
+        toastSuccess(`Solicitud de inscripción para ${nombreEst} enviada. Nos pondremos en contacto en las próximas 48 hs.`);
+        this.reset();
+    });
+}
+
+// B) Postulación de Empleo (CV)
+const employmentForm = document.getElementById('employmentForm');
+if (employmentForm) {
+    employmentForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const puesto = document.getElementById('cv-puesto').selectedOptions[0]?.text || 'el puesto seleccionado';
+        toastSuccess(`Recibimos tu postulación para ${puesto}. Revisaremos tu CV y te avisaremos por mail.`);
+        this.reset();
+        const fileNameEl = document.getElementById('fileName');
+        if (fileNameEl) fileNameEl.textContent = 'Seleccionar archivo';
+    });
+}
+
+// C) Opinión / Valoración
+let ratingValue = 0;
+document.querySelectorAll('.stars i').forEach(star => {
+    star.addEventListener('click', () => {
+        ratingValue = parseInt(star.dataset.value, 10);
+        document.querySelectorAll('.stars i').forEach(s => {
+            const v = parseInt(s.dataset.value, 10);
+            s.classList.toggle('fas', v <= ratingValue);
+            s.classList.toggle('far', v > ratingValue);
+            s.style.color = v <= ratingValue ? '#f59e0b' : '';
+        });
+    });
+});
+
+const opinionForm = document.getElementById('opinionForm');
+if (opinionForm) {
+    opinionForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const nombre = document.getElementById('opinion-nombre').value.trim() || 'Anónimo';
+        const texto = document.getElementById('opinion-texto').value.trim();
+        const estrellas = ratingValue || 5;
+        if (!texto) {
+            toastWarning('Escribí tu opinión antes de enviar.');
+            return;
+        }
+        const display = document.querySelector('.opiniones-display');
+        if (display) {
+            const card = document.createElement('div');
+            card.className = 'opinion-card';
+            card.innerHTML = `
+                <div class="opinion-header">
+                    <span class="opinion-author">${nombre}</span>
+                    <span class="opinion-rating">${'★'.repeat(estrellas)}${'☆'.repeat(5 - estrellas)}</span>
+                </div>
+                <p>"${texto}"</p>
+            `;
+            display.insertBefore(card, display.children[1] || null);
+        }
+        toastSuccess('¡Gracias por compartir tu opinión!');
+        this.reset();
+        ratingValue = 0;
+        document.querySelectorAll('.stars i').forEach(s => {
+            s.classList.remove('fas');
+            s.classList.add('far');
+            s.style.color = '';
+        });
+    });
+}
+
+// D) Contacto
+const contactForm = document.getElementById('contactForm');
+if (contactForm) {
+    contactForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        toastSuccess('Mensaje enviado. Te responderemos dentro de las próximas 24 hs.');
+        this.reset();
+    });
+}
+
+// ==========================================
+// 5. MÓDULO DE CALIFICACIONES
 // ==========================================
 
 // A) Panel Docente: Guardar Nota
