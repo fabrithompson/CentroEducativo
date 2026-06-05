@@ -178,7 +178,7 @@ if (loginForm) {
         const usuario = document.getElementById('username').value;
         const password = document.getElementById('password').value;
 
-        fetch('login.php', {
+        fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ usuario: usuario, password: password })
@@ -186,18 +186,18 @@ if (loginForm) {
             .then(response => response.json())
             .then(data => {
                 if (data.exito) {
-                    // ¡Agregamos el guardado del token acá!
-                    sessionStorage.setItem('token', data.usuario.token); 
+                    sessionStorage.setItem('token', data.usuario.token);
                     localStorage.setItem('usuarioActual', JSON.stringify(data.usuario));
-                    
                     closeModal();
                     this.reset();
-                    showUserPanel(); // Redirige al panel correcto
+                    showUserPanel();
+                } else {
+                    toastError(data.mensaje || 'No se pudo iniciar sesión.');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error al conectar con la base de datos.');
+                toastError('Error al conectar con el servidor.');
             });
     });
 }
@@ -218,7 +218,7 @@ if (registerForm) {
             curso: document.getElementById('reg-curso') ? document.getElementById('reg-curso').value : null
         };
 
-        fetch('registro.php', {
+        fetch('/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosRegistro)
@@ -226,23 +226,122 @@ if (registerForm) {
             .then(response => response.json())
             .then(data => {
                 if (data.exito) {
-                    alert('¡Registro exitoso! Ya puedes iniciar sesión.');
+                    toastSuccess('¡Registro exitoso! Ya puedes iniciar sesión.');
                     closeRegisterModal();
                     this.reset();
                     openLoginModal();
                 } else {
-                    alert('Error: ' + data.mensaje);
+                    toastError(data.mensaje || 'No se pudo completar el registro.');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Ocurrió un error al registrar en el servidor.');
+                toastError('Ocurrió un error al registrar en el servidor.');
             });
     });
 }
 
 // ==========================================
-// 4. MÓDULO DE CALIFICACIONES
+// 4. FORMULARIOS DE LA LANDING (toast feedback)
+// ==========================================
+
+// Helper para el input de archivo del CV
+function updateFileName(input) {
+    const el = document.getElementById('fileName');
+    if (!el) return;
+    if (input.files && input.files.length > 0) {
+        el.textContent = input.files[0].name;
+    } else {
+        el.textContent = 'Seleccionar archivo';
+    }
+}
+
+
+// A) Solicitud de Inscripción
+const inscriptionForm = document.getElementById('inscriptionForm');
+if (inscriptionForm) {
+    inscriptionForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const nombreEst = document.getElementById('nombre_estudiante').value;
+        toastSuccess(`Solicitud de inscripción para ${nombreEst} enviada. Nos pondremos en contacto en las próximas 48 hs.`);
+        this.reset();
+    });
+}
+
+// B) Postulación de Empleo (CV)
+const employmentForm = document.getElementById('employmentForm');
+if (employmentForm) {
+    employmentForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const puesto = document.getElementById('cv-puesto').selectedOptions[0]?.text || 'el puesto seleccionado';
+        toastSuccess(`Recibimos tu postulación para ${puesto}. Revisaremos tu CV y te avisaremos por mail.`);
+        this.reset();
+        const fileNameEl = document.getElementById('fileName');
+        if (fileNameEl) fileNameEl.textContent = 'Seleccionar archivo';
+    });
+}
+
+// C) Opinión / Valoración
+let ratingValue = 0;
+document.querySelectorAll('.stars i').forEach(star => {
+    star.addEventListener('click', () => {
+        ratingValue = parseInt(star.dataset.value, 10);
+        document.querySelectorAll('.stars i').forEach(s => {
+            const v = parseInt(s.dataset.value, 10);
+            s.classList.toggle('fas', v <= ratingValue);
+            s.classList.toggle('far', v > ratingValue);
+            s.style.color = v <= ratingValue ? '#f59e0b' : '';
+        });
+    });
+});
+
+const opinionForm = document.getElementById('opinionForm');
+if (opinionForm) {
+    opinionForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const nombre = document.getElementById('opinion-nombre').value.trim() || 'Anónimo';
+        const texto = document.getElementById('opinion-texto').value.trim();
+        const estrellas = ratingValue || 5;
+        if (!texto) {
+            toastWarning('Escribí tu opinión antes de enviar.');
+            return;
+        }
+        const display = document.querySelector('.opiniones-display');
+        if (display) {
+            const card = document.createElement('div');
+            card.className = 'opinion-card';
+            card.innerHTML = `
+                <div class="opinion-header">
+                    <span class="opinion-author">${nombre}</span>
+                    <span class="opinion-rating">${'★'.repeat(estrellas)}${'☆'.repeat(5 - estrellas)}</span>
+                </div>
+                <p>"${texto}"</p>
+            `;
+            display.insertBefore(card, display.children[1] || null);
+        }
+        toastSuccess('¡Gracias por compartir tu opinión!');
+        this.reset();
+        ratingValue = 0;
+        document.querySelectorAll('.stars i').forEach(s => {
+            s.classList.remove('fas');
+            s.classList.add('far');
+            s.style.color = '';
+        });
+    });
+}
+
+// D) Contacto
+const contactForm = document.getElementById('contactForm');
+if (contactForm) {
+    contactForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        toastSuccess('Mensaje enviado. Te responderemos dentro de las próximas 24 hs.');
+        this.reset();
+    });
+}
+
+// ==========================================
+// 5. MÓDULO DE CALIFICACIONES
 // ==========================================
 
 // A) Panel Docente: Guardar Nota
@@ -263,7 +362,7 @@ if (formCalificaciones) {
             fecha: new Date().toISOString().split('T')[0] // Saca la fecha de hoy automáticamente
         };
 
-        fetch('guardar_nota.php', {
+        fetch('/api/grades', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -274,13 +373,16 @@ if (formCalificaciones) {
         .then(res => res.json())
         .then(data => {
             if(data.exito) {
-                alert('¡Nota guardada correctamente en la Base de Datos!');
+                toastSuccess('¡Nota guardada correctamente en la base de datos!');
                 formCalificaciones.reset();
             } else {
-                alert('Error: ' + data.mensaje);
+                toastError(data.mensaje || 'No se pudo guardar la nota.');
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error:', error);
+            toastError('Error al conectar con el servidor.');
+        });
     });
 }
 
@@ -293,7 +395,7 @@ function renderizarBoletin() {
     
     const estudianteId = usuarioActual.id; 
 
-    fetch(`obtener_notas.php?estudiante_id=${estudianteId}`, {
+    fetch(`/api/grades?estudiante_id=${estudianteId}`, {
         method: 'GET',
         headers: { 
             'Authorization': 'Bearer ' + token // Candado de seguridad
@@ -354,15 +456,17 @@ function resetearTemporizador() {
 function cerrarSesionPorInactividad() {
     // Verificamos si el usuario realmente tiene una sesión iniciada
     if (sessionStorage.getItem('token') || localStorage.getItem('usuarioActual')) {
-        alert("⏱️ Tu sesión ha caducado por 30 minutos de inactividad. Por tu seguridad, vuelve a iniciar sesión.");
-        
+        if (typeof toastWarning === 'function') {
+            toastWarning('Tu sesión caducó por 30 minutos de inactividad. Por tu seguridad, vuelve a iniciar sesión.', 5000);
+        }
+
         // Destruimos las credenciales
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('usuarioActual');
         localStorage.removeItem('usuarioActual');
-        
-        // Lo redirigimos a la página principal
-        window.location.href = 'index.html';
+
+        // Demoramos la redirección para que se vea el toast
+        setTimeout(() => { window.location.href = 'index.html'; }, 2000);
     }
 }
 

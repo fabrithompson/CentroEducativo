@@ -1,0 +1,65 @@
+// Educar para Transformar — Schema mínimo para el TP.
+// Cubre auth (3 roles) + calificaciones + vínculo padre-hijo por DNI.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ESTUDIANTE
+  DOCENTE
+  PADRE
+  ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  usuario   String   @unique
+  email     String   @unique
+  dni       String   @unique
+  password  String
+  role      Role
+  nombre    String
+  curso     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  notasRecibidas Grade[]             @relation("EstudianteGrades")
+  notasDadas     Grade[]             @relation("DocenteGrades")
+  hijos          ParentStudentLink[] @relation("PadreLinks")
+  padres         ParentStudentLink[] @relation("EstudianteLinks")
+
+  @@index([role])
+}
+
+model Grade {
+  id           Int      @id @default(autoincrement())
+  estudianteId Int
+  estudiante   User     @relation("EstudianteGrades", fields: [estudianteId], references: [id], onDelete: Cascade)
+  docenteId    Int
+  docente      User     @relation("DocenteGrades", fields: [docenteId], references: [id], onDelete: Restrict)
+  materia      String
+  instancia    String
+  nota         Int
+  fecha        DateTime @db.Date
+  createdAt    DateTime @default(now())
+
+  @@index([estudianteId])
+  @@index([docenteId])
+}
+
+model ParentStudentLink {
+  id           Int  @id @default(autoincrement())
+  padreId      Int
+  padre        User @relation("PadreLinks", fields: [padreId], references: [id], onDelete: Cascade)
+  estudianteId Int
+  estudiante   User @relation("EstudianteLinks", fields: [estudianteId], references: [id], onDelete: Cascade)
+
+  @@unique([padreId, estudianteId])
+  @@index([estudianteId])
+}
