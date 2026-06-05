@@ -1,24 +1,22 @@
 import { Router } from 'express';
 
+import { authRouter } from './auth.routes';
+import { gradesRouter } from './grades.routes';
+import { studentsRouter } from './students.routes';
+import { parentRouter } from './parent.routes';
+
 const router = Router();
 
-/**
- * GET /api
- * Punto de bienvenida de la API. Útil para verificar que el router base está montado.
- */
 router.get('/', (_req, res) => {
   res.json({
     name: 'Educar para Transformar — API',
     version: '0.1.0',
-    docs: '/api (en construcción)',
   });
 });
 
-// Los routers por módulo se montarán acá a medida que se implementen:
-// router.use('/auth', authRouter);
-// router.use('/student', studentRouter);
-// router.use('/teacher', teacherRouter);
-// router.use('/parent', parentRouter);
-// router.use('/admin', adminRouter);
+router.use('/auth', authRouter);
+router.use('/grades', gradesRouter);
+router.use('/students', studentsRouter);
+router.use('/parent', parentRouter);
 
 export { router as apiRouter };

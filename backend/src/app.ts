@@ -12,7 +12,13 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 export function createApp() {
   const app = express();
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.use(
     cors({
       origin: env.CORS_ORIGIN,
@@ -38,6 +44,10 @@ export function createApp() {
   app.use('/uploads', express.static(uploadsAbsPath));
 
   app.use('/api', apiRouter);
+
+  const frontendDir = path.resolve(process.cwd(), '..', 'frontend');
+  app.use(express.static(frontendDir));
+  app.get('/', (_req, res) => res.sendFile(path.join(frontendDir, 'index.html')));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

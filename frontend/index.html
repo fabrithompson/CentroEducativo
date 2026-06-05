@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro Educativo - Inicio</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container">
+                <div class="contact-info">
+                    <span><i class="fas fa-phone"></i> (011) 1234-5678</span>
+                    <span><i class="fas fa-envelope"></i> info@centromixto.edu</span>
+                </div>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <div class="container">
+                <div class="logo">
+                    <span class="logo-icon">🎓</span>
+                    <h1>Educar Para Transformar</h1>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#inicio">Inicio</a></li>
+                    <li><a href="#nosotros">Quiénes Somos</a></li>
+                    <li><a href="#niveles">Niveles Educativos</a></li>
+                    <li><a href="#bienestar">Bienestar Estudiantil</a></li>
+                    <li><a href="#noticias">Noticias</a></li>
+                    <li><a href="#galeria">Galería</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
+                    <li class="user-menu" id="userMenu" style="display: none;">
+                        <a href="#" class="dropbtn"><i class="fas fa-user"></i> <span id="userName"></span> <i class="fas fa-chevron-down"></i></a>
+                        <div class="dropdown-content">
+                            <a href="#" onclick="showUserPanel()"><i class="fas fa-tachometer-alt"></i> Mi Panel</a>
+                            <a href="#" onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                        </div>
+                    </li>
+                    <li class="login-link" id="loginLink">
+                        <a href="#" onclick="openLoginModal()"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</a>
+                    </li>
+                </ul>
+                <div class="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <section id="inicio" class="hero">
+        <div class="hero-slider">
+            <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1920&q=80')"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1920&q=80')"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1562774053-701939374585?w=1920&q=80')"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1577896851231-70ef18881754?w=1920&q=80')"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1920&q=80')"></div>
+            <div class="hero-content">
+                <h2>Educando para el futuro</h2>
+                <p>Formando personas integrales con valores y conocimientos</p>
+                <a href="#inscripcion" class="btn-primary">Solicitar Inscripción</a>
+            </div>
+            <button class="sliderprev" onclick="moveSlide(-1)">&#10094;</button>
+            <button class="slidernext" onclick="moveSlide(1)">&#10095;</button>
+            <div class="dots-container">
+                <span class="dot active" onclick="currentSlide(0)"></span>
+                <span class="dot" onclick="currentSlide(1)"></span>
+                <span class="dot" onclick="currentSlide(2)"></span>
+                <span class="dot" onclick="currentSlide(3)"></span>
+                <span class="dot" onclick="currentSlide(4)"></span>
+            </div>
+        </div>
+    </section>
+
+    <section id="nosotros" class="section">
+        <div class="container">
+            <h2 class="section-title">Quiénes Somos</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>Somos una institución educativa comprometida con la excelencia académica y la formación integral de nuestros estudiantes. Con años de experiencia en la educación, nuestro objetivo es proporcionar un ambiente de aprendizaje seguro, inclusivo y estimulante.</p>
+                    <p>Nuestro equipo de profesionales altamente capacitados trabaja diariamente para garantizar una educación de calidad que prepare a nuestros alumnos para los desafíos del futuro.</p>
+                    <div class="mission-vision">
+                        <div class="mv-card">
+                            <h3><i class="fas fa-bullseye"></i> Misión</h3>
+                            <p>Proporcionar educación de calidad formando personas críticas, solidarias y preparadas para contribuir positivamente a la sociedad.</p>
+                        </div>
+                        <div class="mv-card">
+                            <h3><i class="fas fa-eye"></i> Visión</h3>
+                            <p>Ser una institución educativa líder que forme ciudadanos éticos, creativos y competentes para un mundo en constante cambio.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="niveles" class="section bg-light">
+        <div class="container">
+            <h2 class="section-title">Niveles Educativos</h2>
+            <div class="levels-grid">
+                <div class="level-card">
+                    <i class="fas fa-child"></i>
+                    <h3>Educación Inicial</h3>
+                    <p>Desde los 45 días hasta los 5 años. Jardín maternal y preescolar.</p>
+                </div>
+                <div class="level-card">
+                    <i class="fas fa-school"></i>
+                    <h3>Educación Primaria</h3>
+                    <p>1° a 6° grado. Formación académica integral.</p>
+                </div>
+                <div class="level-card">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h3>Educación Secundaria</h3>
+                    <p>1° a 5° año. Orientación en ciencias y humanidades.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="bienestar" class="section">
+        <div class="container">
+            <h2 class="section-title">Bienestar Estudiantil</h2>
+            <div class="wellbeing-content">
+                <div class="wellbeing-item">
+                    <i class="fas fa-heart"></i>
+                    <h3>Acompañamiento Psicológico</h3>
+                    <p>Contamos con profesionales de psicología educativa para apoyar el desarrollo emocional de nuestros estudiantes.</p>
+                </div>
+                <div class="wellbeing-item">
+                    <i class="fas fa-users"></i>
+                    <h3>Trabajo Social</h3>
+                    <p>Programa de contención familiar y apoyo a familias en situación de vulnerabilidad.</p>
+                </div>
+                <div class="wellbeing-item">
+                    <i class="fas fa-basketball-ball"></i>
+                    <h3>Actividades Deportivas</h3>
+                    <p>Club deportivo escolar con múltiples disciplinas y competencias intercolegiales.</p>
+                </div>
+                <div class="wellbeing-item">
+                    <i class="fas fa-palette"></i>
+                    <h3>Actividades Culturales</h3>
+                    <p>Talleres de arte, música, teatro y danzas para desarrollar la creatividad.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="noticias" class="section bg-light">
+        <div class="container">
+            <h2 class="section-title">Noticias</h2>
+            <div class="news-grid">
+                <article class="news-card">
+                    <div class="news-date">05/05/2026</div>
+                    <h3>Comenzó el ciclo lectivo 2026</h3>
+                    <p>Les damos la bienvenida a todos los estudiantes y familias. ¡Un nuevo año de grandes aprendizamientos nos espera!</p>
+                    <a href="#" class="read-more">Leer más</a>
+                </article>
+                <article class="news-card">
+                    <div class="news-date">28/04/2026</div>
+                    <h3>Jornada de orientación vocacional</h3>
+                    <p>Se realizará una jornada especial para estudiantes de 5° año sobre opciones académicas y profesionales.</p>
+                    <a href="#" class="read-more">Leer más</a>
+                </article>
+                <article class="news-card">
+                    <div class="news-date">20/04/2026</div>
+                    <h3>Festival de ciencias y tecnología</h3>
+                    <p>Invitamos a toda la comunidad educativa a participar de nuestro festival anual de proyectos científicos.</p>
+                    <a href="#" class="read-more">Leer más</a>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="galeria" class="section">
+        <div class="container">
+            <h2 class="section-title">Galería de Imágenes</h2>
+            <div class="gallery">
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400" alt="Instalaciones">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400" alt="Aula">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?w=400" alt="Biblioteca">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=400" alt="Laboratorio">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1576267423445-b2e0074d68a4?w=400" alt="Deportes">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=400&q=80" alt="Actividades">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="inscripcion" class="section bg-light">
+        <div class="container">
+            <h2 class="section-title">Solicitud de Inscripción</h2>
+            <form class="form-inscription" id="inscriptionForm">
+                <div class="form-group">
+                    <label for="nombre">Nombre del padre/madre/tutor *</label>
+                    <input type="text" id="nombre" name="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="telefono">Teléfono *</label>
+                    <input type="tel" id="telefono" name="telefono" required>
+                </div>
+                <div class="form-group">
+                    <label for="nombre_estudiante">Nombre del estudiante *</label>
+                    <input type="text" id="nombre_estudiante" name="nombre_estudiante" required>
+                </div>
+                <div class="form-group">
+                    <label for="nivel">Nivel educativo *</label>
+                    <select id="nivel" name="nivel" required>
+                        <option value="">Seleccionar nivel</option>
+                        <option value="inicial">Educación Inicial</option>
+                        <option value="primaria">Educación Primaria</option>
+                        <option value="secundaria">Educación Secundaria</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="año">Año/Curso</label>
+                    <input type="text" id="año" name="año">
+                </div>
+                <div class="form-group">
+                    <label for="mensaje">Mensaje adicional</label>
+                    <textarea id="mensaje" name="mensaje" rows="4"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Enviar Solicitud</button>
+            </form>
+        </div>
+    </section>
+
+    <section id="empleo" class="section">
+        <div class="container">
+            <h2 class="section-title">Empleo</h2>
+            <div class="employment-content">
+                <p>Si estás interesado en formar parte de nuestro equipo docente y administrativo, puedes dejarnos tu CV.</p>
+                <form class="form-employment" id="employmentForm">
+                    <div class="form-group">
+                        <label for="cv-nombre">Nombre completo *</label>
+                        <input type="text" id="cv-nombre" name="cv-nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cv-email">Email *</label>
+                        <input type="email" id="cv-email" name="cv-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cv-puesto">Puesto de interés *</label>
+                        <select id="cv-puesto" name="cv-puesto" required>
+                            <option value="">Seleccionar puesto</option>
+                            <option value="docente">Docente</option>
+                            <option value="preceptor">Preceptor</option>
+                            <option value="admin">Personal Administrativo</option>
+                            <option value="auxilio">Auxiliar</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="cv-archivo">Adjuntar CV (PDF)</label>
+                        <div class="file-upload">
+                            <input type="file" id="cv-archivo" name="cv-archivo" accept=".pdf" onchange="updateFileName(this)">
+                            <label for="cv-archivo" class="file-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span id="fileName">Seleccionar archivo</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Enviar CV</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <section id="opiniones" class="section bg-light">
+        <div class="container">
+            <h2 class="section-title">Deja tu opinión</h2>
+            <p class="subtitle">Tu opinión nos importa. Comparte tu experiencia con nosotros (no requiere registro)</p>
+            <form class="form-opinion" id="opinionForm">
+                <div class="form-group">
+                    <label for="opinion-nombre">Tu nombre</label>
+                    <input type="text" id="opinion-nombre" name="opinion-nombre">
+                </div>
+                <div class="form-group">
+                    <label for="opinion-rol">¿Eres?</label>
+                    <select id="opinion-rol" name="opinion-rol">
+                        <option value="padre">Padre/Madre</option>
+                        <option value="estudiante">Estudiante</option>
+                        <option value="exalumno">Ex alumno</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="opinion-texto">Tu opinión *</label>
+                    <textarea id="opinion-texto" name="opinion-texto" rows="4" required></textarea>
+                </div>
+                <div class="rating">
+                    <label>Tu valoración:</label>
+                    <div class="stars">
+                        <i class="far fa-star" data-value="1"></i>
+                        <i class="far fa-star" data-value="2"></i>
+                        <i class="far fa-star" data-value="3"></i>
+                        <i class="far fa-star" data-value="4"></i>
+                        <i class="far fa-star" data-value="5"></i>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Enviar Opinión</button>
+            </form>
+            <div class="opiniones-display">
+                <h3>Últimas opiniones</h3>
+                <div class="opinion-card">
+                    <div class="opinion-header">
+                        <span class="opinion-author">María González</span>
+                        <span class="opinion-rating">★★★★★</span>
+                    </div>
+                    <p>"Excelente institución. Mis hijos están muy bien cuidados y aprenden mucho. El equipo docente es muy profesional."</p>
+                </div>
+                <div class="opinion-card">
+                    <div class="opinion-header">
+                        <span class="opinion-author">Carlos Rodríguez</span>
+                        <span class="opinion-rating">★★★★☆</span>
+                    </div>
+                    <p>"Muy buena experiencia académica. Solo sugiero mejorar la comunicación con los padres sobre las actividades."</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="panel-usuario" class="section user-panel" style="display: none;">
+        <div class="container">
+            <div class="dashboard-header">
+                <h2 class="section-title">Mi Panel</h2>
+                <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+            </div>
+            <div class="dashboard-grid">
+                <div class="dashboard-card user-info">
+                    <div class="card-icon"><i class="fas fa-user-circle"></i></div>
+                    <div class="card-content">
+                        <h3>Bienvenido, <span id="panelUserName"></span></h3>
+                        <p class="user-type" id="panelUserType"></p>
+                        <p class="user-email" id="panelUserEmail"></p>
+                    </div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <h3>Ciclo Lectivo</h3>
+                    <p class="card-value">2026</p>
+                    <p class="card-subtitle">Estado: Activo</p>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-icon"><i class="fas fa-envelope"></i></div>
+                    <h3>Mensajes</h3>
+                    <p class="card-value">0</p>
+                    <p class="card-subtitle">Sin leer</p>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-icon"><i class="fas fa-bell"></i></div>
+                    <h3>Noticias</h3>
+                    <p class="card-value">3</p>
+                    <p class="card-subtitle">Nuevas</p>
+                </div>
+            </div>
+            <div class="dashboard-sections">
+                <div class="dashboard-section">
+                    <h3><i class="fas fa-newspaper"></i> Últimas Noticias</h3>
+                    <div class="news-item">
+                        <span class="news-date">05/05/2026</span>
+                        <p>Comenzó el ciclo lectivo 2026 - Les damos la bienvenida a todos los estudiantes y familias.</p>
+                    </div>
+                    <div class="news-item">
+                        <span class="news-date">28/04/2026</span>
+                        <p>Jornada de orientación vocacional para estudiantes de 5° año.</p>
+                    </div>
+                    <div class="news-item">
+                        <span class="news-date">20/04/2026</span>
+                        <p>Festival de ciencias y tecnología - ¡Participa de nuestro festival anual!</p>
+                    </div>
+                </div>
+                <div class="dashboard-section">
+                    <h3><i class="fas fa-phone-alt"></i> Contacto Rápido</h3>
+                    <div class="contact-quick">
+                        <p><i class="fas fa-phone"></i> (011) 1234-5678</p>
+                        <p><i class="fas fa-envelope"></i> info@centromixto.edu</p>
+                        <p><i class="fab fa-whatsapp"></i> +54 11 1234-5678</p>
+                    </div>
+                    <a href="#contacto" class="btn-primary btn-small">Enviar Mensaje</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contacto" class="section">
+        <div class="container">
+            <h2 class="section-title">Contacto</h2>
+            <div class="contact-grid">
+                <div class="contact-info-card">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <h3>Dirección</h3>
+                    <p>Av. Educación 1234<br>CABA, Argentina</p>
+                </div>
+                <div class="contact-info-card">
+                    <i class="fas fa-phone"></i>
+                    <h3>Teléfono</h3>
+                    <p>(011) 1234-5678<br>(011) 9876-5432</p>
+                </div>
+                <div class="contact-info-card">
+                    <i class="fas fa-envelope"></i>
+                    <h3>Email</h3>
+                    <p>info@centromixto.edu<br>admisiones@centromixto.edu</p>
+                </div>
+                <div class="contact-info-card">
+                    <i class="fab fa-whatsapp"></i>
+                    <h3>WhatsApp</h3>
+                    <p>+54 11 1234-5678</p>
+                    <a href="https://wa.me/541112345678" class="btn-whatsapp" target="_blank">Enviar mensaje</a>
+                </div>
+            </div>
+            <form class="form-contact" id="contactForm">
+                <h3>Envíanos un mensaje</h3>
+                <div class="form-group">
+                    <label for="contact-nombre">Nombre</label>
+                    <input type="text" id="contact-nombre" name="contact-nombre">
+                </div>
+                <div class="form-group">
+                    <label for="contact-email">Email</label>
+                    <input type="email" id="contact-email" name="contact-email">
+                </div>
+                <div class="form-group">
+                    <label for="contact-mensaje">Mensaje</label>
+                    <textarea id="contact-mensaje" name="contact-mensaje" rows="4"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Enviar</button>
+            </form>
+        </div>
+    </section>
+
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Iniciar Sesión</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" name="username" maxlength="50" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" minlength="6" maxlength="50" required>
+                </div>
+                <button type="submit" class="btn-primary">Iniciar Sesión</button>
+            </form>
+            <p class="register-link">¿No tienes cuenta? <a href="#" onclick="openRegisterModal()">Regístrate aquí</a></p>
+        </div>
+    </div>
+
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRegisterModal()">&times;</span>
+            <h2>Registrarse</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="reg-tipo">Tipo de usuario *</label>
+                    <select id="reg-tipo" name="tipo" required onchange="updateRegisterFields()">
+                        <option value="">Seleccionar...</option>
+                        <option value="docente">Docente/Autoridad/Personal</option>
+                        <option value="padre">Padre</option>
+                        <option value="estudiante">Estudiante</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="reg-nombre">Nombre completo *</label>
+                    <input type="text" id="reg-nombre" name="nombre" maxlength="100" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">Email *</label>
+                    <input type="email" id="reg-email" name="email" maxlength="100" required>
+                    <small class="form-ayuda">Formato requerido: usuario@dominio.com</small>
+                </div>
+                
+                <div class="form-group" id="dni-group">
+                    <label for="reg-dni">DNI *</label>
+                    <input type="text" id="reg-dni" name="dni" required pattern="[0-9]{7,8}" title="Debe contener entre 7 y 8 números enteros, sin puntos ni espacios.">
+                    <small class="form-ayuda">Ingrese su DNI sin puntos ni espacios (Ej: 12345678).</small>
+                </div>
+                
+                <div class="form-group" id="curso-group" style="display: none;">
+                    <label for="reg-curso">Curso/Año *</label>
+                    <input type="text" id="reg-curso" name="curso" maxlength="50">
+                </div>
+                
+                <div class="form-group">
+                    <label for="reg-usuario">Usuario *</label>
+                    <input type="text" id="reg-usuario" name="usuario" maxlength="50" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">Contraseña *</label>
+                    <input type="password" id="reg-password" name="password" required minlength="6" maxlength="50">
+                    <small class="form-ayuda">Debe tener al menos 6 caracteres.</small>
+                </div>
+                <button type="submit" class="btn-primary">Registrarse</button>
+            </form>
+            <p class="register-link">¿Ya tienes cuenta? <a href="#" onclick="switchToLogin()">Iniciar sesión</a></p>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Educar Para Transformar</h3>
+                    <p>Formando personas integrales para un futuro mejor.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Enlaces rápidos</h3>
+                    <ul>
+                        <li><a href="#nosotros">Quiénes Somos</a></li>
+                        <li><a href="#niveles">Niveles Educativos</a></li>
+                        <li><a href="#inscripcion">Inscripción</a></li>
+                        <li><a href="#empleo">Empleo</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contacto</h3>
+                    <p><i class="fas fa-phone"></i> (011) 1234-5678</p>
+                    <p><i class="fas fa-envelope"></i> info@centromixto.edu</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Educar Para Transformar. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

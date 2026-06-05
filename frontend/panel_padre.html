@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Tutor - Centro Educativo</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f4f6f9; }
+        header { flex-shrink: 0; z-index: 100; }
+        .app-wrapper { display: flex; flex: 1; overflow: hidden; }
+        
+        .sidebar { width: 260px; background-color: #2c3e50; color: #ecf0f1; display: flex; flex-direction: column; }
+        .sidebar-menu { list-style: none; padding-top: 10px; }
+        .sidebar-menu li a { display: flex; align-items: center; padding: 15px 20px; color: #ecf0f1; text-decoration: none; cursor: pointer; border-left: 3px solid transparent; }
+        .sidebar-menu li a:hover, .sidebar-menu li a.active { background-color: #34495e; border-left-color: #f39c12; color: #fff; }
+        .sidebar-menu li a i { margin-right: 15px; width: 20px; text-align: center; }
+        
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; background: #ecf0f1; }
+        .view-section { display: none; background: #fff; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 4px solid #f39c12; }
+        .view-section.active { display: block; }
+        
+        .section-title { font-size: 1.4rem; color: #2c3e50; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .data-table th, .data-table td { border: 1px solid #d1d8e0; padding: 12px 15px; text-align: left; }
+        .data-table th { background-color: #f4f6f7; color: #2c3e50; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; }
+        .bg-green { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div class="contact-info">
+                    <span><i class="fas fa-phone"></i> (011) 1234-5678</span>
+                    <span><i class="fas fa-envelope"></i> info@centromixto.edu</span>
+                </div>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
+                <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+                    <span class="logo-icon">🎓</span>
+                    <h1 style="margin:0; font-size: 1.3rem;">Educar Para Transformar</h1>
+                </div>
+                <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none;">
+                    <li><a href="index.html#inicio">Inicio</a></li>
+                    <li class="user-menu">
+                        <a href="#" style="color: #f39c12; font-weight: bold;"><i class="fas fa-users"></i> <span id="userNameDisplay">Tutor</span> <i class="fas fa-chevron-down"></i></a>
+                        <div class="dropdown-content">
+                            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="app-wrapper">
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a class="nav-link active" onclick="switchView('boletin', this)"><i class="fas fa-file-invoice"></i> Boletín e Historial (RF-8)</a></li>
+                <li><a class="nav-link" onclick="switchView('finanzas', this)"><i class="fas fa-file-invoice-dollar"></i> Estado de Cuenta</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <section id="boletin" class="view-section active">
+                <h3 class="section-title">Seguimiento de Calificaciones (Solo Lectura — RF-8)</h3>
+
+                <div style="margin-bottom: 20px; padding: 15px; background: #fdfefe; border: 1px solid #d1d8e0; border-radius: 6px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                    <label style="font-weight: bold; margin: 0;">Alumno a cargo:</label>
+                    <select id="selectHijo" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; min-width: 200px;" onchange="renderizarBoletinTutor()">
+                        <option value="">— Sin hijos vinculados —</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 25px; padding: 15px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px;">
+                    <label style="font-weight: bold; display: block; margin-bottom: 8px;">Vincular un nuevo hijo (por DNI):</label>
+                    <form onsubmit="vincularHijo(event)" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" id="dniHijo" placeholder="DNI del estudiante" required style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; min-width: 180px;">
+                        <button type="submit" style="background: #3498db; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;"><i class="fas fa-link"></i> Vincular</button>
+                    </form>
+                </div>
+                <table class="data-table" id="boletinTutor">
+                    <thead>
+                        <tr>
+                            <th>Materia</th>
+                            <th>Instancia de Evaluación</th>
+                            <th>Calificación Asentada</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </section>
+
+            <section id="finanzas" class="view-section">
+                <h3 class="section-title">Estado de Cuenta Arancelario</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Concepto</th><th>Vencimiento</th><th>Monto</th><th>Estado</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Matrícula Ciclo 2026</td><td>15/02/2026</td><td>$50.000</td><td><span class="badge bg-green">Abonado</span></td></tr>
+                        <tr><td>Cuota Mensual — Mayo</td><td>10/05/2026</td><td>$45.000</td><td><span class="badge bg-green">Abonado</span></td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('usuarioActual'));
+            if (!user || user.tipo !== 'padre') { window.location.href = 'index.html'; return; }
+            document.getElementById('userNameDisplay').textContent = user.nombre;
+            cargarHijos();
+        });
+
+        function switchView(viewId, element) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        function authHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+            };
+        }
+
+        function cargarHijos() {
+            const select = document.getElementById('selectHijo');
+            fetch('/api/parent/hijos', { headers: authHeaders() })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.exito) {
+                        select.innerHTML = `<option value="">${data.mensaje || 'No se pudieron cargar tus hijos.'}</option>`;
+                        return;
+                    }
+                    if (!data.hijos || data.hijos.length === 0) {
+                        select.innerHTML = '<option value="">— Sin hijos vinculados. Vinculá uno por DNI debajo. —</option>';
+                        renderizarBoletinTutor();
+                        return;
+                    }
+                    select.innerHTML = '';
+                    data.hijos.forEach(h => {
+                        const label = h.curso ? `${h.nombre} (${h.curso})` : h.nombre;
+                        select.innerHTML += `<option value="${h.id}">${label}</option>`;
+                    });
+                    renderizarBoletinTutor();
+                })
+                .catch(err => {
+                    console.error(err);
+                    select.innerHTML = '<option value="">Error al cargar hijos.</option>';
+                });
+        }
+
+        function vincularHijo(e) {
+            e.preventDefault();
+            const dni = document.getElementById('dniHijo').value.trim();
+            if (!dni) return;
+            fetch('/api/parent/vincular', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({ dni })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.exito) {
+                    alert('Hijo vinculado correctamente: ' + data.hijo.nombre);
+                    document.getElementById('dniHijo').value = '';
+                    cargarHijos();
+                } else {
+                    alert('Error: ' + (data.mensaje || 'No se pudo vincular.'));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error al conectar con el servidor.');
+            });
+        }
+
+        function renderizarBoletinTutor() {
+            const tbody = document.querySelector('#boletinTutor tbody');
+            const hijoId = document.getElementById('selectHijo').value;
+            if (!hijoId) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">Seleccioná un hijo para ver su boletín.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">Cargando boletín...</td></tr>';
+            fetch(`/api/grades?estudiante_id=${hijoId}`, { headers: authHeaders() })
+                .then(res => res.json())
+                .then(data => {
+                    tbody.innerHTML = '';
+                    if (!data.exito) {
+                        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#c0392b;">${data.mensaje || 'No se pudo obtener el boletín.'}</td></tr>`;
+                        return;
+                    }
+                    if (!data.notas || data.notas.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">No se registran calificaciones oficiales emitidas para el alumno.</td></tr>';
+                        return;
+                    }
+                    data.notas.forEach(n => {
+                        tbody.innerHTML += `<tr><td>${n.materia}</td><td>${n.instancia_evaluacion}</td><td><b>${n.nota}</b></td><td>${n.fecha}</td></tr>`;
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#c0392b;">Error al conectar con el servidor.</td></tr>';
+                });
+        }
+
+        function logout() { localStorage.removeItem('usuarioActual'); window.location.href = 'index.html'; }
+    </script>
+</body>
+</html>
