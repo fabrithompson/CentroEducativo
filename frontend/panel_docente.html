@@ -302,8 +302,8 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Fecha de entrega</label>
-                                <input type="date" id="actFecha" required class="form-input">
+                                <label for="foroFechaEntrega">Fecha y Hora límite de entrega:</label>
+                                <input type="datetime-local" id="actFecha" required class="form-input">
                             </div>
                             <div class="form-group">
                                 <label>Puntaje máximo</label>
@@ -688,7 +688,7 @@
                         <h4 class="campus-card-title">${window.escapeHtml(a.titulo)} <span class="campus-badge campus-badge-entregado">${a.tipo}</span></h4>
                         <div class="campus-card-meta">
                             <span><i class="fas fa-book"></i> ${window.escapeHtml(a.materia)}</span>
-                            <span><i class="fas fa-calendar"></i> Entrega: ${window.formatFecha(a.fechaEntrega)}</span>
+                            <span><i class="fas fa-calendar"></i> Entrega: ${window.formatFechaHora(a.fechaEntrega)}</span>
                             <span><i class="fas fa-users"></i> ${a.totalEntregas} entregas</span>
                             <span><i class="fas fa-star"></i> Máx: ${a.maxScore}</span>
                         </div>
@@ -709,7 +709,9 @@
             fd.append('titulo', document.getElementById('actTitulo').value);
             fd.append('descripcion', document.getElementById('actDescripcion').value);
             fd.append('tipo', document.getElementById('actTipo').value);
-            fd.append('fechaEntrega', document.getElementById('actFecha').value);
+            const fechaLocal = document.getElementById('actFecha').value;
+            const fechaUTC = new Date(fechaLocal).toISOString();
+            fd.append('fechaEntrega', fechaUTC);
             fd.append('maxScore', document.getElementById('actMax').value);
             const fileInput = document.getElementById('actFile');
             if (fileInput.files.length > 0) fd.append('file', fileInput.files[0]);
