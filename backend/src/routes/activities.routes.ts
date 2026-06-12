@@ -40,7 +40,7 @@ router.get('/', requireAuth, async (req, res, next) => {
           descripcion: a.descripcion,
           materia: a.materia,
           tipo: a.tipo,
-          fechaEntrega: a.fechaEntrega.toISOString().slice(0, 10),
+          fechaEntrega: a.fechaEntrega.toISOString(),
           maxScore: a.maxScore,
           fileUrl: a.fileUrl,
           docente: a.docente.nombre,
