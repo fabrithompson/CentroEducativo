@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Tutor - Centro Educativo</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/componentes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f4f6f9; }
@@ -29,7 +30,8 @@
         .bg-green { background: #d4edda; color: #155724; }
     </style>
 </head>
-<body>
+<body class="panel-app">
+    <a class="skip-link" href="#contenido-principal">Saltar al contenido principal</a>
     <header>
         <div class="header-top">
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -43,7 +45,7 @@
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
                 <div class="logo" style="display: flex; align-items: center; gap: 10px;">
                     <span class="logo-icon">🎓</span>
-                    <h1 style="margin:0; font-size: 1.3rem;">Educar Para Transformar</h1>
+                    <h1 style="margin:0; font-size: 1.3rem;">Transformar Para Educar</h1>
                 </div>
                 <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none;">
                     <li><button id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button></li>
@@ -64,6 +66,7 @@
         <aside class="sidebar">
             <ul class="sidebar-menu">
                 <li><a class="nav-link active" onclick="switchView('boletin', this)"><i class="fas fa-file-invoice"></i> Boletín e Historial</a></li>
+                <li><a class="nav-link" onclick="switchView('mis-hijos', this); window.abrirMisHijos();"><i class="fas fa-children"></i> Ficha de mis hijos</a></li>
                 <li><a class="nav-link" onclick="switchView('materias', this)"><i class="fas fa-book-open"></i> Materias del Hijo</a></li>
                 <li><a class="nav-link" onclick="switchView('asistencias', this)"><i class="fas fa-clipboard-user"></i> Asistencias</a></li>
                 <li><a class="nav-link" onclick="switchView('finanzas', this); cargarPagos();"><i class="fas fa-file-invoice-dollar"></i> Estado de Cuenta</a></li>
@@ -72,11 +75,11 @@
             </ul>
         </aside>
 
-        <main class="main-content">
+        <main class="main-content" id="contenido-principal" tabindex="-1">
             <!-- Barra superior común: selector de hijo + vincular -->
             <div style="margin-bottom: 20px; padding: 15px; background: #fff; border: 1px solid #d1d8e0; border-radius: 8px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
                 <i class="fas fa-child" style="color:#f39c12; font-size:1.4rem;"></i>
-                <label style="font-weight: bold; margin: 0;">Alumno a cargo:</label>
+                <label style="font-weight: bold; margin: 0;" for="selectHijo">Alumno a cargo:</label>
                 <select id="selectHijo" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; min-width: 200px;" onchange="onHijoChange()">
                     <option value="">— Sin hijos vinculados —</option>
                 </select>
@@ -119,6 +122,11 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+            </section>
+
+            <section id="mis-hijos" class="view-section" aria-labelledby="t-mis-hijos">
+                <h2 class="section-title" id="t-mis-hijos">Ficha de mis hijos</h2>
+                <div id="vista-mis-hijos"></div>
             </section>
 
             <section id="materias" class="view-section">
@@ -605,5 +613,10 @@
 
         function logout() { localStorage.removeItem('usuarioActual'); window.location.href = 'index.html'; }
     </script>
+
+<script type="module">
+  import { iniciarMisHijos } from './js/vistas/padre-hijos.js';
+  window.abrirMisHijos = () => iniciarMisHijos('vista-mis-hijos');
+</script>
 </body>
 </html>

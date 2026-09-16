@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Centro Educativo - Inicio</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/componentes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         // Aplicar tema guardado antes de pintar para evitar parpadeo
@@ -19,6 +20,7 @@
     </script>
 </head>
 <body>
+    <a class="skip-link" href="#contenido-principal">Saltar al contenido principal</a>
     <header>
         <div class="header-top">
             <div class="container">
@@ -38,7 +40,7 @@
             <div class="container">
                 <div class="logo">
                     <span class="logo-icon">🎓</span>
-                    <h1>Educar Para Transformar</h1>
+                    <h1>Transformar Para Educar</h1>
                 </div>
                 <ul class="nav-links">
                     <li><a href="#nosotros">Quiénes Somos</a></li>
@@ -67,6 +69,7 @@
         </nav>
     </header>
 
+    <main id="contenido-principal">
     <section id="inicio" class="hero">
         <div class="hero-slider">
             <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1920&q=80')"></div>
@@ -190,29 +193,123 @@
         </div>
     </section>
 
-    <section id="galeria" class="section">
+    <section id="galeria" class="section" aria-labelledby="galeria-titulo">
         <div class="container">
-            <h2 class="section-title">Galería de Imágenes</h2>
-            <div class="gallery">
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400" alt="Instalaciones">
-                </div>
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400" alt="Aula">
-                </div>
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?w=400" alt="Biblioteca">
-                </div>
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=400" alt="Laboratorio">
-                </div>
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1576267423445-b2e0074d68a4?w=400" alt="Deportes">
-                </div>
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=400&q=80" alt="Actividades">
-                </div>
-            </div>
+            <h2 class="section-title" id="galeria-titulo">Nuestras instalaciones</h2>
+            <p class="galeria-intro">
+                Conocé los espacios donde los chicos aprenden, entrenan y comparten el día.
+                Todas las instalaciones están en nuestra sede de Resistencia.
+            </p>
+
+            <!--
+              Cada figura describe una instalación real del colegio, las mismas que
+              aparecen como sede en la grilla de deportes y en el servicio de comedor.
+              El `alt` describe la instalación; el `figcaption` la nombra y la explica,
+              así que la imagen no es la única fuente de información.
+            -->
+            <ul class="galeria" role="list">
+                <li class="galeria__item">
+                    <figure>
+                        <img src="https://images.unsplash.com/photo-1600965962361-9035dbfd1c50?w=800&q=80"
+                             alt="Natatorio cubierto con tres andariveles y gradas laterales."
+                             loading="lazy" width="800" height="533">
+                        <figcaption>
+                            <strong>Natatorio climatizado</strong>
+                            Pileta cubierta de 25 metros, en uso todo el año. Sede de natación
+                            para los tres niveles.
+                        </figcaption>
+                    </figure>
+                </li>
+
+                <li class="galeria__item">
+                    <figure>
+                        <img src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&q=80"
+                             alt="Pista de atletismo de superficie sintética roja con marcación de carriles."
+                             loading="lazy" width="800" height="533">
+                        <figcaption>
+                            <strong>Pista de atletismo</strong>
+                            Seis carriles, foso de salto en largo y sector de lanzamiento.
+                            Preparación para los juegos escolares.
+                        </figcaption>
+                    </figure>
+                </li>
+
+                <li class="galeria__item">
+                    <figure>
+                        <img src="https://images.unsplash.com/photo-1577471488278-16eec37ffcc2?w=800&q=80"
+                             alt="Cancha de fútbol de césped con arcos reglamentarios."
+                             loading="lazy" width="800" height="533">
+                        <figcaption>
+                            <strong>Canchas deportivas</strong>
+                            Cancha de fútbol 11 y campo de hockey sobre césped.
+                            El colegio compite en la liga intercolegial del Chaco.
+                        </figcaption>
+                    </figure>
+                </li>
+
+                <li class="galeria__item">
+                    <figure>
+                        <img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&q=80"
+                             alt="Polideportivo techado con piso de parquet y aros de básquet."
+                             loading="lazy" width="800" height="533">
+                        <figcaption>
+                            <strong>Polideportivo techado</strong>
+                            Vóley, básquet y handball. Se usa todo el año, llueva o haga calor.
+                        </figcaption>
+                    </figure>
+                </li>
+
+                <li class="galeria__item">
+                    <figure>
+                        <img src="https://images.unsplash.com/photo-1567521464027-f127ff144326?w=800&q=80"
+                             alt="Comedor escolar con mesas largas de madera y ventanales amplios."
+                             loading="lazy" width="800" height="533">
+                        <figcaption>
+                            <strong>Comedor</strong>
+                            Cocina propia y menú elaborado en el día. Servicio de dos, tres o
+                            cinco días por semana.
+                        </figcaption>
+                    </figure>
+                </li>
+
+                <li class="galeria__item">
+                    <figure>
+                        <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=800&q=80"
+                             alt="Laboratorio de ciencias con mesadas, microscopios y material de vidrio."
+                             loading="lazy" width="800" height="533">
+                        <figcaption>
+                            <strong>Laboratorios</strong>
+                            Laboratorio de ciencias naturales y laboratorio de informática,
+                            para las materias del ciclo orientado.
+                        </figcaption>
+                    </figure>
+                </li>
+
+                <li class="galeria__item">
+                    <figure>
+                        <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800&q=80"
+                             alt="Biblioteca con estanterías de libros y mesas de lectura."
+                             loading="lazy" width="800" height="533">
+                        <figcaption>
+                            <strong>Biblioteca</strong>
+                            Sala de lectura y consulta, con espacio de estudio para el
+                            ciclo secundario.
+                        </figcaption>
+                    </figure>
+                </li>
+
+                <li class="galeria__item">
+                    <figure>
+                        <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80"
+                             alt="Aula luminosa con bancos individuales y pizarrón."
+                             loading="lazy" width="800" height="533">
+                        <figcaption>
+                            <strong>Aulas</strong>
+                            Espacios amplios y ventilados para Inicial, Primario y Secundario.
+                        </figcaption>
+                    </figure>
+                </li>
+            </ul>
         </div>
     </section>
 
@@ -574,11 +671,12 @@
         </div>
     </div>
 
+    </main>
     <footer>
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>Educar Para Transformar</h3>
+                    <h3>Transformar Para Educar</h3>
                     <p>Formando personas integrales para un futuro mejor.</p>
                 </div>
                 <div class="footer-section">
@@ -602,7 +700,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2026 Educar Para Transformar. Todos los derechos reservados.</p>
+                <p>&copy; 2026 Transformar Para Educar. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Estudiante - Sistema Académico</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/componentes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f4f6f9; }
@@ -31,7 +32,8 @@
         .btn-action { background: #3498db; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
-<body>
+<body class="panel-app">
+    <a class="skip-link" href="#contenido-principal">Saltar al contenido principal</a>
     <header>
         <div class="header-top">
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -45,7 +47,7 @@
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
                 <div class="logo" style="display: flex; align-items: center; gap: 10px;">
                     <span class="logo-icon">🎓</span>
-                    <h1 style="margin:0; font-size: 1.3rem;">Educar Para Transformar</h1>
+                    <h1 style="margin:0; font-size: 1.3rem;">Transformar Para Educar</h1>
                 </div>
                 <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none;">
                     <li><a href="index.html#inicio">Inicio</a></li>
@@ -77,7 +79,7 @@
             </ul>
         </aside>
 
-        <main class="main-content">
+        <main class="main-content" id="contenido-principal" tabindex="-1">
             <section id="boletin" class="view-section active">
                 <h3 class="section-title">Mi Boletín de Calificaciones (Solo Lectura)</h3>
                 <table class="data-table" id="boletinEstudiante">
@@ -170,7 +172,7 @@
                 <h3 class="section-title">Inscripción a Mesas de Exámenes Libres</h3>
                 <form onsubmit="registrarExamenLibre(event)">
                     <div class="form-controls">
-                        <select id="selectLibre" class="form-select" required>
+                        <select id="selectLibre" class="form-select" required aria-label="Materia de la mesa de examen libre">
                             <option value="">Seleccione Asignatura a Rendir...</option>
                             <option value="Matemáticas Avanzadas">Matemáticas Avanzadas (Mesa Especial)</option>
                             <option value="Historia Argentina">Historia Argentina (Mesa Libre)</option>
@@ -303,7 +305,7 @@
                                     <label style="font-size:0.85rem; font-weight:600;">Hacer entrega:</label>
                                     <textarea placeholder="Texto de tu entrega (opcional si adjuntás archivo)" rows="2" style="width:100%; margin-top:6px; padding:8px; border:1px solid #cbd5e1; border-radius:4px;"></textarea>
                                     <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
-                                        <input type="file" style="flex:1;">
+                                        <input type="file" style="flex:1;" aria-label="Archivo adjunto de la entrega">
                                         <button type="submit" class="btn-action" style="padding:6px 14px;"><i class="fas fa-upload"></i> Entregar</button>
                                     </div>
                                 </form>

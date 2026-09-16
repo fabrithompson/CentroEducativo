@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admin — Educar Para Transformar</title>
+    <title>Panel Admin — Transformar Para Educar</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/componentes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --accent: #8b5cf6; }
@@ -36,7 +37,8 @@
         .btn-secondary { background: #64748b; color: #fff; border: none; padding: 5px 11px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
     </style>
 </head>
-<body>
+<body class="panel-app">
+    <a class="skip-link" href="#contenido-principal">Saltar al contenido principal</a>
     <header>
         <div class="header-top">
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -50,7 +52,7 @@
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
                 <div class="logo" style="display: flex; align-items: center; gap: 10px;">
                     <span class="logo-icon">🎓</span>
-                    <h1 style="margin:0; font-size: 1.3rem; color: #0f172a;">Educar Para Transformar — Admin</h1>
+                    <h1 style="margin:0; font-size: 1.3rem; color: #0f172a;">Transformar Para Educar — Admin</h1>
                 </div>
                 <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none; margin: 0;">
                     <li><a href="index.html#inicio">Inicio</a></li>
@@ -75,6 +77,8 @@
             </div>
             <ul class="sidebar-menu">
                 <li><a class="nav-link active" onclick="switchView('dashboard', this); cargarStats();"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a class="nav-link" onclick="switchView('escaner', this); window.abrirEscaner();"><i class="fas fa-qrcode"></i> Escanear carnet</a></li>
+                <li><a class="nav-link" onclick="switchView('reportes', this); window.abrirReportes();"><i class="fas fa-chart-column"></i> Reportes</a></li>
                 <li><a class="nav-link" onclick="switchView('usuarios', this); cargarUsuarios();"><i class="fas fa-users"></i> Usuarios</a></li>
                 <li><a class="nav-link" onclick="switchView('docentes', this); cargarDocentesPendientes();"><i class="fas fa-user-clock"></i> Docentes pendientes <span id="badgePendientes" class="chat-list-unread" style="display:none;">0</span></a></li>
                 <li><a class="nav-link" onclick="switchView('inscripciones', this); cargarInscripciones();"><i class="fas fa-file-signature"></i> Inscripciones <span id="badgeInscripciones" class="chat-list-unread" style="display:none;">0</span></a></li>
@@ -87,10 +91,20 @@
             </ul>
         </aside>
 
-        <main class="main-content">
+        <main class="main-content" id="contenido-principal" tabindex="-1">
             <section id="dashboard" class="view-section active">
                 <h3 class="section-title">Dashboard institucional</h3>
                 <div id="statsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;"></div>
+            </section>
+
+            <section id="reportes" class="view-section" aria-labelledby="t-reportes">
+                <h2 class="section-title" id="t-reportes">Reportes administrativos</h2>
+                <div id="vista-reportes"></div>
+            </section>
+
+            <section id="escaner" class="view-section" aria-labelledby="t-escaner">
+                <h2 class="section-title" id="t-escaner">Control de acceso — carnet digital</h2>
+                <div id="vista-escaner"></div>
             </section>
 
             <section id="usuarios" class="view-section">
@@ -103,7 +117,7 @@
                         <input type="email" id="newEmail" placeholder="Email" required class="form-input">
                         <input type="text" id="newDni" placeholder="DNI (7-8 dígitos)" required class="form-input">
                         <input type="text" id="newNombre" placeholder="Nombre completo" required class="form-input">
-                        <select id="newRole" required class="form-select">
+                        <select id="newRole" aria-label="Rol del nuevo usuario" required class="form-select">
                             <option value="">Rol...</option>
                             <option value="ESTUDIANTE">Estudiante</option>
                             <option value="DOCENTE">Docente</option>
@@ -118,7 +132,7 @@
 
                 <div style="display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
                     <input type="text" id="filtroUsuarios" placeholder="Buscar por nombre / usuario / DNI / email..." oninput="cargarUsuarios()" class="form-input" style="flex:1; min-width: 220px;">
-                    <select id="filtroRole" onchange="cargarUsuarios()" class="form-select" style="max-width: 200px;">
+                    <select id="filtroRole" aria-label="Filtrar usuarios por rol" onchange="cargarUsuarios()" class="form-select" style="max-width: 200px;">
                         <option value="">Todos los roles</option>
                         <option value="ESTUDIANTE">Estudiantes</option>
                         <option value="DOCENTE">Docentes</option>
@@ -144,7 +158,7 @@
             <section id="inscripciones" class="view-section">
                 <h3 class="section-title">Solicitudes de inscripción</h3>
                 <div style="display:flex; gap:10px; margin-bottom:14px;">
-                    <select id="filtroInsc" class="form-select" style="max-width:220px;" onchange="cargarInscripciones()">
+                    <select id="filtroInsc" aria-label="Filtrar solicitudes de inscripción por estado" class="form-select" style="max-width:220px;" onchange="cargarInscripciones()">
                         <option value="PENDIENTE">Pendientes</option>
                         <option value="APROBADO">Aprobadas</option>
                         <option value="RECHAZADO">Rechazadas</option>
@@ -160,7 +174,7 @@
             <section id="opiniones" class="view-section">
                 <h3 class="section-title">Moderación de opiniones</h3>
                 <div style="display:flex; gap:10px; margin-bottom:14px;">
-                    <select id="filtroOp" class="form-select" style="max-width:220px;" onchange="cargarOpiniones()">
+                    <select id="filtroOp" aria-label="Filtrar opiniones por estado" class="form-select" style="max-width:220px;" onchange="cargarOpiniones()">
                         <option value="PENDIENTE">Pendientes</option>
                         <option value="APROBADO">Aprobadas</option>
                         <option value="RECHAZADO">Rechazadas</option>
@@ -176,7 +190,7 @@
             <section id="empleo" class="view-section">
                 <h3 class="section-title">Postulaciones de empleo</h3>
                 <div style="display:flex; gap:10px; margin-bottom:14px;">
-                    <select id="filtroEmp" class="form-select" style="max-width:220px;" onchange="cargarPostulaciones()">
+                    <select id="filtroEmp" aria-label="Filtrar postulaciones por estado" class="form-select" style="max-width:220px;" onchange="cargarPostulaciones()">
                         <option value="PENDIENTE">Pendientes</option>
                         <option value="APROBADO">Aprobadas</option>
                         <option value="RECHAZADO">Rechazadas</option>
@@ -196,11 +210,11 @@
                     <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#8b5cf6;"></i> Crear vínculo</summary>
                     <form onsubmit="crearVinculo(event)" style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;">
                         <div>
-                            <label style="font-size:0.85rem; font-weight:600;">Padre</label>
+                            <label style="font-size:0.85rem; font-weight:600;" for="vincPadre">Padre</label>
                             <select id="vincPadre" required class="form-select"></select>
                         </div>
                         <div>
-                            <label style="font-size:0.85rem; font-weight:600;">Estudiante</label>
+                            <label style="font-size:0.85rem; font-weight:600;" for="vincEstudiante">Estudiante</label>
                             <select id="vincEstudiante" required class="form-select"></select>
                         </div>
                         <button type="submit" class="btn-action">Vincular</button>
@@ -217,7 +231,7 @@
                 <h3 class="section-title">Cargar nueva cuota</h3>
                 <form onsubmit="crearCuota(event)" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; max-width: 800px;">
                     <div>
-                        <label style="font-size:0.85rem; font-weight:600;">Estudiante</label>
+                        <label style="font-size:0.85rem; font-weight:600;" for="cuotaEst">Estudiante</label>
                         <select id="cuotaEst" required class="form-select"></select>
                     </div>
                     <div>
@@ -229,7 +243,7 @@
                         <input type="number" id="cuotaMonto" required min="1" step="0.01" class="form-input" placeholder="45000">
                     </div>
                     <div>
-                        <label style="font-size:0.85rem; font-weight:600;">Vencimiento</label>
+                        <label style="font-size:0.85rem; font-weight:600;" for="cuotaVenc">Vencimiento</label>
                         <input type="date" id="cuotaVenc" required class="form-input">
                     </div>
                     <button type="submit" class="btn-action" style="grid-column: 1 / -1; justify-self: end;"><i class="fas fa-money-check"></i> Cargar cuota</button>
@@ -244,7 +258,7 @@
                         <input type="text" id="anuncioTitulo" placeholder="Título" required class="form-input">
                         <textarea id="anuncioContenido" placeholder="Contenido..." rows="3" required class="form-input"></textarea>
                         <div style="display:flex; gap:10px; align-items:center;">
-                            <label>Para:</label>
+                            <label for="anuncioTarget">Para:</label>
                             <select id="anuncioTarget" class="form-select" style="flex:1;">
                                 <option value="ALL">Toda la comunidad</option>
                                 <option value="ESTUDIANTE">Estudiantes</option>
@@ -999,5 +1013,19 @@
             window.location.href = 'index.html';
         }
     </script>
+
+<script type="module">
+  import { iniciarReportes } from './js/vistas/reportes.js';
+  // Se expone en window porque la navegación del panel usa onclick inline.
+  window.abrirReportes = () => iniciarReportes('vista-reportes');
+</script>
+
+<script type="module">
+  import { iniciarEscaner, detenerEscaner } from './js/vistas/escaner.js';
+  window.abrirEscaner = () => iniciarEscaner('vista-escaner');
+  // Al cambiar de vista se libera la cámara: dejarla abierta consume batería
+  // y mantiene el indicador encendido.
+  window.addEventListener('beforeunload', detenerEscaner);
+</script>
 </body>
 </html>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Docente - Sistema Académico</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/componentes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { 
@@ -56,7 +57,8 @@
         .comunicado-card { padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 15px; background: #fff; }
     </style>
 </head>
-<body>
+<body class="panel-app">
+    <a class="skip-link" href="#contenido-principal">Saltar al contenido principal</a>
     <header>
         <div class="header-top">
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -70,7 +72,7 @@
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
                 <div class="logo" style="display: flex; align-items: center; gap: 10px;">
                     <span class="logo-icon">🎓</span>
-                    <h1 style="margin:0; font-size: 1.3rem; color: #0f172a;">Educar Para Transformar</h1>
+                    <h1 style="margin:0; font-size: 1.3rem; color: #0f172a;">Transformar Para Educar</h1>
                 </div>
                 <ul class="nav-links" style="display: flex; gap: 25px; align-items: center; margin: 0; list-style: none;">
                     <li><a href="index.html#inicio">Inicio</a></li>
@@ -97,6 +99,8 @@
             </div>
             <ul class="sidebar-menu">
                 <li><a class="nav-link active" onclick="switchView('calificaciones', this)"><i class="fas fa-pen-square"></i> Cargar Calificaciones</a></li>
+                <li><a class="nav-link" onclick="switchView('escaner', this); window.abrirEscaner();"><i class="fas fa-qrcode"></i> Escanear carnet</a></li>
+                <li><a class="nav-link" onclick="switchView('mis-cursos', this); window.abrirMisCursos();"><i class="fas fa-chalkboard-user"></i> Mis cursos y materias</a></li>
                 <li><a class="nav-link" onclick="switchView('actividades', this); cargarActividades();"><i class="fas fa-tasks"></i> Actividades</a></li>
                 <li><a class="nav-link" onclick="switchView('planes', this); cargarPlanes();"><i class="fas fa-book"></i> Planes de Estudio</a></li>
                 <li><a class="nav-link" onclick="switchView('configurar', this)"><i class="fas fa-cogs"></i> Mis Materias Asignadas</a></li>
@@ -107,14 +111,14 @@
             </ul>
         </aside>
 
-        <main class="main-content">
+        <main class="main-content" id="contenido-principal" tabindex="-1">
             <section id="calificaciones" class="view-section active">
                 <h3 class="section-title">Registro Oficial de Calificaciones (RF-8)</h3>
                 <div class="form-layout">
                     <form onsubmit="registrarNota(event)">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Nivel Educativo</label>
+                                <label for="notaNivel">Nivel Educativo</label>
                                 <select id="notaNivel" class="form-select" required onchange="actualizarMateriasCalificación()">
                                     <option value="">Seleccione Nivel...</option>
                                     <option value="inicial">Nivel Inicial (Jardín)</option>
@@ -123,7 +127,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Materia</label>
+                                <label for="notaMateria">Materia</label>
                                 <select id="notaMateria" class="form-select" required>
                                     <option value="">Seleccione Asignatura...</option>
                                 </select>
@@ -131,13 +135,13 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Alumno</label>
+                                <label for="notaAlumno">Alumno</label>
                                 <select id="notaAlumno" class="form-select" required>
                                     <option value="">Cargando estudiantes...</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Instancia de Evaluación</label>
+                                <label for="notaInstancia">Instancia de Evaluación</label>
                                 <select id="notaInstancia" class="form-select" required>
                                     <option value="">Seleccione Período...</option>
                                     <option value="1er Trimestre">1er Trimestre</option>
@@ -153,7 +157,7 @@
                                 <input type="number" id="notaValor" class="form-input" min="1" max="10" placeholder="Ej: 8" required>
                             </div>
                             <div class="form-group">
-                                <label>Fecha de Registro</label>
+                                <label for="notaFecha">Fecha de Registro</label>
                                 <input type="date" id="notaFecha" class="form-input" required>
                             </div>
                         </div>
@@ -179,13 +183,23 @@
                 </table>
             </section>
 
+            <section id="mis-cursos" class="view-section" aria-labelledby="t-mis-cursos">
+                <h2 class="section-title" id="t-mis-cursos">Mis cursos y materias a cargo</h2>
+                <div id="vista-mis-cursos"></div>
+            </section>
+
+            <section id="escaner" class="view-section" aria-labelledby="t-escaner">
+                <h2 class="section-title" id="t-escaner">Control de acceso — carnet digital</h2>
+                <div id="vista-escaner"></div>
+            </section>
+
             <section id="configurar" class="view-section">
                 <h3 class="section-title">Visualización de Carga Horaria Institucional</h3>
                 <div class="form-layout">
                     <form onsubmit="asociarMateriaDocente(event)">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Nivel General</label>
+                                <label for="carreraSelect">Nivel General</label>
                                 <select id="carreraSelect" class="form-select" required onchange="manejarNivelEscolar()">
                                     <option value="">Seleccione un nivel...</option>
                                     <option value="inicial">Nivel Inicial (Jardín)</option>
@@ -194,7 +208,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Materia</label>
+                                <label for="materiaEscolar">Materia</label>
                                 <select id="materiaEscolar" class="form-select" required onchange="cargarHorarioFijo()">
                                     <option value="">Seleccione asignatura...</option>
                                 </select>
@@ -254,7 +268,7 @@
                         <input type="text" id="anuncioTitulo" placeholder="Título del anuncio" required style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
                         <textarea id="anuncioContenido" placeholder="Contenido del anuncio..." rows="3" required style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; resize: vertical;"></textarea>
                         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                            <label>Dirigido a:</label>
+                            <label for="anuncioTarget">Dirigido a:</label>
                             <select id="anuncioTarget" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
                                 <option value="ALL">Toda la comunidad</option>
                                 <option value="ESTUDIANTE">Solo estudiantes</option>
@@ -283,7 +297,7 @@
                                 <input type="text" id="actMateria" required class="form-input" placeholder="Ej: Álgebra y Geometría">
                             </div>
                             <div class="form-group">
-                                <label>Tipo</label>
+                                <label for="actTipo">Tipo</label>
                                 <select id="actTipo" class="form-select">
                                     <option value="TAREA">Tarea</option>
                                     <option value="ACTIVIDAD">Actividad</option>
@@ -302,16 +316,16 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="foroFechaEntrega">Fecha y Hora límite de entrega:</label>
+                                <label for="actFecha">Fecha y Hora límite de entrega:</label>
                                 <input type="datetime-local" id="actFecha" required class="form-input">
                             </div>
                             <div class="form-group">
-                                <label>Puntaje máximo</label>
+                                <label for="actMax">Puntaje máximo</label>
                                 <input type="number" id="actMax" value="10" min="1" max="100" class="form-input">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>Archivo adjunto (opcional)</label>
+                            <label for="actFile">Archivo adjunto (opcional)</label>
                             <input type="file" id="actFile" class="form-input">
                         </div>
                         <button type="submit" class="btn-action" style="justify-self:end;"><i class="fas fa-save"></i> Publicar actividad</button>
@@ -329,24 +343,24 @@
                     <form onsubmit="crearPlan(event)" enctype="multipart/form-data" style="margin-top: 15px; display: grid; gap: 12px;">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Materia</label>
+                                <label for="planMateria">Materia</label>
                                 <input type="text" id="planMateria" required class="form-input">
                             </div>
                             <div class="form-group">
-                                <label>Título</label>
+                                <label for="planTitulo">Título</label>
                                 <input type="text" id="planTitulo" required class="form-input">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>Objetivos</label>
+                            <label for="planObjetivos">Objetivos</label>
                             <textarea id="planObjetivos" required class="form-input" rows="2"></textarea>
                         </div>
                         <div class="form-group">
-                            <label>Contenidos / Unidades</label>
+                            <label for="planContenidos">Contenidos / Unidades</label>
                             <textarea id="planContenidos" required class="form-input" rows="3"></textarea>
                         </div>
                         <div class="form-group">
-                            <label>Archivo adjunto (PDF u otro)</label>
+                            <label for="planFile">Archivo adjunto (PDF u otro)</label>
                             <input type="file" id="planFile" class="form-input">
                         </div>
                         <button type="submit" class="btn-action" style="justify-self:end;"><i class="fas fa-save"></i> Publicar plan</button>
@@ -583,9 +597,9 @@
                             <td>${e.dni}</td>
                             <td>${window.escapeHtml(e.nombre)}</td>
                             <td>${window.escapeHtml(e.curso || '—')}</td>
-                            <td style="text-align:center;"><input type="radio" name="${radioName}" value="presente" ${estado === 'presente' ? 'checked' : ''}></td>
-                            <td style="text-align:center;"><input type="radio" name="${radioName}" value="ausente" ${estado === 'ausente' ? 'checked' : ''}></td>
-                            <td style="text-align:center;"><input type="radio" name="${radioName}" value="tarde" ${estado === 'tarde' ? 'checked' : ''}></td>
+                            <td style="text-align:center;"><input type="radio" name="${radioName}" value="presente" aria-label="Presente — ${window.escapeHtml(e.nombre)}" ${estado === 'presente' ? 'checked' : ''}></td>
+                            <td style="text-align:center;"><input type="radio" name="${radioName}" value="ausente" aria-label="Ausente — ${window.escapeHtml(e.nombre)}" ${estado === 'ausente' ? 'checked' : ''}></td>
+                            <td style="text-align:center;"><input type="radio" name="${radioName}" value="tarde" aria-label="Tarde — ${window.escapeHtml(e.nombre)}" ${estado === 'tarde' ? 'checked' : ''}></td>
                         </tr>
                     `;
                 });
@@ -918,5 +932,19 @@
 
         function logout() { localStorage.removeItem('usuarioActual'); sessionStorage.removeItem('token'); window.location.href = 'index.html'; }
     </script>
+
+<script type="module">
+  import { iniciarCursosDocente } from './js/vistas/docente-cursos.js';
+  // Se expone en window porque la navegación del panel usa onclick inline.
+  window.abrirMisCursos = () => iniciarCursosDocente('vista-mis-cursos');
+</script>
+
+<script type="module">
+  import { iniciarEscaner, detenerEscaner } from './js/vistas/escaner.js';
+  window.abrirEscaner = () => iniciarEscaner('vista-escaner');
+  // Al cambiar de vista se libera la cámara: dejarla abierta consume batería
+  // y mantiene el indicador encendido.
+  window.addEventListener('beforeunload', detenerEscaner);
+</script>
 </body>
 </html>
