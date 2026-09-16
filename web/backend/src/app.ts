@@ -28,12 +28,15 @@ export function createApp() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
-  app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+  // En test se silencia: el log de cada request tapa la salida del runner.
+  if (env.NODE_ENV !== 'test') {
+    app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+  }
 
   app.get('/health', (_req, res) => {
     res.json({
       status: 'ok',
-      service: 'educar-para-transformar-api',
+      service: 'transformar-para-educar-api',
       env: env.NODE_ENV,
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),

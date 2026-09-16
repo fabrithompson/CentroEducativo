@@ -92,7 +92,7 @@ const opinionSchema = z.object({
 publicRouter.post('/opinions', async (req, res, next) => {
   try {
     const data = opinionSchema.parse(req.body);
-    const created = await prisma.opinion.create({
+    const created = await prisma.opinionPublica.create({
       data: {
         nombre: data.nombre || null,
         rol: data.rol,
@@ -110,7 +110,7 @@ publicRouter.post('/opinions', async (req, res, next) => {
 
 publicRouter.get('/opinions', async (_req, res, next) => {
   try {
-    const items = await prisma.opinion.findMany({
+    const items = await prisma.opinionPublica.findMany({
       where: { status: ModerationStatus.APROBADO },
       orderBy: { createdAt: 'desc' },
       take: 12,
@@ -126,7 +126,7 @@ adminRouter.get('/opinions', async (req, res, next) => {
     const where = status && ['PENDIENTE', 'APROBADO', 'RECHAZADO'].includes(status)
       ? { status: status as ModerationStatus }
       : {};
-    const items = await prisma.opinion.findMany({ where, orderBy: { createdAt: 'desc' } });
+    const items = await prisma.opinionPublica.findMany({ where, orderBy: { createdAt: 'desc' } });
     res.json({ exito: true, opiniones: items });
   } catch (err) { next(err); }
 });
@@ -134,7 +134,7 @@ adminRouter.get('/opinions', async (req, res, next) => {
 adminRouter.post('/opinions/:id/approve', async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const updated = await prisma.opinion.update({
+    const updated = await prisma.opinionPublica.update({
       where: { id },
       data: { status: ModerationStatus.APROBADO, resolvedAt: new Date() },
     });
@@ -145,7 +145,7 @@ adminRouter.post('/opinions/:id/approve', async (req, res, next) => {
 adminRouter.post('/opinions/:id/reject', async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const updated = await prisma.opinion.update({
+    const updated = await prisma.opinionPublica.update({
       where: { id },
       data: { status: ModerationStatus.RECHAZADO, resolvedAt: new Date() },
     });
@@ -155,7 +155,7 @@ adminRouter.post('/opinions/:id/reject', async (req, res, next) => {
 
 adminRouter.delete('/opinions/:id', async (req, res, next) => {
   try {
-    await prisma.opinion.delete({ where: { id: Number(req.params.id) } });
+    await prisma.opinionPublica.delete({ where: { id: Number(req.params.id) } });
     res.json({ exito: true });
   } catch (err) { next(err); }
 });
@@ -233,7 +233,7 @@ adminRouter.get('/moderation/counts', async (_req, res, next) => {
   try {
     const [insc, op, emp, doc] = await Promise.all([
       prisma.inscription.count({ where: { status: ModerationStatus.PENDIENTE } }),
-      prisma.opinion.count({ where: { status: ModerationStatus.PENDIENTE } }),
+      prisma.opinionPublica.count({ where: { status: ModerationStatus.PENDIENTE } }),
       prisma.employmentApplication.count({ where: { status: ModerationStatus.PENDIENTE } }),
       prisma.user.count({ where: { role: Role.DOCENTE, isActive: false } }),
     ]);

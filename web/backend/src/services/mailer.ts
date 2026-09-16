@@ -29,17 +29,24 @@ export function getMailer(): Transporter {
   return cached;
 }
 
+export interface MailAttachment {
+  filename: string;
+  content: string | Buffer;
+  contentType?: string;
+}
+
 export interface MailInput {
   to: string;
   subject: string;
   text: string;
   html?: string;
+  attachments?: MailAttachment[];
 }
 
 export async function sendMail(input: MailInput): Promise<void> {
   try {
     const info = await getMailer().sendMail({
-      from: env.SMTP_FROM || 'Educar para Transformar <no-reply@educarparatransformar.edu.ar>',
+      from: env.SMTP_FROM || 'Transformar para educar <no-reply@educarparatransformar.edu.ar>',
       ...input,
     });
     if (!isSmtpConfigured()) {

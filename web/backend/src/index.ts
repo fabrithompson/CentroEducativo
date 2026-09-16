@@ -5,6 +5,7 @@ import { env } from './config/env';
 import { createApp } from './app';
 import { logger } from './utils/logger';
 import { attachSockets } from './sockets/io';
+import { detenerScheduler, iniciarScheduler } from './modules/scheduler';
 
 async function bootstrap() {
   const app = createApp();
@@ -19,6 +20,9 @@ async function bootstrap() {
 
   attachSockets(io);
 
+  // Tareas programadas de cobranza (facturación mensual y recordatorio de deuda).
+  iniciarScheduler();
+
   server.listen(env.PORT, () => {
     logger.info(
       `🚀 API lista en http://localhost:${env.PORT} (${env.NODE_ENV})`,
@@ -29,6 +33,7 @@ async function bootstrap() {
 
   const shutdown = (signal: string) => {
     logger.info(`Recibido ${signal}, cerrando servidor...`);
+    detenerScheduler();
     io.close();
     server.close((err) => {
       if (err) {
