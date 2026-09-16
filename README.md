@@ -1,6 +1,6 @@
-# Educar para Transformar — Campus Virtual
+# Transformar para educar — Campus Virtual
 
-Plataforma del campus virtual del colegio "Educar para Transformar". Monorepo con backend en Node/Express/Prisma y frontend en React/Vite/Tailwind.
+Plataforma del campus virtual del colegio "Transformar para educar". Monorepo con backend en Node/Express/Prisma y frontend en React/Vite/Tailwind.
 
 ## Estructura
 

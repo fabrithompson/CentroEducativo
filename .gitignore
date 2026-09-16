@@ -16,7 +16,7 @@ build/
 out/
 
 # Prisma
-backend/prisma/migrations/dev.db*
+web/backend/prisma/migrations/dev.db*
 *.sqlite
 *.sqlite-journal
 
@@ -34,14 +34,19 @@ yarn-error.log*
 .idea/
 .DS_Store
 Thumbs.db
+CLAUDE.md
 
 # Tests
 coverage/
 .nyc_output/
 
 # Uploads (archivos subidos por usuarios)
-backend/uploads/*
-!backend/uploads/.gitkeep
+web/backend/uploads/*
+!web/backend/uploads/.gitkeep
+
+# Base de datos de pruebas (embedded-postgres)
+.tmp/
+web/backend/.tmp/
 
 # Cache
 .cache/

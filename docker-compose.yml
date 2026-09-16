@@ -1,0 +1,58 @@
+# Infraestructura local de desarrollo.
+#
+#   docker compose up -d        levanta PostgreSQL
+#   docker compose down         lo detiene (conserva los datos)
+#   docker compose down -v      lo detiene y BORRA los datos
+#
+# Después de levantarlo:
+#   cp backend/.env.example backend/.env    y ajustar DATABASE_URL
+#   pnpm --filter backend prisma:deploy
+#   pnpm --filter backend prisma:seed
+#
+# En una máquina sin Docker, `pnpm --filter backend db:test:up` levanta un
+# PostgreSQL 15 equivalente usando binarias embebidas. Es lo que se utilizó
+# para validar las migraciones de este proyecto.
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: educar_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: educar
+      POSTGRES_PASSWORD: educar
+      POSTGRES_DB: educar_transformar_db
+      # Fuerza la comparación de texto en es_AR para que los ORDER BY por
+      # apellido ubiquen bien los acentos y la Ñ.
+      LANG: es_AR.utf8
+      POSTGRES_INITDB_ARGS: '--encoding=UTF8'
+    ports:
+      - '5432:5432'
+    volumes:
+      - datos_postgres:/var/lib/postgresql/data
+    healthcheck:
+      # El backend no debería arrancar antes de que la base acepte conexiones.
+      test: ['CMD-SHELL', 'pg_isready -U educar -d educar_transformar_db']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # Interfaz web para inspeccionar la base durante el desarrollo.
+  # Sólo se levanta si se lo pide: `docker compose --profile dev up -d`
+  adminer:
+    image: adminer:4
+    container_name: educar_adminer
+    restart: unless-stopped
+    profiles: ['dev']
+    ports:
+      - '8080:8080'
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  datos_postgres:
+    name: educar_datos_postgres
