@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Transformar para educar",
+    "slug": "educar-para-transformar",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "educar",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#1f4e79"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ar.edu.educarparatransformar.tutores"
+    },
+    "android": {
+      "package": "ar.edu.educarparatransformar.tutores",
+      "adaptiveIcon": { "backgroundColor": "#1f4e79" }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "La app accede a tus fotos para que puedas adjuntar el comprobante de transferencia.",
+          "cameraPermission": "La app usa la cámara para que puedas fotografiar el comprobante de transferencia."
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "extra": {
+      "apiUrl": "http://10.0.2.2:4000"
+    }
+  }
+}
