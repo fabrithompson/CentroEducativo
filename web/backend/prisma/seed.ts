@@ -9,6 +9,8 @@ import {
 } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
+import { seedDominio } from './seed-dominio';
+
 const prisma = new PrismaClient();
 
 type UserSeed = {
@@ -310,6 +312,9 @@ async function main() {
       },
     ],
   });
+
+  // ---- Dominio académico y administrativo (Sprint 1)
+  await seedDominio(prisma);
 
   console.log('✅ Seed completo. Password de todos los usuarios: 123456');
   console.log(`   ${SEED_USERS.length} usuarios · ${GRADES.length} notas · ${asistenciasData.length} asistencias · ${pagosData.length} cuotas · ${ANUNCIOS.length} anuncios · 3 actividades · 3 planes`);

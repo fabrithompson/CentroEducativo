@@ -1,0 +1,1113 @@
+// Transformar para educar — Campus virtual + Sistema de gestión
+//
+// Bloque 1 (existente): auth, calificaciones, vínculo padre-hijo, asistencia,
+//   pagos legacy, anuncios, notificaciones, mensajería, actividades y planes.
+// Bloque 2 (Sprint 1): estructura académica, deportes, transporte, comedor
+//   y facturación con comprobantes de transferencia.
+//
+// Convención horaria: los horarios se guardan como minutos desde medianoche
+// (Int 0..1439). Evita ambigüedades de zona horaria y hace que la detección de
+// solapamiento sea una comparación de enteros exacta: (aIni < bFin AND bIni < aFin).
+// 7:30 => 450 · 12:00 => 720 · 18:45 => 1125.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS — Bloque 1 (existentes, sin cambios)
+// ============================================================
+
+enum Role {
+  ESTUDIANTE
+  DOCENTE
+  PADRE
+  ADMIN
+}
+
+enum AttendanceStatus {
+  PRESENTE
+  AUSENTE
+  TARDE
+  JUSTIFICADO
+}
+
+enum ActivityType {
+  ACTIVIDAD
+  TRABAJO
+  PARCIAL
+  TAREA
+}
+
+enum SubmissionStatus {
+  PENDIENTE
+  ENTREGADO
+  CALIFICADO
+}
+
+enum PaymentStatus {
+  PENDIENTE
+  PAGADO
+  VENCIDO
+}
+
+enum AnnouncementTarget {
+  ALL
+  ESTUDIANTE
+  DOCENTE
+  PADRE
+}
+
+enum ModerationStatus {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+// ============================================================
+// ENUMS — Bloque 2 (nuevos)
+// ============================================================
+
+enum Turno {
+  MANANA
+  TARDE
+  JORNADA_COMPLETA
+}
+
+enum DiaSemana {
+  LUNES
+  MARTES
+  MIERCOLES
+  JUEVES
+  VIERNES
+  SABADO
+}
+
+enum EstadoAlumno {
+  ACTIVO
+  INACTIVO
+  EGRESADO
+  SUSPENDIDO
+}
+
+enum EstadoProfesor {
+  ACTIVO
+  INACTIVO
+  LICENCIA
+}
+
+enum EstadoInscripcion {
+  ACTIVA
+  BAJA
+}
+
+/// Exactamente 4 recorridos, por regla de negocio. El enum acota el universo de
+/// códigos posibles y `@unique` sobre `codigo` impide que exista un quinto.
+enum CodigoRecorrido {
+  R1
+  R2
+  R3
+  R4
+}
+
+enum TurnoTransporte {
+  IDA
+  VUELTA
+  IDA_Y_VUELTA
+}
+
+enum TipoItemFactura {
+  MATRICULA
+  CUOTA
+  TRANSPORTE
+  COMEDOR
+  DEPORTE
+  RECARGO
+  OTRO
+}
+
+enum EstadoFactura {
+  PENDIENTE
+  EN_REVISION
+  PARCIAL
+  PAGADA
+  VENCIDA
+  ANULADA
+}
+
+enum EstadoComprobante {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+// ============================================================
+// IDENTIDAD Y ACCESO
+// ============================================================
+
+model User {
+  id        Int      @id @default(autoincrement())
+  usuario   String   @unique
+  email     String   @unique
+  dni       String   @unique
+  password  String
+  role      Role
+  nombre    String
+  /// @deprecated Reemplazado por Alumno.cursoId. Se conserva para no romper el
+  /// código existente; se elimina cuando los paneles migren a la relación real.
+  curso     String?
+  /// Teléfono de contacto. RF-07: sólo se envían avisos por mensajería a
+  /// quienes lo tengan cargado; al resto se los contacta por correo.
+  telefono  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  notasRecibidas Grade[]             @relation("EstudianteGrades")
+  notasDadas     Grade[]             @relation("DocenteGrades")
+  hijos          ParentStudentLink[] @relation("PadreLinks")
+  padres         ParentStudentLink[] @relation("EstudianteLinks")
+
+  asistencias           Attendance[]
+  pagosEstudiante       Payment[]      @relation("PaymentStudent")
+  pagosPadre            Payment[]      @relation("PaymentParent")
+  anunciosCreados       Announcement[]
+  notificaciones        Notification[]
+  mensajesEnviados      Message[]      @relation("MsgSender")
+  mensajesRecibidos     Message[]      @relation("MsgReceiver")
+  actividadesCreadas    Activity[]     @relation("ActivityDocente")
+  entregas              Submission[]
+  planesDeEstudio       StudyPlan[]
+  forumPosts            ForumPost[]
+  forumReplies          ForumReply[]
+
+  // --- Bloque 2 ---
+  /// Perfil de negocio. Un alumno puede existir sin credenciales (típico en Nivel
+  /// Inicial, donde opera el tutor); por eso la relación es opcional.
+  alumno                Alumno?
+  profesor              Profesor?
+  facturasComoTutor     Factura[]          @relation("FacturaTutor")
+  comprobantesSubidos   ComprobantePago[]  @relation("ComprobanteSubidoPor")
+  comprobantesValidados ComprobantePago[]  @relation("ComprobanteValidadoPor")
+
+  // --- Bloque 3 ---
+  alumnosACargo         TutorAlumno[]        @relation("TutorDe")
+  vinculosCreados       TutorAlumno[]        @relation("VinculoCreadoPor")
+  passwordResets        PasswordResetToken[]
+
+  // --- Bloque 5: avisos por mensajería ---
+  avisosCreados         AvisoMasivo[]        @relation("AvisoCreadoPor")
+  mensajesRecibidosSms  MensajeEnviado[]     @relation("MensajeDestinatario")
+
+  // --- Bloque 4: carnet digital ---
+  credencialesEmitidas  CredencialDigital[]  @relation("CredencialEmitidaPor")
+  accesosOperados       RegistroAcceso[]     @relation("AccesoOperador")
+
+  @@index([role])
+}
+
+// ============================================================
+// VÍNCULO TUTOR — ALUMNO
+// ============================================================
+
+/// Regla de negocio: los padres SÓLO pueden ver información de sus propios hijos.
+///
+/// Reemplaza a `ParentStudentLink`, que tenía dos problemas: vinculaba User con
+/// User (y un alumno de Inicial no tiene User), y lo creaba el propio padre
+/// informando un DNI, sin verificación alguna. Acá el vínculo lo crea un ADMIN
+/// y queda registrado quién lo hizo.
+model TutorAlumno {
+  id                       Int      @id @default(autoincrement())
+  tutorId                  Int
+  tutor                    User     @relation("TutorDe", fields: [tutorId], references: [id], onDelete: Cascade)
+  alumnoId                 Int
+  alumno                   Alumno   @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  parentesco               String?
+  /// Tutor al que se le emiten las facturas del alumno.
+  esResponsableFacturacion Boolean  @default(false)
+  creadoPorId              Int?
+  creadoPor                User?    @relation("VinculoCreadoPor", fields: [creadoPorId], references: [id], onDelete: SetNull)
+  createdAt                DateTime @default(now())
+
+  @@unique([tutorId, alumnoId])
+  @@index([alumnoId])
+  @@index([tutorId])
+}
+
+// ============================================================
+// AUDITORÍA DE TAREAS PROGRAMADAS Y CORREOS
+// ============================================================
+
+enum TipoTareaProgramada {
+  /// Último día hábil del mes: genera facturas y envía el desglose.
+  FACTURACION_MENSUAL
+  /// Día 20: recuerda las facturas con saldo pendiente.
+  RECORDATORIO_DEUDA
+}
+
+enum EstadoEjecucion {
+  EN_CURSO
+  COMPLETADA
+  FALLIDA
+}
+
+/// Bitácora de corridas de los schedulers.
+///
+/// Sirve para dos cosas: demostrar ante la cátedra que las tareas efectivamente
+/// corrieron, y hacer que sean **idempotentes** — antes de ejecutar, el job
+/// consulta si ya hay una corrida COMPLETADA para ese período y no la repite.
+/// Sin esto, un reinicio del servidor el último día del mes mandaría los mails
+/// dos veces.
+model EjecucionTarea {
+  id            Int                 @id @default(autoincrement())
+  tarea         TipoTareaProgramada
+  anio          Int
+  mes           Int
+  estado        EstadoEjecucion     @default(EN_CURSO)
+  iniciadaEn    DateTime            @default(now())
+  finalizadaEn  DateTime?
+  /// Resumen de lo procesado: facturas generadas, mails enviados, errores.
+  resultado     Json?
+  error         String?
+  /// `true` si la disparó una persona desde el backoffice en vez del cron.
+  manual        Boolean             @default(false)
+  ejecutadaPorId Int?
+
+  @@unique([tarea, anio, mes])
+  @@index([estado])
+}
+
+enum EstadoEmail {
+  ENVIADO
+  FALLIDO
+}
+
+/// Registro de correos enviados por el sistema. Auditoría del circuito de
+/// cobranza: permite responder "¿se le avisó a esta familia y cuándo?".
+model EmailLog {
+  id         Int         @id @default(autoincrement())
+  destino    String
+  asunto     String
+  tipo       String
+  estado     EstadoEmail @default(ENVIADO)
+  error      String?
+  facturaId  Int?
+  alumnoId   Int?
+  ejecucionId Int?
+  createdAt  DateTime    @default(now())
+
+  @@index([destino])
+  @@index([tipo, createdAt])
+  @@index([ejecucionId])
+}
+
+// ============================================================
+// RECUPERACIÓN DE CONTRASEÑA
+// ============================================================
+
+/// Se guarda el **hash** del token, nunca el token en claro: si alguien lee la
+/// tabla no puede usar los tokens vigentes. El valor original viaja sólo en el
+/// mail al usuario.
+model PasswordResetToken {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  solicitadoDesde String?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ============================================================
+// ESTRUCTURA ACADÉMICA
+// ============================================================
+
+model NivelEducativo {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique
+  orden       Int      @unique
+  descripcion String?
+  /// Cuota base mensual del nivel. La factura copia el importe en su
+  /// `ItemFactura`, así que cambiar este valor no altera el histórico.
+  cuotaMensual Decimal @default(0) @db.Decimal(10, 2)
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  cursos           Curso[]
+  horariosDeporte  HorarioDeporte[]
+
+  @@index([activo])
+}
+
+/// Regla de negocio: cada curso pertenece a un único nivel (FK obligatoria).
+model Curso {
+  id          Int      @id @default(autoincrement())
+  nivelId     Int
+  nivel       NivelEducativo @relation(fields: [nivelId], references: [id], onDelete: Restrict)
+  nombre      String
+  division    String   @default("A")
+  turno       Turno    @default(MANANA)
+  anioLectivo Int
+  cupoMaximo  Int      @default(30)
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  alumnos  Alumno[]
+  materias Materia[]
+  avisos   AvisoMasivo[]
+
+  @@unique([nivelId, nombre, division, anioLectivo])
+  @@index([anioLectivo, activo])
+}
+
+model Materia {
+  id           Int      @id @default(autoincrement())
+  nombre       String
+  cursoId      Int
+  curso        Curso    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  profesorId   Int?
+  profesor     Profesor? @relation(fields: [profesorId], references: [id], onDelete: SetNull)
+  cargaHoraria Int      @default(4)
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  avisos       AvisoMasivo[]
+
+  @@unique([cursoId, nombre])
+  @@index([profesorId])
+}
+
+// ============================================================
+// PERSONAS
+// ============================================================
+
+/// Regla de negocio: cada alumno pertenece a un único curso (`cursoId` es
+/// obligatorio) y ese curso a un único nivel. El nivel del alumno se deriva de
+/// `curso.nivel`, nunca se duplica.
+model Alumno {
+  id              Int          @id @default(autoincrement())
+  userId          Int?         @unique
+  user            User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  legajo          String       @unique
+  dni             String       @unique
+  apellido        String
+  nombres         String
+  fechaNacimiento DateTime     @db.Date
+  domicilio       String
+  localidad       String       @default("Resistencia")
+  provincia       String       @default("Chaco")
+  telefono        String?
+  email           String?
+  cursoId         Int
+  curso           Curso        @relation(fields: [cursoId], references: [id], onDelete: Restrict)
+  estado          EstadoAlumno @default(ACTIVO)
+  fechaIngreso    DateTime     @db.Date
+  observaciones   String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  inscripcionesDeporte    InscripcionDeporte[]
+  inscripcionesTransporte InscripcionTransporte[]
+  inscripcionesComedor    InscripcionComedor[]
+  facturas                Factura[]
+  tutores                 TutorAlumno[]
+  credencial              CredencialDigital?
+  mensajes                MensajeEnviado[]
+  accesos                 RegistroAcceso[]
+
+  @@index([cursoId])
+  @@index([estado])
+  @@index([apellido, nombres])
+}
+
+model Profesor {
+  id            Int            @id @default(autoincrement())
+  userId        Int?           @unique
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  legajo        String         @unique
+  dni           String         @unique
+  apellido      String
+  nombres       String
+  especialidad  String
+  email         String
+  telefono      String?
+  domicilio     String?
+  estado        EstadoProfesor @default(ACTIVO)
+  fechaIngreso  DateTime       @db.Date
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  materias          Materia[]
+  deportesACargo    Deporte[]        @relation("DeporteResponsable")
+  horariosDeporte   HorarioDeporte[] @relation("HorarioProfesor")
+
+  @@index([estado])
+  @@index([apellido, nombres])
+}
+
+// ============================================================
+// DEPORTES
+// ============================================================
+
+/// Regla de negocio: cada deporte tiene profesor responsable, arancel
+/// diferenciado y grupos por nivel/horario (ver HorarioDeporte).
+model Deporte {
+  id                    Int      @id @default(autoincrement())
+  nombre                String   @unique
+  descripcion           String?
+  profesorResponsableId Int
+  profesorResponsable   Profesor @relation("DeporteResponsable", fields: [profesorResponsableId], references: [id], onDelete: Restrict)
+  arancelMensual        Decimal  @db.Decimal(10, 2)
+  cupoMaximo            Int      @default(25)
+  activo                Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  horarios      HorarioDeporte[]
+  inscripciones InscripcionDeporte[]
+  avisos        AvisoMasivo[]
+
+  @@index([activo])
+  @@index([profesorResponsableId])
+}
+
+/// Un grupo-sesión semanal de un deporte para un nivel determinado.
+/// `horaInicio`/`horaFin` en minutos desde medianoche (ver cabecera del archivo).
+model HorarioDeporte {
+  id         Int            @id @default(autoincrement())
+  deporteId  Int
+  deporte    Deporte        @relation(fields: [deporteId], references: [id], onDelete: Cascade)
+  nivelId    Int
+  nivel      NivelEducativo @relation(fields: [nivelId], references: [id], onDelete: Restrict)
+  diaSemana  DiaSemana
+  horaInicio Int
+  horaFin    Int
+  lugar      String         @default("Polideportivo del colegio")
+  profesorId Int?
+  profesor   Profesor?      @relation("HorarioProfesor", fields: [profesorId], references: [id], onDelete: SetNull)
+  cupoMaximo Int            @default(25)
+  activo     Boolean        @default(true)
+  createdAt  DateTime       @default(now())
+
+  @@unique([deporteId, nivelId, diaSemana, horaInicio])
+  @@index([nivelId, diaSemana])
+  @@index([deporteId])
+}
+
+/// Regla de negocio: máximo 2 deportes simultáneos por alumno.
+/// Se garantiza en tres capas:
+///   1. `slot` ∈ {1,2} — CHECK en la migración.
+///   2. Índice único parcial (alumnoId, slot) WHERE estado = 'ACTIVA' — hace
+///      físicamente imposible una tercera inscripción activa.
+///   3. Trigger `fn_validar_max_deportes` — mensaje de error legible.
+/// El solapamiento horario lo valida el trigger `fn_validar_solapamiento_deporte`.
+model InscripcionDeporte {
+  id          Int               @id @default(autoincrement())
+  alumnoId    Int
+  alumno      Alumno            @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  deporteId   Int
+  deporte     Deporte           @relation(fields: [deporteId], references: [id], onDelete: Restrict)
+  slot        Int
+  estado      EstadoInscripcion @default(ACTIVA)
+  fechaAlta   DateTime          @default(now())
+  fechaBaja   DateTime?
+  observacion String?
+
+  @@unique([alumnoId, deporteId])
+  @@index([alumnoId, estado])
+  @@index([deporteId, estado])
+}
+
+// ============================================================
+// TRANSPORTE ESCOLAR
+// ============================================================
+
+/// Regla de negocio: existen exactamente 4 recorridos. El enum `CodigoRecorrido`
+/// acota los códigos a R1..R4 y `@unique` impide duplicarlos: el máximo de 4
+/// filas queda garantizado por el motor. El seed asegura que las 4 existan.
+model RecorridoTransporte {
+  id             Int             @id @default(autoincrement())
+  codigo         CodigoRecorrido @unique
+  nombre         String
+  descripcion    String?
+  zonas          String
+  arancelMensual Decimal         @db.Decimal(10, 2)
+  capacidad      Int             @default(45)
+  choferNombre   String?
+  patente        String?
+  horaSalida     Int
+  horaRegreso    Int
+  activo         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  inscripciones InscripcionTransporte[]
+  accesos       RegistroAcceso[]
+  posiciones    PosicionTransporte[]
+
+  @@index([activo])
+}
+
+/// Servicio opcional contratado por mes calendario.
+model InscripcionTransporte {
+  id          Int                 @id @default(autoincrement())
+  alumnoId    Int
+  alumno      Alumno              @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  recorridoId Int
+  recorrido   RecorridoTransporte @relation(fields: [recorridoId], references: [id], onDelete: Restrict)
+  anio        Int
+  mes         Int
+  turno       TurnoTransporte     @default(IDA_Y_VUELTA)
+  estado      EstadoInscripcion   @default(ACTIVA)
+  fechaAlta   DateTime            @default(now())
+  fechaBaja   DateTime?
+
+  @@unique([alumnoId, anio, mes])
+  @@index([recorridoId, anio, mes])
+}
+
+// ============================================================
+// COMEDOR
+// ============================================================
+
+/// Modalidades del servicio de comedor, con arancel diferenciado.
+model Comedor {
+  id             Int      @id @default(autoincrement())
+  nombre         String   @unique
+  descripcion    String?
+  diasPorSemana  Int
+  arancelMensual Decimal  @db.Decimal(10, 2)
+  cupoMaximo     Int      @default(120)
+  horaServicio   Int      @default(720)
+  activo         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  inscripciones InscripcionComedor[]
+  accesos       RegistroAcceso[]
+
+  @@index([activo])
+}
+
+model InscripcionComedor {
+  id        Int               @id @default(autoincrement())
+  alumnoId  Int
+  alumno    Alumno            @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  comedorId Int
+  comedor   Comedor           @relation(fields: [comedorId], references: [id], onDelete: Restrict)
+  anio      Int
+  mes       Int
+  estado    EstadoInscripcion @default(ACTIVA)
+  fechaAlta DateTime          @default(now())
+  fechaBaja DateTime?
+
+  @@unique([alumnoId, anio, mes])
+  @@index([comedorId, anio, mes])
+}
+
+// ============================================================
+// FACTURACIÓN Y PAGOS
+// ============================================================
+
+/// Una factura por alumno y período. `ItemFactura` provee el desglose exigido
+/// por la consigna (cuota, transporte, comedor, deportes).
+model Factura {
+  id               Int           @id @default(autoincrement())
+  numero           String        @unique
+  alumnoId         Int
+  alumno           Alumno        @relation(fields: [alumnoId], references: [id], onDelete: Restrict)
+  tutorId          Int?
+  tutor            User?         @relation("FacturaTutor", fields: [tutorId], references: [id], onDelete: SetNull)
+  anio             Int
+  mes              Int
+  fechaEmision     DateTime      @db.Date
+  fechaVencimiento DateTime      @db.Date
+  subtotal         Decimal       @db.Decimal(10, 2)
+  recargo          Decimal       @default(0) @db.Decimal(10, 2)
+  total            Decimal       @db.Decimal(10, 2)
+  /// Suma de los comprobantes APROBADOS. Lo mantiene el trigger
+  /// `fn_recalcular_estado_factura`; no se escribe a mano desde la aplicación.
+  montoPagado      Decimal       @default(0) @db.Decimal(10, 2)
+  estado           EstadoFactura @default(PENDIENTE)
+  pdfUrl           String?
+  observaciones    String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  items        ItemFactura[]
+  comprobantes ComprobantePago[]
+
+  @@unique([alumnoId, anio, mes])
+  @@index([estado])
+  @@index([anio, mes])
+  @@index([fechaVencimiento])
+}
+
+model ItemFactura {
+  id             Int             @id @default(autoincrement())
+  facturaId      Int
+  factura        Factura         @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+  tipo           TipoItemFactura
+  descripcion    String
+  cantidad       Int             @default(1)
+  precioUnitario Decimal         @db.Decimal(10, 2)
+  subtotal       Decimal         @db.Decimal(10, 2)
+  /// Id de la entidad que originó el ítem (deporte, recorrido o comedor).
+  /// Sin FK a propósito: es polimórfico según `tipo`.
+  referenciaId   Int?
+
+  @@index([facturaId])
+  @@index([tipo])
+}
+
+/// Regla de negocio: NO se acepta efectivo. Todo pago es una transferencia con
+/// comprobante adjunto (`archivoUrl` es obligatorio) que Administración valida.
+/// Relación 1:N — una factura puede liquidarse con varias transferencias.
+model ComprobantePago {
+  id                 Int               @id @default(autoincrement())
+  facturaId          Int
+  factura            Factura           @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+  subidoPorId        Int
+  subidoPor          User              @relation("ComprobanteSubidoPor", fields: [subidoPorId], references: [id], onDelete: Restrict)
+  monto              Decimal           @db.Decimal(10, 2)
+  fechaTransferencia DateTime          @db.Date
+  bancoOrigen        String
+  numeroOperacion    String
+  archivoUrl         String
+  estado             EstadoComprobante @default(PENDIENTE)
+  validadoPorId      Int?
+  validadoPor        User?             @relation("ComprobanteValidadoPor", fields: [validadoPorId], references: [id], onDelete: SetNull)
+  validadoEn         DateTime?
+  motivoRechazo      String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@unique([facturaId, numeroOperacion])
+  @@index([facturaId, estado])
+  @@index([estado])
+}
+
+// ============================================================
+// BLOQUE 1 — Modelos existentes (sin cambios de estructura)
+// ============================================================
+
+model Grade {
+  id           Int      @id @default(autoincrement())
+  estudianteId Int
+  estudiante   User     @relation("EstudianteGrades", fields: [estudianteId], references: [id], onDelete: Cascade)
+  docenteId    Int
+  docente      User     @relation("DocenteGrades", fields: [docenteId], references: [id], onDelete: Restrict)
+  materia      String
+  instancia    String
+  nota         Int
+  fecha        DateTime @db.Date
+  createdAt    DateTime @default(now())
+
+  @@index([estudianteId])
+  @@index([docenteId])
+}
+
+model ParentStudentLink {
+  id           Int  @id @default(autoincrement())
+  padreId      Int
+  padre        User @relation("PadreLinks", fields: [padreId], references: [id], onDelete: Cascade)
+  estudianteId Int
+  estudiante   User @relation("EstudianteLinks", fields: [estudianteId], references: [id], onDelete: Cascade)
+
+  @@unique([padreId, estudianteId])
+  @@index([estudianteId])
+}
+
+model Attendance {
+  id           Int              @id @default(autoincrement())
+  estudianteId Int
+  estudiante   User             @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  fecha        DateTime         @db.Date
+  status       AttendanceStatus
+  materia      String?
+  observacion  String?
+  createdAt    DateTime         @default(now())
+
+  @@unique([estudianteId, fecha, materia])
+  @@index([estudianteId])
+  @@index([fecha])
+}
+
+/// @deprecated Modelo de pagos original. Se conserva porque `payments.routes.ts`
+/// y el panel de padres siguen consumiéndolo. Sprint 3 lo reemplaza por
+/// Factura + ItemFactura + ComprobantePago y luego se elimina.
+model Payment {
+  id           Int           @id @default(autoincrement())
+  estudianteId Int
+  estudiante   User          @relation("PaymentStudent", fields: [estudianteId], references: [id], onDelete: Cascade)
+  padreId      Int?
+  padre        User?         @relation("PaymentParent", fields: [padreId], references: [id], onDelete: SetNull)
+  concepto     String
+  monto        Decimal       @db.Decimal(10, 2)
+  vencimiento  DateTime      @db.Date
+  pagadoEn     DateTime?
+  status       PaymentStatus @default(PENDIENTE)
+  createdAt    DateTime      @default(now())
+
+  @@index([estudianteId])
+  @@index([status])
+}
+
+model Announcement {
+  id         Int                @id @default(autoincrement())
+  authorId   Int
+  author     User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  titulo     String
+  contenido  String
+  targetRole AnnouncementTarget @default(ALL)
+  createdAt  DateTime           @default(now())
+
+  @@index([targetRole])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titulo    String
+  contenido String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  senderId   Int
+  sender     User     @relation("MsgSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId Int
+  receiver   User     @relation("MsgReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  contenido  String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([senderId, receiverId])
+  @@index([receiverId, isRead])
+}
+
+model Activity {
+  id           Int          @id @default(autoincrement())
+  docenteId    Int
+  docente      User         @relation("ActivityDocente", fields: [docenteId], references: [id], onDelete: Cascade)
+  materia      String
+  titulo       String
+  descripcion  String
+  tipo         ActivityType @default(TAREA)
+  fechaEntrega DateTime
+  maxScore     Int          @default(10)
+  fileUrl      String?
+  createdAt    DateTime     @default(now())
+
+  submissions Submission[]
+
+  @@index([materia])
+  @@index([fechaEntrega])
+}
+
+model Submission {
+  id           Int              @id @default(autoincrement())
+  activityId   Int
+  activity     Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  estudianteId Int
+  estudiante   User             @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  textContent  String?
+  fileUrl      String?
+  status       SubmissionStatus @default(ENTREGADO)
+  score        Int?
+  feedback     String?
+  entregadoEn  DateTime         @default(now())
+  calificadoEn DateTime?
+
+  @@unique([activityId, estudianteId])
+  @@index([estudianteId])
+}
+
+model ForumPost {
+  id        Int          @id @default(autoincrement())
+  authorId  Int
+  author    User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  materia   String
+  titulo    String
+  contenido String
+  isPinned  Boolean      @default(false)
+  createdAt DateTime     @default(now())
+
+  replies   ForumReply[]
+
+  @@index([materia])
+  @@index([createdAt])
+}
+
+model ForumReply {
+  id        Int       @id @default(autoincrement())
+  postId    Int
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  Int
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  contenido String
+  createdAt DateTime  @default(now())
+
+  @@index([postId])
+}
+
+model Inscription {
+  id               Int              @id @default(autoincrement())
+  nombreTutor      String
+  emailTutor       String
+  telefonoTutor    String
+  nombreEstudiante String
+  nivel            String
+  curso            String
+  mensaje          String?
+  status           ModerationStatus @default(PENDIENTE)
+  notaAdmin        String?
+  createdAt        DateTime         @default(now())
+  resolvedAt       DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// Reseñas públicas del sitio institucional (no requieren login).
+/// Renombrado desde `Opinion` para alinearse con la nomenclatura del dominio.
+/// `@@map("Opinion")` conserva la tabla física: el renombre NO migra datos.
+model OpinionPublica {
+  id         Int              @id @default(autoincrement())
+  nombre     String?
+  rol        String
+  texto      String
+  rating     Int
+  status     ModerationStatus @default(PENDIENTE)
+  createdAt  DateTime         @default(now())
+  resolvedAt DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("Opinion")
+}
+
+model EmploymentApplication {
+  id         Int              @id @default(autoincrement())
+  nombre     String
+  email      String
+  puesto     String
+  cvUrl      String?
+  status     ModerationStatus @default(PENDIENTE)
+  notaAdmin  String?
+  createdAt  DateTime         @default(now())
+  resolvedAt DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model StudyPlan {
+  id         Int      @id @default(autoincrement())
+  docenteId  Int
+  docente    User     @relation(fields: [docenteId], references: [id], onDelete: Cascade)
+  materia    String
+  titulo     String
+  objetivos  String
+  contenidos String
+  fileUrl    String?
+  createdAt  DateTime @default(now())
+
+  @@index([materia])
+}
+
+// ============================================================
+// CARNET DIGITAL Y CONTROL DE ACCESO POR QR
+// ============================================================
+
+enum PuntoControl {
+  TRANSPORTE
+  COMEDOR
+}
+
+enum ResultadoAcceso {
+  PERMITIDO
+  DENEGADO_CODIGO_INVALIDO
+  DENEGADO_CODIGO_REUTILIZADO
+  DENEGADO_CREDENCIAL_REVOCADA
+  DENEGADO_ALUMNO_INACTIVO
+  DENEGADO_SIN_SERVICIO
+  DENEGADO_OTRO_RECORRIDO
+}
+
+/// Credencial digital del alumno.
+///
+/// `secreto` es la clave HMAC con la que el teléfono deriva el código rotativo
+/// (TOTP, RFC 6238). Se entrega una sola vez a la app del tutor por HTTPS y ahí
+/// queda en el almacenamiento seguro del dispositivo.
+///
+/// `version` permite revocar: al reemitir la credencial se genera un secreto
+/// nuevo y los códigos del teléfono viejo dejan de validar de inmediato. Es la
+/// respuesta a un teléfono perdido o a una credencial compartida.
+model CredencialDigital {
+  id           Int       @id @default(autoincrement())
+  alumnoId     Int       @unique
+  alumno       Alumno    @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  secreto      String
+  version      Int       @default(1)
+  activa       Boolean   @default(true)
+  emitidaEn    DateTime  @default(now())
+  revocadaEn   DateTime?
+  motivoRevocacion String?
+  emitidaPorId Int?
+  emitidaPor   User?     @relation("CredencialEmitidaPor", fields: [emitidaPorId], references: [id], onDelete: SetNull)
+
+  accesos RegistroAcceso[]
+
+  @@index([activa])
+}
+
+/// Bitácora de escaneos, tanto los permitidos como los rechazados.
+///
+/// Se registran también los rechazos: si alguien intenta entrar al comedor sin
+/// servicio contratado, o reutiliza un código, Administración tiene que poder
+/// verlo. Un registro que sólo guarda los éxitos no sirve para auditar.
+///
+/// `@@unique([credencialId, punto, contador])` es la defensa contra repetición:
+/// un mismo código no puede usarse dos veces en el mismo punto de control. Lo
+/// garantiza el motor, no la aplicación.
+model RegistroAcceso {
+  id            Int             @id @default(autoincrement())
+  credencialId  Int?
+  credencial    CredencialDigital? @relation(fields: [credencialId], references: [id], onDelete: SetNull)
+  alumnoId      Int?
+  alumno        Alumno?         @relation(fields: [alumnoId], references: [id], onDelete: SetNull)
+  punto         PuntoControl
+  resultado     ResultadoAcceso
+  motivo        String?
+  contador      Int?
+  recorridoId   Int?
+  recorrido     RecorridoTransporte? @relation(fields: [recorridoId], references: [id], onDelete: SetNull)
+  comedorId     Int?
+  comedor       Comedor?        @relation(fields: [comedorId], references: [id], onDelete: SetNull)
+  operadorId    Int?
+  operador      User?           @relation("AccesoOperador", fields: [operadorId], references: [id], onDelete: SetNull)
+  dispositivo   String?
+  notificado    Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+
+  @@unique([credencialId, punto, contador])
+  @@index([alumnoId, createdAt])
+  @@index([punto, createdAt])
+  @@index([resultado])
+}
+
+// ============================================================
+// RF-07 — AVISOS POR MENSAJERÍA
+// ============================================================
+
+enum TipoAviso {
+  CAMBIO_HORARIO
+  AUSENCIA_PROFESOR
+  GENERAL
+}
+
+enum CanalMensaje {
+  SMS
+  WHATSAPP
+  EMAIL
+}
+
+enum EstadoMensaje {
+  PENDIENTE
+  ENVIADO
+  FALLIDO
+  /// El tutor no tiene teléfono cargado: el plan exige avisar por correo.
+  SIN_TELEFONO
+}
+
+/// Aviso que la Dirección emite a un conjunto de familias.
+///
+/// El destinatario no se elige a mano: se deriva del curso, la materia o el
+/// deporte afectado. Así un cambio de horario llega exactamente a las familias
+/// involucradas y a ninguna más.
+model AvisoMasivo {
+  id          Int       @id @default(autoincrement())
+  tipo        TipoAviso
+  titulo      String
+  cuerpo      String
+  /// Alcance del aviso. Al menos uno debe estar presente.
+  cursoId     Int?
+  curso       Curso?    @relation(fields: [cursoId], references: [id], onDelete: SetNull)
+  materiaId   Int?
+  materia     Materia?  @relation(fields: [materiaId], references: [id], onDelete: SetNull)
+  deporteId   Int?
+  deporte     Deporte?  @relation(fields: [deporteId], references: [id], onDelete: SetNull)
+  creadoPorId Int?
+  creadoPor   User?     @relation("AvisoCreadoPor", fields: [creadoPorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+
+  mensajes MensajeEnviado[]
+
+  @@index([tipo, createdAt])
+}
+
+/// Un mensaje por destinatario. Queda registrado aunque falle: el plan exige
+/// poder demostrar a quién se avisó y a quién no.
+model MensajeEnviado {
+  id             Int           @id @default(autoincrement())
+  avisoId        Int
+  aviso          AvisoMasivo   @relation(fields: [avisoId], references: [id], onDelete: Cascade)
+  destinatarioId Int
+  destinatario   User          @relation("MensajeDestinatario", fields: [destinatarioId], references: [id], onDelete: Cascade)
+  alumnoId       Int?
+  alumno         Alumno?       @relation(fields: [alumnoId], references: [id], onDelete: SetNull)
+  telefono       String?
+  canal          CanalMensaje
+  estado         EstadoMensaje @default(PENDIENTE)
+  /// Identificador que devuelve el proveedor externo, para conciliar.
+  referenciaExterna String?
+  error          String?
+  enviadoEn      DateTime?
+  createdAt      DateTime      @default(now())
+
+  @@index([avisoId, estado])
+  @@index([destinatarioId])
+}
+
+// ============================================================
+// RF-08 — GEOLOCALIZACIÓN DEL TRANSPORTE
+// ============================================================
+
+/// Posición reportada por el dispositivo a bordo del micro.
+///
+/// Se conserva el histórico en vez de sobrescribir una única fila: permite
+/// reconstruir el recorrido de un día puntual si una familia reclama, y es el
+/// insumo para analizar demoras.
+model PosicionTransporte {
+  id           Int                 @id @default(autoincrement())
+  recorridoId  Int
+  recorrido    RecorridoTransporte @relation(fields: [recorridoId], references: [id], onDelete: Cascade)
+  latitud      Float
+  longitud     Float
+  /// Velocidad en km/h y precisión en metros, si el dispositivo las informa.
+  velocidad    Float?
+  precision    Float?
+  /// Momento en que el dispositivo tomó la posición, que puede diferir del de
+  /// recepción si hubo corte de señal y el envío quedó encolado.
+  registradoEn DateTime
+  dispositivo  String?
+  recibidoEn   DateTime            @default(now())
+
+  @@index([recorridoId, registradoEn])
+}
