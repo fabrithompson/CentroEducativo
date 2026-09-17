@@ -784,7 +784,10 @@ type ItemSeed = { tipo: TipoItemFactura; descripcion: string; precio: number; re
  * `fn_recalcular_estado_factura` a partir de los comprobantes aprobados.
  */
 async function seedFacturacion(prisma: PrismaClient, cat: Catalogos): Promise<void> {
-  const adminId = cat.usuarios.get('admin')!;
+  // Puede no existir: el seed del dominio corre también sobre una base sin
+  // usuarios (`prisma/seed-sin-usuarios.ts`). Antes esto era `get('admin')!`,
+  // una afirmación que no se sostenía y hacía fallar el seed entero.
+  const adminId = cat.usuarios.get('admin');
   let correlativo = 1;
 
   const numeroFactura = () => `0001-${String(correlativo++).padStart(8, '0')}`;
@@ -850,6 +853,11 @@ async function seedFacturacion(prisma: PrismaClient, cat: Catalogos): Promise<vo
     motivoRechazo?: string;
   }) {
     const subidoPorId = cat.usuarios.get(opts.subidoPor) ?? adminId;
+    // `ComprobantePago.subidoPorId` es un FK obligatorio a User: sin ninguna
+    // cuenta en la base, un comprobante no puede existir. Se omite en lugar de
+    // cortar el seed; las facturas quedan igual, en estado impago.
+    if (subidoPorId === undefined) return;
+
     const resuelto = opts.estado !== EstadoComprobante.PENDIENTE;
 
     await prisma.comprobantePago.upsert({
@@ -864,7 +872,7 @@ async function seedFacturacion(prisma: PrismaClient, cat: Catalogos): Promise<vo
         numeroOperacion: opts.operacion,
         archivoUrl: `/uploads/comprobantes/demo-${opts.operacion}.pdf`,
         estado: opts.estado,
-        validadoPorId: resuelto ? adminId : null,
+        validadoPorId: resuelto ? adminId ?? null : null,
         validadoEn: resuelto ? fecha(opts.dia[0], opts.dia[1], Math.min(opts.dia[2] + 1, 28)) : null,
         motivoRechazo: opts.motivoRechazo ?? null,
       },
