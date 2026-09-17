@@ -48,6 +48,10 @@ web/backend/uploads/*
 .tmp/
 web/backend/.tmp/
 
+# Expo
+.expo/
+mobile/.expo/
+
 # Cache
 .cache/
 .turbo/
