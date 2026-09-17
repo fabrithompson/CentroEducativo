@@ -1,14 +1,5 @@
 /**
  * Pantalla de ingreso.
- *
- * Decisiones que importan en un formulario de autenticación móvil:
- *  - `secureTextEntry` con opción de mostrar la clave: en un teclado de teléfono
- *    equivocarse es la norma, y esconderla siempre genera más errores que los
- *    que evita.
- *  - `autoCapitalize="none"` y `autoCorrect={false}` en el usuario: el
- *    autocorrector de Android convierte "fbarrabino" en cualquier cosa.
- *  - `KeyboardAvoidingView`: sin esto, en iOS el teclado tapa el botón.
- *  - El error se anuncia con `accessibilityLiveRegion`.
  */
 
 import React, { useState } from 'react';

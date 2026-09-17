@@ -154,9 +154,9 @@ type AlumnoSeed = {
 export const ALUMNOS: AlumnoSeed[] = [
   // --- Secundario (con cuenta de campus) ---
   {
-    legajo: 'A-0001', dni: '40000001', apellido: 'Barrabino', nombres: 'Franco Nicolás',
+    legajo: 'A-0001', dni: '40000001', apellido: 'Medina', nombres: 'Mateo Nicolás',
     nacimiento: [2013, 4, 18], domicilio: 'Av. 9 de Julio 2145', telefono: '362-4501122',
-    curso: { nivel: 'Secundario', nombre: '1er Año' }, usuario: 'fbarrabino',
+    curso: { nivel: 'Secundario', nombre: '1er Año' }, usuario: 'mmedina',
   },
   {
     legajo: 'A-0002', dni: '40000002', apellido: 'Pérez', nombres: 'Juan Manuel',
@@ -785,9 +785,9 @@ type ItemSeed = { tipo: TipoItemFactura; descripcion: string; precio: number; re
  */
 async function seedFacturacion(prisma: PrismaClient, cat: Catalogos): Promise<void> {
   // Puede no existir: el seed del dominio corre también sobre una base sin
-  // usuarios (`prisma/seed-sin-usuarios.ts`). Antes esto era `get('admin')!`,
+  // usuarios (`prisma/seed-sin-usuarios.ts`). Antes esto era una asercion no nula,
   // una afirmación que no se sostenía y hacía fallar el seed entero.
-  const adminId = cat.usuarios.get('admin');
+  const adminId = cat.usuarios.get('fabriynahuel');
   let correlativo = 1;
 
   const numeroFactura = () => `0001-${String(correlativo++).padStart(8, '0')}`;
@@ -889,46 +889,46 @@ async function seedFacturacion(prisma: PrismaClient, cat: Catalogos): Promise<vo
   const r1 = cat.recorridos.get(CodigoRecorrido.R1);
   const comedor5 = cat.comedores.get('Comedor — 5 días');
 
-  // --- Familia Barrabino (A-0001): el caso completo ---
-  const itemsBarrabino: ItemSeed[] = [
+  // --- Familia Medina (A-0001): el caso completo ---
+  const itemsMedina: ItemSeed[] = [
     { tipo: TipoItemFactura.CUOTA, descripcion: 'Cuota mensual — Secundario 1er Año', precio: cuota('A-0001') },
     { tipo: TipoItemFactura.TRANSPORTE, descripcion: `Transporte — ${r1?.nombre ?? 'Recorrido 1'}`, precio: 46000, referenciaId: r1?.id },
     { tipo: TipoItemFactura.COMEDOR, descripcion: 'Comedor — 5 días', precio: 68000, referenciaId: comedor5?.id },
     { tipo: TipoItemFactura.DEPORTE, descripcion: 'Deporte — Fútbol', precio: 22000, referenciaId: futbol?.id },
     { tipo: TipoItemFactura.DEPORTE, descripcion: 'Deporte — Ajedrez', precio: 15000, referenciaId: ajedrez?.id },
   ];
-  const totalBarrabino = itemsBarrabino.reduce((s, i) => s + i.precio, 0);
+  const totalMedina = itemsMedina.reduce((s, i) => s + i.precio, 0);
 
   // Julio: saldada con una sola transferencia.
-  const fJul = await crearFactura({ legajo: 'A-0001', tutor: 'pbarrabino', mes: 7, items: itemsBarrabino });
+  const fJul = await crearFactura({ legajo: 'A-0001', tutor: 'pmedina', mes: 7, items: itemsMedina });
   if (fJul) {
     await agregarComprobante({
-      facturaId: fJul.id, subidoPor: 'pbarrabino', monto: totalBarrabino,
+      facturaId: fJul.id, subidoPor: 'pmedina', monto: totalMedina,
       dia: [CICLO, 7, 8], banco: 'Banco Nación', operacion: 'NAC-7781204',
       estado: EstadoComprobante.APROBADO,
     });
   }
 
   // Agosto: saldada con DOS transferencias — la relación 1:N de la consigna.
-  const fAgo = await crearFactura({ legajo: 'A-0001', tutor: 'pbarrabino', mes: 8, items: itemsBarrabino });
+  const fAgo = await crearFactura({ legajo: 'A-0001', tutor: 'pmedina', mes: 8, items: itemsMedina });
   if (fAgo) {
     await agregarComprobante({
-      facturaId: fAgo.id, subidoPor: 'pbarrabino', monto: 120000,
+      facturaId: fAgo.id, subidoPor: 'pmedina', monto: 120000,
       dia: [CICLO, 8, 6], banco: 'Banco Nación', operacion: 'NAC-7902551',
       estado: EstadoComprobante.APROBADO,
     });
     await agregarComprobante({
-      facturaId: fAgo.id, subidoPor: 'pbarrabino', monto: totalBarrabino - 120000,
+      facturaId: fAgo.id, subidoPor: 'pmedina', monto: totalMedina - 120000,
       dia: [CICLO, 8, 9], banco: 'Nuevo Banco del Chaco', operacion: 'NBCH-334871',
       estado: EstadoComprobante.APROBADO,
     });
   }
 
   // Septiembre: comprobante cargado, esperando validación de Administración.
-  const fSep = await crearFactura({ legajo: 'A-0001', tutor: 'pbarrabino', mes: 9, items: itemsBarrabino });
+  const fSep = await crearFactura({ legajo: 'A-0001', tutor: 'pmedina', mes: 9, items: itemsMedina });
   if (fSep) {
     await agregarComprobante({
-      facturaId: fSep.id, subidoPor: 'pbarrabino', monto: totalBarrabino,
+      facturaId: fSep.id, subidoPor: 'pmedina', monto: totalMedina,
       dia: [CICLO, 9, 9], banco: 'Nuevo Banco del Chaco', operacion: 'NBCH-401223',
       estado: EstadoComprobante.PENDIENTE,
     });

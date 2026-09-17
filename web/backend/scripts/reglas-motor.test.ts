@@ -259,7 +259,7 @@ test('REGLA: el estado de la factura lo deriva el motor, no la aplicación', asy
   const alumno = await prisma.alumno.findUnique({ where: { legajo: 'A-0003' } });
   assert.ok(alumno);
 
-  const admin = await prisma.user.findUnique({ where: { usuario: 'admin' } });
+  const admin = await prisma.user.findUnique({ where: { usuario: 'fabriynahuel' } });
   assert.ok(admin);
 
   const factura = await prisma.factura.create({
@@ -325,7 +325,7 @@ test('REGLA: el estado de la factura lo deriva el motor, no la aplicación', asy
 
 test('REGLA: no se acepta un comprobante sin archivo adjunto', async () => {
   const factura = await prisma.factura.findFirst();
-  const admin = await prisma.user.findUnique({ where: { usuario: 'admin' } });
+  const admin = await prisma.user.findUnique({ where: { usuario: 'fabriynahuel' } });
   assert.ok(factura && admin);
 
   await assert.rejects(
@@ -365,7 +365,7 @@ test('REGLA: el motor rechaza como tutor a quien no tiene rol PADRE', async () =
 
 test('REGLA: un código QR no puede usarse dos veces en el mismo punto', async () => {
   const alumno = await prisma.alumno.findUnique({ where: { legajo: 'A-0001' } });
-  const admin = await prisma.user.findUnique({ where: { usuario: 'admin' } });
+  const admin = await prisma.user.findUnique({ where: { usuario: 'fabriynahuel' } });
   assert.ok(alumno && admin);
 
   const credencial = await prisma.credencialDigital.create({

@@ -101,7 +101,7 @@ lo resuelve el motor, no la aplicación. Dos requests concurrentes no pueden dej
 con 3 deportes.
 
 El trigger existe para otra cosa: convertir el `duplicate key value violates unique
-constraint` —que no le dice nada a un tutor— en *"El alumno Barrabino, Franco ya tiene 2
+constraint` —que no le dice nada a un tutor— en *"El alumno Medina, Mateo ya tiene 2
 deportes activos. El máximo permitido es 2."*
 
 ### 3.2 El estado de la factura es derivado, nunca declarado
@@ -204,7 +204,7 @@ Para la defensa conviene poder mostrar los rechazos en vivo. El seed está armad
 
 ### 6.1 Máximo 2 deportes — debe fallar
 
-`A-0001` (Franco Barrabino) ya cursa Fútbol y Ajedrez.
+`A-0001` (Mateo Medina) ya cursa Fútbol y Ajedrez.
 
 ```sql
 INSERT INTO "InscripcionDeporte" ("alumnoId", "deporteId", "slot", "estado")
@@ -215,7 +215,7 @@ VALUES (
 );
 ```
 
-**Esperado:** `El alumno Barrabino, Franco Nicolás ya tiene 2 deportes activos. El máximo permitido es 2.`
+**Esperado:** `El alumno Medina, Mateo Nicolás ya tiene 2 deportes activos. El máximo permitido es 2.`
 
 ### 6.2 Solapamiento de horarios — debe fallar
 

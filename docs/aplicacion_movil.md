@@ -73,7 +73,7 @@ El refresh token nunca toca JavaScript: el backend lo deja en una cookie
 - **Opción de mostrar la contraseña.** En un teclado de teléfono equivocarse es
   la norma; esconderla siempre genera más errores que los que evita.
 - `autoCapitalize="none"` y `autoCorrect={false}` en el usuario: el autocorrector
-  de Android convierte "fbarrabino" en cualquier cosa.
+  de Android convierte "mmedina" en cualquier cosa.
 - `KeyboardAvoidingView`: sin eso, en iOS el teclado tapa el botón.
 - **Recuperación de contraseña** integrada con `POST /api/auth/forgot-password`.
 

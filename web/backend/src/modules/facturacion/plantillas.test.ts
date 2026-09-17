@@ -33,11 +33,11 @@ const FACTURA: DatosFactura = {
   periodo: { anio: 2026, mes: 9 },
   fechaEmision: d('2026-09-30'),
   fechaVencimiento: d('2026-10-13'),
-  alumno: 'Barrabino, Franco Nicolás',
+  alumno: 'Medina, Mateo Nicolás',
   legajo: 'A-0001',
   curso: '1er Año "A"',
   nivel: 'Secundario',
-  tutor: 'Patricia Barrabino',
+  tutor: 'Patricia Medina',
   items: [
     { tipo: 'CUOTA', descripcion: 'Cuota mensual — Secundario', cantidad: 1, precioUnitario: 104000, subtotal: 104000 },
     { tipo: 'TRANSPORTE', descripcion: 'Recorrido 1 — Centro', cantidad: 1, precioUnitario: 46000, subtotal: 46000 },
@@ -58,7 +58,7 @@ const FACTURA: DatosFactura = {
 test('la factura incluye el número, el alumno y el legajo', () => {
   const html = facturaHtml(FACTURA);
   assert.match(html, /0001-00000042/);
-  assert.match(html, /Barrabino, Franco Nicolás/);
+  assert.match(html, /Medina, Mateo Nicolás/);
   assert.match(html, /A-0001/);
 });
 
@@ -117,19 +117,19 @@ test('etiquetaTipo traduce los tipos y deja pasar los desconocidos', () => {
 // ------------------------------------------------------------------
 
 const RESUMEN: DatosResumenMensual = {
-  tutor: 'Patricia Barrabino',
+  tutor: 'Patricia Medina',
   periodo: { anio: 2026, mes: 9 },
   fechaVencimiento: d('2026-10-13'),
   hijos: [
     {
-      alumno: 'Barrabino, Franco',
+      alumno: 'Medina, Mateo',
       curso: 'Secundario · 1er Año "A"',
       numero: '0001-00000042',
       items: FACTURA.items,
       total: 240000,
     },
     {
-      alumno: 'Barrabino, Julieta',
+      alumno: 'Medina, Julieta',
       curso: 'Primario · 4to Grado "A"',
       numero: '0001-00000043',
       items: [{ tipo: 'CUOTA', descripcion: 'Cuota mensual — Primario', cantidad: 1, precioUnitario: 92000, subtotal: 92000 }],
@@ -145,8 +145,8 @@ test('el asunto del resumen nombra el período en castellano', () => {
 
 test('el resumen incluye a todos los hijos en un solo correo', () => {
   const texto = resumenMensualTexto(RESUMEN);
-  assert.match(texto, /Barrabino, Franco/);
-  assert.match(texto, /Barrabino, Julieta/);
+  assert.match(texto, /Medina, Mateo/);
+  assert.match(texto, /Medina, Julieta/);
   assert.match(texto, /0001-00000042/);
   assert.match(texto, /0001-00000043/);
 });
@@ -174,8 +174,8 @@ test('el resumen explica la forma de pago y el CBU', () => {
 
 test('la versión HTML del resumen contiene los mismos datos clave', () => {
   const html = resumenMensualHtml(RESUMEN);
-  assert.match(html, /Barrabino, Franco/);
-  assert.match(html, /Barrabino, Julieta/);
+  assert.match(html, /Medina, Mateo/);
+  assert.match(html, /Medina, Julieta/);
   assert.match(html, /septiembre de 2026/);
   assert.match(html, new RegExp(INSTITUCION.cbu));
 });
@@ -255,7 +255,7 @@ test('el aviso de aprobación informa si queda saldo', () => {
   const conSaldo = comprobanteAprobadoTexto({
     tutor: 'Patricia',
     numero: '0001-00000042',
-    alumno: 'Barrabino, Franco',
+    alumno: 'Medina, Mateo',
     monto: 120000,
     saldo: 120000,
   });
@@ -264,7 +264,7 @@ test('el aviso de aprobación informa si queda saldo', () => {
   const saldado = comprobanteAprobadoTexto({
     tutor: 'Patricia',
     numero: '0001-00000042',
-    alumno: 'Barrabino, Franco',
+    alumno: 'Medina, Mateo',
     monto: 240000,
     saldo: 0,
   });

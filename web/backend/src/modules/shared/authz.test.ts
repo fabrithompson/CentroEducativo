@@ -63,12 +63,12 @@ function fakePrisma() {
   } as any;
 }
 
-const admin: AuthUser = { id: 1, usuario: 'admin', role: 'ADMIN' };
+const admin: AuthUser = { id: 1, usuario: 'fabriynahuel', role: 'ADMIN' };
 const docente: AuthUser = { id: 2, usuario: 'mlopez', role: 'DOCENTE' };
-const tutor10: AuthUser = { id: 10, usuario: 'pbarrabino', role: 'PADRE' };
+const tutor10: AuthUser = { id: 10, usuario: 'pmedina', role: 'PADRE' };
 const tutor11: AuthUser = { id: 11, usuario: 'rperez', role: 'PADRE' };
 const tutorSinHijos: AuthUser = { id: 12, usuario: 'nuevo', role: 'PADRE' };
-const estudiante: AuthUser = { id: 50, usuario: 'fbarrabino', role: 'ESTUDIANTE' };
+const estudiante: AuthUser = { id: 50, usuario: 'mmedina', role: 'ESTUDIANTE' };
 
 // ------------------------------------------------------------------
 // alumnosDelTutor

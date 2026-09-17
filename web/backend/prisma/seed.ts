@@ -23,14 +23,14 @@ type UserSeed = {
 };
 
 const SEED_USERS: UserSeed[] = [
-  { usuario: 'admin', email: 'admin@et.edu.ar', dni: '10000001', nombre: 'Administrador del Sistema', role: Role.ADMIN, curso: null },
+  { usuario: 'fabriynahuel', email: 'fabriynahuel@et.edu.ar', dni: '10000001', nombre: 'Fabricio y Nahuel', role: Role.ADMIN, curso: null },
 
   { usuario: 'mlopez',    email: 'm.lopez@et.edu.ar',    dni: '20000001', nombre: 'María López',     role: Role.DOCENTE, curso: null },
   { usuario: 'jgarcia',   email: 'j.garcia@et.edu.ar',   dni: '20000002', nombre: 'Javier García',   role: Role.DOCENTE, curso: null },
   { usuario: 'csilva',    email: 'c.silva@et.edu.ar',    dni: '20000003', nombre: 'Carolina Silva',  role: Role.DOCENTE, curso: null },
   { usuario: 'amartinez', email: 'a.martinez@et.edu.ar', dni: '20000004', nombre: 'Andrés Martínez', role: Role.DOCENTE, curso: null },
 
-  { usuario: 'fbarrabino', email: 'f.barrabino@et.edu.ar', dni: '40000001', nombre: 'Franco Barrabino',   role: Role.ESTUDIANTE, curso: 'Secundario — 1er Año' },
+  { usuario: 'mmedina',    email: 'm.medina@et.edu.ar',    dni: '40000001', nombre: 'Mateo Medina',       role: Role.ESTUDIANTE, curso: 'Secundario — 1er Año' },
   { usuario: 'jperez',     email: 'j.perez@et.edu.ar',     dni: '40000002', nombre: 'Juan Pérez',         role: Role.ESTUDIANTE, curso: 'Secundario — 1er Año' },
   { usuario: 'mgomez',     email: 'm.gomez@et.edu.ar',     dni: '40000003', nombre: 'María Gómez',        role: Role.ESTUDIANTE, curso: 'Primario — 6to Grado' },
   { usuario: 'lferreyra',  email: 'l.ferreyra@et.edu.ar',  dni: '40000004', nombre: 'Lucía Ferreyra',     role: Role.ESTUDIANTE, curso: 'Secundario — 2do Año' },
@@ -39,13 +39,13 @@ const SEED_USERS: UserSeed[] = [
   { usuario: 'vsanchez',   email: 'v.sanchez@et.edu.ar',   dni: '40000007', nombre: 'Valentina Sánchez',  role: Role.ESTUDIANTE, curso: 'Secundario — 1er Año' },
   { usuario: 'iflores',    email: 'i.flores@et.edu.ar',    dni: '40000008', nombre: 'Ignacio Flores',     role: Role.ESTUDIANTE, curso: 'Primario — 6to Grado' },
 
-  { usuario: 'pbarrabino', email: 'p.barrabino@et.edu.ar', dni: '30000001', nombre: 'Patricia Barrabino', role: Role.PADRE, curso: null },
+  { usuario: 'pmedina',    email: 'p.medina@et.edu.ar',    dni: '30000001', nombre: 'Patricia Medina',    role: Role.PADRE, curso: null },
   { usuario: 'rperez',     email: 'r.perez@et.edu.ar',     dni: '30000002', nombre: 'Roberto Pérez',      role: Role.PADRE, curso: null },
   { usuario: 'mgomezp',    email: 'm.gomez.padre@et.edu.ar', dni: '30000003', nombre: 'Mariana Gómez',    role: Role.PADRE, curso: null },
 ];
 
 const LINKS = [
-  { padre: 'pbarrabino', hijos: ['fbarrabino'] },
+  { padre: 'pmedina', hijos: ['mmedina'] },
   { padre: 'rperez',     hijos: ['jperez'] },
   { padre: 'mgomezp',    hijos: ['mgomez', 'iflores'] },
 ];
@@ -60,14 +60,14 @@ type GradeSeed = {
 };
 
 const GRADES: GradeSeed[] = [
-  { estudiante: 'fbarrabino', docente: 'mlopez',    materia: 'Álgebra y Geometría', instancia: '1er Trimestre', nota: 8, daysAgo: 60 },
-  { estudiante: 'fbarrabino', docente: 'mlopez',    materia: 'Álgebra y Geometría', instancia: '2do Trimestre', nota: 9, daysAgo: 12 },
-  { estudiante: 'fbarrabino', docente: 'jgarcia',   materia: 'Literatura',          instancia: '1er Trimestre', nota: 7, daysAgo: 55 },
-  { estudiante: 'fbarrabino', docente: 'jgarcia',   materia: 'Literatura',          instancia: '2do Trimestre', nota: 8, daysAgo: 10 },
-  { estudiante: 'fbarrabino', docente: 'csilva',    materia: 'Física',              instancia: '1er Trimestre', nota: 6, daysAgo: 40 },
-  { estudiante: 'fbarrabino', docente: 'csilva',    materia: 'Química',             instancia: '1er Trimestre', nota: 7, daysAgo: 30 },
-  { estudiante: 'fbarrabino', docente: 'amartinez', materia: 'Historia',            instancia: '1er Trimestre', nota: 9, daysAgo: 25 },
-  { estudiante: 'fbarrabino', docente: 'amartinez', materia: 'Inglés',              instancia: '1er Trimestre', nota: 10, daysAgo: 20 },
+  { estudiante: 'mmedina', docente: 'mlopez',    materia: 'Álgebra y Geometría', instancia: '1er Trimestre', nota: 8, daysAgo: 60 },
+  { estudiante: 'mmedina', docente: 'mlopez',    materia: 'Álgebra y Geometría', instancia: '2do Trimestre', nota: 9, daysAgo: 12 },
+  { estudiante: 'mmedina', docente: 'jgarcia',   materia: 'Literatura',          instancia: '1er Trimestre', nota: 7, daysAgo: 55 },
+  { estudiante: 'mmedina', docente: 'jgarcia',   materia: 'Literatura',          instancia: '2do Trimestre', nota: 8, daysAgo: 10 },
+  { estudiante: 'mmedina', docente: 'csilva',    materia: 'Física',              instancia: '1er Trimestre', nota: 6, daysAgo: 40 },
+  { estudiante: 'mmedina', docente: 'csilva',    materia: 'Química',             instancia: '1er Trimestre', nota: 7, daysAgo: 30 },
+  { estudiante: 'mmedina', docente: 'amartinez', materia: 'Historia',            instancia: '1er Trimestre', nota: 9, daysAgo: 25 },
+  { estudiante: 'mmedina', docente: 'amartinez', materia: 'Inglés',              instancia: '1er Trimestre', nota: 10, daysAgo: 20 },
 
   { estudiante: 'jperez', docente: 'mlopez',    materia: 'Álgebra y Geometría', instancia: '1er Trimestre', nota: 9,  daysAgo: 60 },
   { estudiante: 'jperez', docente: 'mlopez',    materia: 'Álgebra y Geometría', instancia: '2do Trimestre', nota: 10, daysAgo: 8 },
@@ -105,10 +105,10 @@ const GRADES: GradeSeed[] = [
 ];
 
 const ANUNCIOS = [
-  { autor: 'admin',    titulo: 'Bienvenida al Ciclo 2026',     contenido: 'Les damos la bienvenida al nuevo ciclo lectivo. Las clases comienzan el lunes a las 7:30hs.', target: 'ALL' },
-  { autor: 'admin',    titulo: 'Reunión de Personal Docente',  contenido: 'Convocatoria a reunión institucional el viernes 12 de junio a las 18:00 hs en el SUM. Asistencia obligatoria.', target: 'DOCENTE' },
+  { autor: 'fabriynahuel',    titulo: 'Bienvenida al Ciclo 2026',     contenido: 'Les damos la bienvenida al nuevo ciclo lectivo. Las clases comienzan el lunes a las 7:30hs.', target: 'ALL' },
+  { autor: 'fabriynahuel',    titulo: 'Reunión de Personal Docente',  contenido: 'Convocatoria a reunión institucional el viernes 12 de junio a las 18:00 hs en el SUM. Asistencia obligatoria.', target: 'DOCENTE' },
   { autor: 'mlopez',   titulo: 'Trabajo Práctico de Álgebra',  contenido: 'Recuerden traer la guía de ejercicios resuelta para el próximo encuentro.', target: 'ESTUDIANTE' },
-  { autor: 'admin',    titulo: 'Cierre de Inscripciones',      contenido: 'Las inscripciones a actividades extracurriculares cierran el viernes 30. Consulten en secretaría.', target: 'PADRE' },
+  { autor: 'fabriynahuel',    titulo: 'Cierre de Inscripciones',      contenido: 'Las inscripciones a actividades extracurriculares cierran el viernes 30. Consulten en secretaría.', target: 'PADRE' },
   { autor: 'jgarcia',  titulo: 'Festival de Ciencias',         contenido: 'El próximo mes realizaremos el festival anual de ciencias. ¡Anímense a participar!', target: 'ALL' },
   { autor: 'amartinez', titulo: 'Mesa de Exámenes Libres',     contenido: 'Las mesas de exámenes libres serán del 15 al 20 de junio. Consultar el cronograma en la web.', target: 'ESTUDIANTE' },
 ];
@@ -222,10 +222,10 @@ async function main() {
   await prisma.notification.deleteMany({});
   await prisma.notification.createMany({
     data: [
-      { userId: uid('fbarrabino'), titulo: 'Nueva calificación cargada', contenido: 'María López cargó tu nota de Álgebra (2do Trim).' },
+      { userId: uid('mmedina'), titulo: 'Nueva calificación cargada', contenido: 'María López cargó tu nota de Álgebra (2do Trim).' },
       { userId: uid('jperez'),     titulo: 'Recordatorio de cuota',       contenido: 'La cuota de Junio vence en 5 días.' },
       { userId: uid('mlopez'),     titulo: 'Nueva entrega pendiente',     contenido: 'Tenés 3 entregas por revisar.' },
-      { userId: uid('pbarrabino'), titulo: 'Nuevo anuncio',               contenido: 'Bienvenida al Ciclo 2026.' },
+      { userId: uid('pmedina'), titulo: 'Nuevo anuncio',               contenido: 'Bienvenida al Ciclo 2026.' },
       { userId: uid('rperez'),     titulo: 'Cuota vencida',               contenido: 'La cuota de Abril sigue impaga.' },
     ],
   });
@@ -234,10 +234,10 @@ async function main() {
   await prisma.message.deleteMany({});
   await prisma.message.createMany({
     data: [
-      { senderId: uid('pbarrabino'), receiverId: uid('mlopez'),     contenido: 'Hola María, ¿cómo viene Franco con Álgebra?' },
-      { senderId: uid('mlopez'),     receiverId: uid('pbarrabino'), contenido: 'Muy bien, está participando y entregó todos los TPs.' },
-      { senderId: uid('fbarrabino'), receiverId: uid('jgarcia'),    contenido: 'Profe, ¿la entrega del trabajo de Literatura es escrita o exposición?' },
-      { senderId: uid('jgarcia'),    receiverId: uid('fbarrabino'), contenido: 'Es escrita, mínimo 2 carillas.' },
+      { senderId: uid('pmedina'), receiverId: uid('mlopez'),     contenido: 'Hola María, ¿cómo viene Mateo con Álgebra?' },
+      { senderId: uid('mlopez'),     receiverId: uid('pmedina'), contenido: 'Muy bien, está participando y entregó todos los TPs.' },
+      { senderId: uid('mmedina'), receiverId: uid('jgarcia'),    contenido: 'Profe, ¿la entrega del trabajo de Literatura es escrita o exposición?' },
+      { senderId: uid('jgarcia'),    receiverId: uid('mmedina'), contenido: 'Es escrita, mínimo 2 carillas.' },
       { senderId: uid('rperez'),     receiverId: uid('csilva'),     contenido: 'Hola, consultaba por las notas de Química de Juan.' },
     ],
   });
@@ -279,9 +279,9 @@ async function main() {
   });
   await prisma.submission.createMany({
     data: [
-      { activityId: act1.id, estudianteId: uid('fbarrabino'), textContent: 'Adjunto los 10 ejercicios resueltos.', status: SubmissionStatus.CALIFICADO, score: 9, feedback: 'Muy bien resuelto, atención al ejercicio 7.', entregadoEn: dayIso(2), calificadoEn: dayIso(1) },
+      { activityId: act1.id, estudianteId: uid('mmedina'), textContent: 'Adjunto los 10 ejercicios resueltos.', status: SubmissionStatus.CALIFICADO, score: 9, feedback: 'Muy bien resuelto, atención al ejercicio 7.', entregadoEn: dayIso(2), calificadoEn: dayIso(1) },
       { activityId: act1.id, estudianteId: uid('jperez'),     textContent: 'Resuelto, en el ejercicio 5 tuve dudas.', status: SubmissionStatus.ENTREGADO, entregadoEn: dayIso(1) },
-      { activityId: act2.id, estudianteId: uid('fbarrabino'), textContent: 'El cuento muestra una alegoría del peronismo...', status: SubmissionStatus.ENTREGADO, entregadoEn: dayIso(0) },
+      { activityId: act2.id, estudianteId: uid('mmedina'), textContent: 'El cuento muestra una alegoría del peronismo...', status: SubmissionStatus.ENTREGADO, entregadoEn: dayIso(0) },
     ],
   });
 
@@ -323,13 +323,13 @@ async function main() {
   // los alumnos ya creados.
   // El tutor debe tener rol PADRE: lo exige `trg_tutor_alumno_valida_rol`.
   const VINCULOS = [
-    { tutor: 'pbarrabino', legajo: 'A-0001', parentesco: 'Madre' },
+    { tutor: 'pmedina', legajo: 'A-0001', parentesco: 'Madre' },
     { tutor: 'rperez', legajo: 'A-0002', parentesco: 'Padre' },
     { tutor: 'mgomezp', legajo: 'A-0006', parentesco: 'Madre' },
   ];
 
   const adminVinculos = await prisma.user.findUnique({
-    where: { usuario: 'admin' },
+    where: { usuario: 'fabriynahuel' },
     select: { id: true },
   });
 
