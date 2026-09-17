@@ -30,7 +30,7 @@
       "expo-secure-store"
     ],
     "extra": {
-      "apiUrl": "http://10.0.2.2:4000"
+      "apiUrl": "https://backend-production-7a0d.up.railway.app"
     }
   }
 }
