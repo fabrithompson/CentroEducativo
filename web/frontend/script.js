@@ -276,7 +276,11 @@ if (registerForm) {
                         openLoginModal();
                     }
                 } else {
-                    toastError(data.mensaje || 'No se pudo completar el registro.');
+                    // El backend responde `mensaje` en los casos de éxito y
+                    // `message` cuando devuelve un error (errorHandler.ts).
+                    // Leer solo `mensaje` descartaba el motivo real y dejaba
+                    // siempre el texto genérico.
+                    toastError(data.mensaje || data.message || 'No se pudo completar el registro.');
                 }
             })
             .catch(error => {
