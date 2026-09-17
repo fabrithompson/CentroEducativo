@@ -316,6 +316,53 @@ async function main() {
   // ---- Dominio académico y administrativo (Sprint 1)
   await seedDominio(prisma);
 
+  // ---- Vínculos tutor ↔ alumno
+  // Todo `/api/padres/mis-hijos/...` parte de esta tabla, y la app móvil
+  // completa cuelga de ahí: sin vínculos el tutor entra y ve el panel vacío,
+  // que se confunde con una falla. Van después del dominio porque necesitan
+  // los alumnos ya creados.
+  // El tutor debe tener rol PADRE: lo exige `trg_tutor_alumno_valida_rol`.
+  const VINCULOS = [
+    { tutor: 'pbarrabino', legajo: 'A-0001', parentesco: 'Madre' },
+    { tutor: 'rperez', legajo: 'A-0002', parentesco: 'Padre' },
+    { tutor: 'mgomezp', legajo: 'A-0006', parentesco: 'Madre' },
+  ];
+
+  const adminVinculos = await prisma.user.findUnique({
+    where: { usuario: 'admin' },
+    select: { id: true },
+  });
+
+  let vinculos = 0;
+  for (const v of VINCULOS) {
+    const tutor = await prisma.user.findUnique({
+      where: { usuario: v.tutor },
+      select: { id: true },
+    });
+    const alumno = await prisma.alumno.findUnique({
+      where: { legajo: v.legajo },
+      select: { id: true },
+    });
+    if (!tutor || !alumno) continue;
+
+    // `esResponsableFacturacion` en true: hay un índice único parcial que
+    // admite un solo responsable por alumno, y acá cada vínculo es de un
+    // alumno distinto.
+    await prisma.tutorAlumno.upsert({
+      where: { tutorId_alumnoId: { tutorId: tutor.id, alumnoId: alumno.id } },
+      update: { parentesco: v.parentesco, esResponsableFacturacion: true },
+      create: {
+        tutorId: tutor.id,
+        alumnoId: alumno.id,
+        parentesco: v.parentesco,
+        esResponsableFacturacion: true,
+        creadoPorId: adminVinculos?.id ?? null,
+      },
+    });
+    vinculos += 1;
+  }
+  console.log(`   ${vinculos} vínculos tutor ↔ alumno`);
+
   console.log('✅ Seed completo. Password de todos los usuarios: 123456');
   console.log(`   ${SEED_USERS.length} usuarios · ${GRADES.length} notas · ${asistenciasData.length} asistencias · ${pagosData.length} cuotas · ${ANUNCIOS.length} anuncios · 3 actividades · 3 planes`);
 }
