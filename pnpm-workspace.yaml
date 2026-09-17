@@ -3,12 +3,32 @@ packages:
   - "web/frontend"
   - "mobile"
 
-# Habilita los install scripts nativos que necesitan estas deps:
-# - prisma / @prisma/* descargan engines nativos
+# pnpm 11 exige decidir explícitamente qué dependencias pueden ejecutar sus
+# install scripts. Una dependencia con script que no figure acá corta el
+# install con código 1, así que las que no se construyen también se listan,
+# en false.
+#
+# Se construyen:
+# - prisma / @prisma/* descargan los engines nativos
 # - bcrypt compila su módulo nativo
-# - esbuild extrae su binario nativo (usado por tsx y Vite)
+# - esbuild extrae su binario nativo (lo usa tsx)
+# - @embedded-postgres/* descarga una distribución completa de PostgreSQL
+#   para poder correr los tests de integración sin Docker
+#
+# No se construyen:
+# - Las variantes de embedded-postgres para Linux. Es una devDependency que
+#   solo usa `scripts/db-test.ts`, y ese archivo queda fuera del build
+#   (tsconfig incluye únicamente src/**/*), así que nunca llega a dist/.
+#   En el servidor no se ejecuta nunca: construirla agregaría ~100 MB de
+#   binarias de PostgreSQL a la imagen de despliegue para nada.
+#
+#   Si alguna vez se corre la suite de integración en CI sobre Linux, hay
+#   que pasar estas dos a true.
 allowBuilds:
   '@embedded-postgres/windows-x64': true
+  '@embedded-postgres/darwin-arm64': true
+  '@embedded-postgres/linux-x64': false
+  '@embedded-postgres/linux-arm64': false
   '@prisma/client': true
   '@prisma/engines': true
   bcrypt: true
