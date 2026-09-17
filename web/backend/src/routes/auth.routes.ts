@@ -47,7 +47,10 @@ router.post('/register', async (req, res, next) => {
   try {
     const data = registerSchema.parse(req.body);
 
-    const exists = await prisma.user.findFirst({
+    // usuario, email y dni son @unique por separado. Se informa cuál de los
+    // tres choca: con el mensaje genérico anterior la persona no sabía qué
+    // dato cambiar y reintentaba con el mismo valor.
+    const enUso = await prisma.user.findMany({
       where: {
         OR: [
           { usuario: data.usuario },
@@ -55,10 +58,26 @@ router.post('/register', async (req, res, next) => {
           { dni: data.dni },
         ],
       },
-      select: { id: true },
+      select: { usuario: true, email: true, dni: true },
     });
-    if (exists) {
-      throw HttpError.conflict('El usuario, DNI o correo ya existen.');
+    if (enUso.length > 0) {
+      const campos: string[] = [];
+      if (enUso.some((u) => u.usuario === data.usuario)) campos.push('usuario');
+      if (enUso.some((u) => u.email === data.email)) campos.push('email');
+      if (enUso.some((u) => u.dni === data.dni)) campos.push('dni');
+
+      const etiquetas: Record<string, string> = {
+        usuario: 'ese nombre de usuario',
+        email: 'ese correo',
+        dni: 'ese DNI',
+      };
+      const lista = campos.map((c) => etiquetas[c]);
+      const detalle =
+        lista.length === 1
+          ? lista[0]
+          : `${lista.slice(0, -1).join(', ')} y ${lista[lista.length - 1]}`;
+
+      throw HttpError.conflict(`Ya existe una cuenta con ${detalle}.`, { campos });
     }
 
     const hash = await bcrypt.hash(data.password, 10);
