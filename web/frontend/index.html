@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Centro Educativo - Inicio</title>
+
+    <!-- La galería trae 8 fotos de images.unsplash.com y los iconos vienen de
+         cdnjs. Sin esto, el navegador recién resuelve el DNS y negocia el TLS
+         de esos dominios cuando encuentra la primera referencia, y esa espera
+         se paga entera antes de ver la primera imagen. -->
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="css/componentes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
