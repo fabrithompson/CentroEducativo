@@ -8,6 +8,10 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   CORS_ORIGIN: z.string().url().default('http://localhost:5173'),
 
+  // Cuántos proxies hay delante de la aplicación. Ver `TRUST_PROXY` más abajo:
+  // sin esto el limitador de intentos cuenta a todos los visitantes como uno.
+  TRUST_PROXY: z.coerce.number().int().min(0).max(5).optional(),
+
   DATABASE_URL: z.string().min(1, 'DATABASE_URL es obligatorio'),
 
   JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET debe tener al menos 32 caracteres'),
@@ -35,3 +39,21 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export type Env = typeof env;
+
+/**
+ * Valor para `app.set('trust proxy', …)`.
+ *
+ * Express, por omisión, toma como IP del cliente la del socket. Detrás del edge
+ * de Railway esa IP es siempre la del proxy, así que todos los visitantes
+ * comparten una única clave en `rateLimit`: el primero que se pasa del límite
+ * deja afuera a todos los demás, y el atacante que se quiere frenar avanza
+ * igual mientras los usuarios legítimos reciben 429.
+ *
+ * Confiar en `X-Forwarded-For` sin un proxy delante es peor todavía, porque la
+ * cabecera la pone el cliente y se puede falsear una IP distinta en cada
+ * intento, que es exactamente esquivar el límite. Por eso se activa solo en
+ * producción, donde sí hay un proxy, y se puede forzar con la variable para
+ * otras topologías (por ejemplo, dos saltos detrás de un CDN).
+ */
+export const TRUST_PROXY: number =
+  parsed.data.TRUST_PROXY ?? (parsed.data.NODE_ENV === 'production' ? 1 : 0);
