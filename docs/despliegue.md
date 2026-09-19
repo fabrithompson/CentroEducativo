@@ -94,6 +94,86 @@ límite para hacerlo es el **01/12/2026**.
 > la base vacía: eran dos contenedores distintos. Antes de sacar conclusiones de
 > algo leído por SSH, conviene confirmar contra qué despliegue se está hablando.
 
+### 1.2 El build fallaba, y por eso el pre-deploy no podía correr
+
+**Diagnóstico del 19/09/2026.** Los despliegues venían cortándose en el paso de
+instalación, antes de construir nada:
+
+```
+RUN npm install -g corepack@0.24.1 && corepack enable
+RUN pnpm i --frozen-lockfile
+  TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]:
+    A dynamic import callback was not specified.
+      at .../corepack/pnpm/11.1.1/bin/pnpm.cjs:3:1
+  Node.js v24.10.0
+```
+
+Nixpacks fija **corepack 0.24.1**, de principios de 2024, y elegía **Node
+24.10**. Ese corepack ejecuta el `pnpm.cjs` que descarga compilándolo con el
+módulo `vm`, sin registrar el callback de import dinámico que Node 24 exige. El
+build moría ahí.
+
+**Esto explica el apartado anterior.** El `preDeployCommand` no es que se
+ejecutara y fallara: nunca llegó a ejecutarse, porque el despliegue no pasaba
+del install. El contenedor viejo siguió sirviendo tráfico con normalidad, que es
+exactamente por qué el problema no se notó desde afuera.
+
+**La causa de fondo no es corepack.** Es que el build de producción corría sobre
+una combinación que ninguna prueba cubría:
+
+| | Node | Cómo se instala pnpm |
+|---|---|---|
+| CI (`.github/workflows/ci.yml`) | 22.13 | `pnpm/action-setup` con la versión fija |
+| Producción (antes) | 24.10 | corepack 0.24.1 |
+| Producción (ahora) | 22.13 | `npm install -g pnpm@11.1.1` |
+
+Las 344 pruebas pasaban en verde sobre una configuración distinta de la que se
+desplegaba. Se corrige alineando las dos, con dos archivos en el repositorio:
+
+- **`.nvmrc`** fija Node en `22.13`, la misma versión que el CI verifica. Sin
+  esto, Nixpacks resuelve `engines.node: ">=22.13"` al Node más nuevo que haya
+  disponible, y el build cambia solo de un día para el otro sin que nadie toque
+  nada. Fue lo que pasó.
+- **`nixpacks.toml`** reemplaza el paso de instalación por `npm install -g
+  pnpm@11.1.1` más `pnpm install --frozen-lockfile`, que es lo que hace el CI.
+  Corepack deja de intervenir en el build.
+
+El `packageManager` de `package.json` se conserva: sigue siendo lo correcto para
+el desarrollo local y es lo que mantiene a todos en la misma versión. Lo que se
+evita es que el **build** dependa de corepack.
+
+> **Nota.** `railway.json` declara `"builder": "NIXPACKS"` y conviene que siga
+> así mientras exista `nixpacks.toml`, porque ese archivo sólo lo lee Nixpacks.
+> Si se cambiara el builder a Railpack, esta configuración quedaría ignorada y
+> habría que rehacerla en el formato del builder nuevo.
+
+### 1.3 La advertencia de secretos en el log del build
+
+El build informa, como advertencia y no como error:
+
+```
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data
+  (ARG "JWT_ACCESS_SECRET") · (ENV "JWT_REFRESH_SECRET")
+```
+
+Es correcta y conviene entenderla en lugar de ignorarla. Railway expone las
+variables del servicio al build, y Nixpacks las traduce a instrucciones `ARG` y
+`ENV` del Dockerfile que genera. Un `ENV` queda escrito en la capa de la imagen,
+así que **los secretos de JWT terminan dentro de la imagen construida**, no sólo
+en el entorno de ejecución. Quien pueda leer esa imagen puede leerlos.
+
+Para el alcance de este trabajo el riesgo es acotado —la imagen no se publica en
+ningún registro público—, pero conviene dejarlo asentado:
+
+1. No se resuelve desde el repositorio: depende de cómo Railway pasa las
+   variables al build.
+2. La aplicación **no necesita** los secretos de JWT en tiempo de build; sólo los
+   usa al ejecutarse. Si Railway permite marcar variables como exclusivas de
+   runtime, corresponde hacerlo con `JWT_ACCESS_SECRET` y `JWT_REFRESH_SECRET`.
+3. Si alguna vez esa imagen se hiciera accesible, los dos secretos se consideran
+   comprometidos y hay que rotarlos. Rotarlos invalida las sesiones abiertas, que
+   es justamente lo que se busca en ese caso.
+
 ---
 
 ## 2. Backups de la base (RNF-06)

@@ -1,0 +1,36 @@
+# Configuración del build de Nixpacks.
+#
+# ── POR QUÉ EXISTE ESTE ARCHIVO ────────────────────────────────────────────
+# Nixpacks, por su cuenta, resolvía el paso de instalación así:
+#
+#     npm install -g corepack@0.24.1 && corepack enable
+#     pnpm i --frozen-lockfile
+#
+# Y eso falla. Nixpacks fija corepack en la versión 0.24.1, de principios de
+# 2024, mientras que el Node que elegía era el 24.10. Ese corepack ejecuta el
+# `pnpm.cjs` descargado compilándolo con el módulo `vm`, sin registrar el
+# callback de import dinámico que Node 24 exige, así que el build se cortaba
+# antes de instalar nada:
+#
+#     TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]:
+#       A dynamic import callback was not specified.
+#         at .../corepack/pnpm/11.1.1/bin/pnpm.cjs:3:1
+#
+# El problema de fondo no es corepack: es que el build de producción corría
+# sobre una combinación que nunca se probó. El CI instala pnpm 11.1.1 directo
+# y compila sobre Node 22.13 (`.github/workflows/ci.yml`), mientras que el
+# despliegue usaba corepack sobre Node 24.10. Las 344 pruebas pasaban en verde
+# sobre una configuración distinta de la que efectivamente se desplegaba.
+#
+# Este archivo alinea las dos: misma versión de Node —fijada además en
+# `.nvmrc`— y el mismo modo de instalar pnpm que usa el CI.
+#
+# El `packageManager` de package.json se conserva: sigue siendo lo correcto
+# para quien desarrolla en su máquina, y es lo que garantiza que todos usen la
+# misma versión. Lo que se evita acá es sólo que el build dependa de corepack.
+
+[phases.install]
+cmds = [
+  "npm install -g pnpm@11.1.1",
+  "pnpm install --frozen-lockfile",
+]
