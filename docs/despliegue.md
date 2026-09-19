@@ -186,6 +186,46 @@ ningún registro público—, pero conviene dejarlo asentado:
    comprometidos y hay que rotarlos. Rotarlos invalida las sesiones abiertas, que
    es justamente lo que se busca en ese caso.
 
+### 1.4 Los despliegues se saltaban sin avisar
+
+El servicio tenía configurado en el panel un único patrón de vigilancia:
+
+```
+/web/backend/**
+```
+
+Railway sólo construye cuando un commit toca alguno de esos archivos. El resto
+se registra como un despliegue en estado **SKIPPED**, con
+`skippedReason: "No changes to watched files"`. No falla, no avisa: simplemente
+no pasa nada, y el servicio sigue sirviendo la versión anterior.
+
+**Eso dejaba afuera al portal entero.** `web/frontend/` no entra en
+`/web/backend/**`, y el backend es quien lo sirve, con `express.static`. Una
+corrección de accesibilidad, un texto, un color: nada de eso llegaba a
+producción. Tampoco entraban `package.json`, `pnpm-lock.yaml` ni el propio
+`railway.json`, así que un cambio de dependencias o de configuración del
+despliegue quedaba igual de invisible.
+
+Los patrones pasan a declararse en `railway.json`, que es donde se pueden
+versionar y revisar:
+
+| Patrón | Por qué |
+|---|---|
+| `/web/**` | Backend **y** frontend: los dos viajan en la misma imagen |
+| `/package.json`, `/pnpm-lock.yaml`, `/pnpm-workspace.yaml` | Un cambio de dependencias cambia la imagen |
+| `/railway.json` | Si cambia cómo se construye o arranca, hay que reconstruir |
+| `/.nvmrc` | Fija la versión de Node del build |
+
+Queda afuera a propósito lo que no entra en la imagen del backend: `mobile/`,
+`docs/` y `.github/`. Un cambio ahí no necesita redesplegar nada.
+
+> **Cómo se ve el síntoma.** `railway deployment list --service backend` muestra
+> el despliegue en `SKIPPED` en lugar de `SUCCESS`. Conviene mirar esa lista
+> después de un push importante: un `SKIPPED` inesperado significa que lo que se
+> acaba de subir **no está corriendo**, aunque el servicio figure como Online y
+> responda con normalidad.
+
+
 ---
 
 ## 2. Backups de la base (RNF-06)

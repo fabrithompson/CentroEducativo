@@ -1,7 +1,15 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "buildCommand": "pnpm build"
+    "buildCommand": "pnpm build",
+    "watchPatterns": [
+      "/web/**",
+      "/package.json",
+      "/pnpm-lock.yaml",
+      "/pnpm-workspace.yaml",
+      "/railway.json",
+      "/.nvmrc"
+    ]
   },
   "deploy": {
     "preDeployCommand": "pnpm --filter backend prisma:deploy",
