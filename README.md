@@ -96,11 +96,21 @@ del motor no.
 
 Se consigna por honestidad metodológica:
 
-- Prueba en navegadores reales (Chrome, Firefox, Edge) y en dispositivo físico.
+- Prueba en navegadores reales (Chrome, Firefox, Edge) y en dispositivo físico (RNF-05).
 - Envío real de SMS y de correo contra un proveedor comercial.
 - Lectura del QR con cámara sobre hardware real.
 - Medición de rendimiento con la matrícula completa (RNF-03).
-- Medición de contraste de color.
+- Backups automáticos de la base (RNF-06): se habilitan desde el panel de
+  Railway. Ver `docs/despliegue.md` §2.
+
+Ya no están en esta lista:
+
+- **Contraste de color.** Medido sobre los tokens reales de la paleta en
+  `web/backend/src/frontend.contraste.test.ts`, contra los umbrales de WCAG 2.1
+  AA. La medición encontró un par por debajo del mínimo —el verde de estado daba
+  4.43:1 sobre su fondo, contra los 4.5:1 exigidos— y se corrigió. Falta todavía
+  pasar Lighthouse, que además mide el contraste efectivo de cada elemento
+  pintado y no sólo el de la paleta declarada.
 
 ---
 
@@ -506,11 +516,12 @@ pnpm start     # node dist/index.js
 
 ## 10. Pruebas
 
-**327 pruebas automatizadas.**
+**340 pruebas automatizadas**, y corren solas en cada PR
+(`.github/workflows/ci.yml`).
 
 | Suite | Cantidad | Comando |
 |---|---|---|
-| Backend | 240 | `pnpm --filter backend test` |
+| Backend | 253 | `pnpm --filter backend test` |
 | Reglas del motor | 17 | incluidas en `test:integracion` |
 | Móvil | 70 | `pnpm --filter mobile test` |
 

@@ -193,6 +193,7 @@ export const api = {
 
   reportes: {
     alumnosPorDeporte: (filtros) => get('/reportes/alumnos-por-deporte', filtros),
+    alumnosPorMateria: (filtros) => get('/reportes/alumnos-por-materia', filtros),
     alumnosPorTransporte: (filtros) => get('/reportes/alumnos-por-transporte', filtros),
     pagos: (filtros) => get('/reportes/pagos', filtros),
     ingresos: (filtros) => get('/reportes/ingresos', filtros),

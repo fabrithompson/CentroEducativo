@@ -6,12 +6,18 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import path from 'node:path';
 
-import { env } from './config/env';
+import { env, TRUST_PROXY } from './config/env';
 import { apiRouter } from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 export function createApp() {
   const app = express();
+
+  // De esto depende que `req.ip` sea la IP de quien realmente hace el pedido y
+  // no la del edge de Railway. Todo `rateLimit` cuenta por IP, así que sin esto
+  // los límites existen pero cuentan a todos los visitantes como si fueran uno.
+  // El valor se resuelve en `config/env`, donde está la explicación completa.
+  app.set('trust proxy', TRUST_PROXY);
 
   // Antes que nada, para que alcance también a los estáticos y a las respuestas
   // JSON. El portal se servía sin comprimir: styles.css viajaba con sus 43 KB

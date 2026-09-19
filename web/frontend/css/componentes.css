@@ -20,7 +20,11 @@
    ========================================================================== */
 
 :root {
-  --c-ok: #1b7f4f;
+  /* Medido, no elegido a ojo: el verde anterior (#1b7f4f) daba 4.43:1 sobre
+     --c-ok-bg, apenas por debajo del 4.5:1 que pide WCAG AA para texto normal.
+     Es el único par de la paleta que no llegaba. Este da 5.25:1. Lo verifica
+     `frontend.contraste.test.ts`, que recalcula la paleta entera. */
+  --c-ok: #187248;
   --c-ok-bg: #e4f5ec;
   --c-espera: #8a5a00;
   --c-espera-bg: #fdf3e0;
