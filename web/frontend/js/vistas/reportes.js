@@ -1,9 +1,9 @@
 /**
  * Reportes administrativos.
  *
- * Cinco reportes con filtros por fecha, curso, nivel, recorrido, deporte y
- * docente. Cada uno se arma con los mismos componentes de `ui.js`, así que
- * tienen el mismo aspecto y todos exportan a CSV con el mismo botón.
+ * Seis reportes con filtros por fecha, curso, nivel, recorrido, deporte,
+ * materia y docente. Cada uno se arma con los mismos componentes de `ui.js`,
+ * así que tienen el mismo aspecto y todos exportan a CSV con el mismo botón.
  *
  * Los catálogos (cursos, niveles, deportes, profesores) se cargan una vez y se
  * cachean: sin eso, cambiar de pestaña volvería a pedirlos cada vez.
@@ -38,16 +38,22 @@ async function cargarCatalogos() {
 
   // Si alguno falla, el reporte igual tiene que poder mostrarse: los filtros
   // que dependan de ese catálogo quedan vacíos, no se rompe la pantalla.
-  const [deportes, recorridos, profesores] = await Promise.allSettled([
+  const [deportes, recorridos, profesores, materias] = await Promise.allSettled([
     api.deportes.catalogo(),
     api.servicios.recorridos(periodoActual()),
     api.profesores.listar({ pageSize: 100 }),
+    // No hay endpoint de catálogo de materias. El resumen del reporte RF-06 sin
+    // filtrar ya trae todas —incluidas las que no tienen inscriptos, que son
+    // justamente las que la Dirección necesita ver— así que se usa como
+    // catálogo en vez de agregar una ruta nueva al backend.
+    api.reportes.alumnosPorMateria({}),
   ]);
 
   catalogos = {
     deportes: deportes.status === 'fulfilled' ? (deportes.value.deportes ?? []) : [],
     recorridos: recorridos.status === 'fulfilled' ? (recorridos.value.recorridos ?? []) : [],
     profesores: profesores.status === 'fulfilled' ? (profesores.value.items ?? []) : [],
+    materias: materias.status === 'fulfilled' ? (materias.value.resumenPorMateria ?? []) : [],
   };
 
   return catalogos;
@@ -164,7 +170,131 @@ async function reporteDeportes(contenedor, valores = {}) {
 }
 
 // ==================================================================
-// Reporte 2 — Alumnos por recorrido de transporte
+// Reporte 2 — Alumnos por materia (RF-06)
+// ==================================================================
+
+async function reporteMaterias(contenedor, valores = {}) {
+  const cat = await cargarCatalogos();
+
+  const barra = filtros({
+    id: 'f-materias',
+    campos: [
+      {
+        nombre: 'materiaId', etiqueta: 'Materia', tipo: 'select', valor: valores.materiaId,
+        opciones: [
+          opcion('', 'Todas'),
+          ...cat.materias.map((m) => opcion(String(m.materiaId), `${m.curso} — ${m.materia}`)),
+        ],
+      },
+      { nombre: 'nivelId', etiqueta: 'Nivel', tipo: 'select', valor: valores.nivelId, opciones: opcionesNivel() },
+      {
+        nombre: 'profesorId', etiqueta: 'Docente a cargo', tipo: 'select', valor: valores.profesorId,
+        opciones: [
+          opcion('', 'Todos'),
+          ...cat.profesores.map((p) => opcion(String(p.id), `${p.apellido}, ${p.nombres}`)),
+        ],
+      },
+    ],
+  });
+
+  const data = await api.reportes.alumnosPorMateria(valores);
+
+  const columnas = [
+    { clave: 'nivel', titulo: 'Nivel' },
+    { clave: 'curso', titulo: 'Curso' },
+    { clave: 'materia', titulo: 'Materia' },
+    {
+      clave: 'profesor', titulo: 'Profesor a cargo',
+      render: (f) =>
+        f.profesor === 'Sin docente asignado'
+          ? '<em>Sin docente asignado</em>'
+          : esc(f.profesor),
+    },
+    { clave: 'alumno', titulo: 'Alumno' },
+    { clave: 'legajo', titulo: 'Legajo' },
+  ];
+
+  const resumen = data.resumenPorMateria.length
+    ? tabla({
+        caption: 'Inscriptos por materia',
+        columnas: [
+          { clave: 'curso', titulo: 'Curso' },
+          { clave: 'materia', titulo: 'Materia' },
+          { clave: 'profesor', titulo: 'Profesor a cargo' },
+          {
+            clave: 'leyenda', titulo: 'Inscriptos', alinear: 'derecha',
+            // HU6 pide que una materia sin inscriptos se informe como tal y no
+            // desaparezca de la vista: son las que la Dirección busca detectar.
+            render: (f) =>
+              f.inscriptos === 0
+                ? `<span class="badge badge--alerta">${esc(f.leyenda)}</span>`
+                : `<span class="numero">${esc(f.leyenda)}</span>`,
+          },
+        ],
+        filas: data.resumenPorMateria,
+      })
+    : '';
+
+  // El detalle sólo tiene pares (materia, alumno), así que una materia sin
+  // inscriptos no aparece en ninguna de sus filas. Para la exportación se
+  // reconstruye desde el resumen: cada materia aporta sus alumnos o, si no
+  // tiene, una única fila que lo dice. Sin esto el CSV que baja la Dirección
+  // omitiría justamente el dato que pide el criterio de aceptación.
+  const filasPorMateria = new Map();
+  for (const fila of data.filas) {
+    const acumuladas = filasPorMateria.get(fila.materiaId);
+    if (acumuladas) acumuladas.push(fila);
+    else filasPorMateria.set(fila.materiaId, [fila]);
+  }
+
+  const filasExport = data.resumenPorMateria.flatMap((m) =>
+    filasPorMateria.get(m.materiaId) ?? [{
+      nivel: m.nivel,
+      curso: m.curso,
+      materia: m.materia,
+      profesor: m.profesor,
+      alumno: m.leyenda,
+      legajo: '',
+      dni: '',
+    }],
+  );
+
+  guardarExportacion('alumnos-por-materia', columnas, filasExport, (f) => ({
+    Nivel: f.nivel,
+    Curso: f.curso,
+    Materia: f.materia,
+    Profesor: f.profesor,
+    Alumno: f.alumno,
+    Legajo: f.legajo,
+    DNI: f.dni,
+  }));
+
+  return `
+    ${barra}
+    ${grillaIndicadores([
+      { titulo: 'Materias', valor: data.totales.materias, icono: 'fa-book' },
+      { titulo: 'Alumnos distintos', valor: data.totales.alumnosDistintos, icono: 'fa-users' },
+      { titulo: 'Inscripciones', valor: data.totales.filas, icono: 'fa-clipboard-list' },
+      {
+        titulo: 'Materias sin inscriptos',
+        valor: data.totales.materiasSinInscriptos,
+        tono: data.totales.materiasSinInscriptos > 0 ? 'alerta' : 'ok',
+        icono: 'fa-circle-exclamation',
+      },
+      {
+        titulo: 'Materias sin docente',
+        valor: data.totales.materiasSinDocente,
+        tono: data.totales.materiasSinDocente > 0 ? 'alerta' : 'ok',
+        icono: 'fa-user-slash',
+      },
+    ])}
+    ${botonExportar()}
+    ${tabla({ caption: 'Alumnos por materia', columnas, filas: data.filas, vacio: 'Ninguna materia con inscriptos coincide con los filtros aplicados.' })}
+    ${resumen ? `<div class="ficha" style="margin-top:20px">${resumen}</div>` : ''}`;
+}
+
+// ==================================================================
+// Reporte 3 — Alumnos por recorrido de transporte
 // ==================================================================
 
 async function reporteTransporte(contenedor, valores = {}) {
@@ -247,7 +377,7 @@ async function reporteTransporte(contenedor, valores = {}) {
 }
 
 // ==================================================================
-// Reporte 3 — Pagos completos e incompletos
+// Reporte 4 — Pagos completos e incompletos
 // ==================================================================
 
 async function reportePagos(contenedor, valores = {}) {
@@ -323,7 +453,7 @@ async function reportePagos(contenedor, valores = {}) {
 }
 
 // ==================================================================
-// Reporte 4 — Ingresos por rango de fechas
+// Reporte 5 — Ingresos por rango de fechas
 // ==================================================================
 
 async function reporteIngresos(contenedor, valores = {}) {
@@ -404,7 +534,7 @@ async function reporteIngresos(contenedor, valores = {}) {
 }
 
 // ==================================================================
-// Reporte 5 — Morosidad
+// Reporte 6 — Morosidad
 // ==================================================================
 
 async function reporteMorosidad(contenedor, valores = {}) {
@@ -489,6 +619,7 @@ function ejecutarExportacion() {
 
 const REPORTES = {
   deportes: { titulo: 'Alumnos por deporte', icono: 'fa-futbol', fn: reporteDeportes },
+  materias: { titulo: 'Alumnos por materia', icono: 'fa-book', fn: reporteMaterias },
   transporte: { titulo: 'Alumnos por recorrido', icono: 'fa-bus', fn: reporteTransporte },
   pagos: { titulo: 'Pagos completos e incompletos', icono: 'fa-file-invoice-dollar', fn: reportePagos },
   ingresos: { titulo: 'Ingresos por período', icono: 'fa-chart-line', fn: reporteIngresos },

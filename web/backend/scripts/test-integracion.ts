@@ -1,8 +1,8 @@
 /**
  * Verificación de integración contra PostgreSQL real.
  *
- * Levanta una instancia embebida de PostgreSQL 15, aplica las 8 migraciones,
- * carga el seed y ejecuta la suite completa apuntando a esa base.
+ * Aplica las 9 migraciones sobre un PostgreSQL real, carga el seed y ejecuta la
+ * suite completa apuntando a esa base.
  *
  * Es lo que valida aquello que ninguna prueba con doble puede validar: que los
  * disparadores en PL/pgSQL compilen, que las restricciones `CHECK` sean
@@ -10,22 +10,59 @@
  * máximo de dos deportes.
  *
  *   pnpm --filter backend test:integracion
+ *
+ * De dónde sale la base:
+ *
+ * - Si `DATABASE_URL_TEST` está definida, se usa esa y no se levanta nada. Es
+ *   el camino de CI, donde PostgreSQL viene como service container, y también
+ *   sirve para apuntar al `docker compose up -d db` de este repositorio.
+ * - Si no, se levanta una instancia embebida de PostgreSQL 15. Es el camino de
+ *   la máquina de desarrollo, que no tiene Docker.
+ *
+ * La distinción no es cosmética: `embedded-postgres` tiene sus variantes de
+ * Linux deshabilitadas en `pnpm-workspace.yaml`, para no cargar ~100 MB de
+ * binarias en la imagen de despliegue. Por eso el módulo que la usa se importa
+ * en forma diferida y sólo cuando hace falta — importarlo arriba haría fallar
+ * este script en CI antes de la primera línea útil.
  */
 
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 
-import { DATABASE_URL, levantar } from './db-test';
-
 const RAIZ = path.resolve(import.meta.dirname ?? __dirname, '..');
 
-const entorno = {
-  ...process.env,
-  DATABASE_URL,
-  NODE_ENV: 'test',
-  JWT_ACCESS_SECRET: 'a'.repeat(48),
-  JWT_REFRESH_SECRET: 'b'.repeat(48),
-};
+const URL_EXTERNA = process.env.DATABASE_URL_TEST;
+
+interface BaseDePruebas {
+  url: string;
+  detener: () => Promise<void>;
+  descripcion: string;
+}
+
+async function prepararBase(): Promise<BaseDePruebas> {
+  if (URL_EXTERNA) {
+    return {
+      url: URL_EXTERNA,
+      detener: async () => {},
+      descripcion: 'PostgreSQL externo (DATABASE_URL_TEST)',
+    };
+  }
+
+  const { DATABASE_URL, levantar } = await import('./db-test.ts');
+  console.log('Levantando PostgreSQL 15 embebido…');
+  const pg = await levantar();
+
+  return {
+    url: DATABASE_URL,
+    detener: async () => {
+      await pg.stop();
+      console.log('\nPostgreSQL detenido.');
+    },
+    descripcion: 'PostgreSQL 15 embebido',
+  };
+}
+
+let entorno: NodeJS.ProcessEnv;
 
 function correr(titulo: string, comando: string, args: string[]): boolean {
   console.log(`\n${'='.repeat(66)}\n${titulo}\n${'='.repeat(66)}`);
@@ -43,14 +80,22 @@ function correr(titulo: string, comando: string, args: string[]): boolean {
 }
 
 async function main() {
-  console.log('Levantando PostgreSQL 15 embebido…');
-  const pg = await levantar();
-  console.log(`Listo. ${DATABASE_URL}\n`);
+  const base = await prepararBase();
+
+  entorno = {
+    ...process.env,
+    DATABASE_URL: base.url,
+    NODE_ENV: 'test',
+    JWT_ACCESS_SECRET: 'a'.repeat(48),
+    JWT_REFRESH_SECRET: 'b'.repeat(48),
+  };
+
+  console.log(`Listo. ${base.descripcion}.\n`);
 
   let exito = true;
 
   try {
-    // 1. Las 8 migraciones, incluidas las funciones y disparadores escritos a mano.
+    // 1. Las 9 migraciones, incluidas las funciones y disparadores escritos a mano.
     exito = correr('MIGRACIONES', 'pnpm', ['exec', 'prisma', 'migrate', 'deploy']) && exito;
 
     // 2. El cliente tipado.
@@ -73,8 +118,7 @@ async function main() {
     // 5. Suite completa del backend.
     if (exito) exito = correr('SUITE COMPLETA', 'pnpm', ['test']) && exito;
   } finally {
-    await pg.stop();
-    console.log('\nPostgreSQL detenido.');
+    await base.detener();
   }
 
   console.log(`\n${'='.repeat(66)}`);

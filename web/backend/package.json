@@ -19,6 +19,9 @@
     "db:reset": "prisma migrate reset --force",
     "test": "node --import tsx --test \"src/**/*.test.ts\" \"prisma/**/*.test.ts\"",
     "test:watch": "node --import tsx --test --watch \"src/**/*.test.ts\" \"prisma/**/*.test.ts\"",
+    "matricula:medir": "tsx scripts/carga-matricula.ts --medir",
+    "matricula:cargar": "tsx scripts/carga-matricula.ts",
+    "matricula:limpiar": "tsx scripts/carga-matricula.ts --limpiar",
     "db:test:up": "tsx scripts/db-test.ts up",
     "db:test:down": "tsx scripts/db-test.ts down",
     "test:integracion": "tsx scripts/test-integracion.ts"
@@ -41,6 +44,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.6.0",
     "@types/bcrypt": "^5.0.2",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.8",
