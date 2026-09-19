@@ -7,12 +7,12 @@
 
 :root {
     --primary: #2c3e50;
-    --secondary: #3498db;
+    --secondary: #217cb9;
     --accent: #e74c3c;
     --light: #ecf0f1;
     --dark: #2c3e50;
     --white: #ffffff;
-    --gray: #95a5a6;
+    --gray: #5f7072;
 }
 
 body {
@@ -112,6 +112,23 @@ ul {
 
 .social-links a:hover {
     color: var(--secondary);
+}
+
+/*
+ * Objetivo táctil mínimo de 24x24 px (WCAG 2.2, criterio 2.5.8). Los enlaces
+ * del portal medían 17 px de alto, y los íconos sociales apenas 14 px de ancho:
+ * en un teléfono eso obliga a apuntar con precisión. El mínimo se fija con flex
+ * y no agrandando la tipografía, así el tamaño visible del texto no cambia. En
+ * el menú no altera la altura de la barra, porque el logo ya es más alto que 24
+ * px; en la barra superior la hace crecer 7 px, que es lo indispensable.
+ */
+.social-links a,
+.nav-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    min-height: 24px;
 }
 
 .main-nav {
@@ -498,6 +515,30 @@ ul {
     color: var(--primary);
 }
 
+/*
+ * En pantalla angosta el ícono, el título y el párrafo son tres hermanos de una
+ * misma fila flex, y ninguno puede encogerse por debajo de su palabra más larga:
+ * el resultado era una tarjeta de 410 px dentro de una ventana de 375 px, con el
+ * texto cortado contra el borde. Se verificó en Chromium, Gecko y WebKit.
+ *
+ * Acá se pasa a grilla sólo en teléfono: el ícono ocupa la primera columna y
+ * abarca las dos filas, y el título queda arriba del párrafo en la segunda. El
+ * escritorio conserva la fila de tres columnas tal como estaba.
+ */
+@media (max-width: 600px) {
+    .wellbeing-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        column-gap: 20px;
+        row-gap: 6px;
+        padding: 24px;
+    }
+
+    .wellbeing-item i {
+        grid-row: 1 / span 2;
+    }
+}
+
 /* News Section */
 .news-grid {
     display: grid;
@@ -673,6 +714,18 @@ ul {
     margin-right: auto;
 }
 
+/*
+ * El color de este párrafo vive acá y no en un `style=` inline ni asignado
+ * desde JavaScript, que es como estaba. La prueba de contraste mide la hoja de
+ * estilos: un color escrito inline no lo ve ninguna prueba hasta que lo marca
+ * Lighthouse, y fue exactamente lo que pasó con este texto, que daba 4.14:1
+ * sobre el fondo de su sección, por debajo del mínimo AA de 4.5:1.
+ */
+.opiniones-vacio {
+    color: #5f6e84;
+    text-align: center;
+}
+
 .opiniones-display h3 {
     text-align: center;
     margin-bottom: 20px;
@@ -731,7 +784,7 @@ ul {
 
 .btn-whatsapp {
     display: inline-block;
-    background: #25d366;
+    background: #188842;
     color: var(--white);
     padding: 8px 20px;
     border-radius: 5px;
@@ -1310,7 +1363,7 @@ footer {
     color: #1f2937;
     border-radius: 8px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.18), 0 4px 10px -2px rgba(0, 0, 0, 0.08);
-    border-left: 4px solid #3498db;
+    border-left: 4px solid var(--secondary);
     pointer-events: auto;
     opacity: 0;
     transform: translateX(120%);

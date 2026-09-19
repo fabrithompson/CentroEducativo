@@ -96,20 +96,34 @@ del motor no.
 
 Se consigna por honestidad metodológica:
 
-- Prueba en navegadores reales (Chrome, Firefox, Edge) y en dispositivo físico (RNF-05).
+- Prueba en un **dispositivo físico** (RNF-05). Los tres motores de navegador sí
+  se verificaron; lo que falta es un Android real, con su cámara y su teclado.
 - Envío real de SMS y de correo contra un proveedor comercial.
 - Lectura del QR con cámara sobre hardware real.
 - Backups automáticos de la base (RNF-06): se habilitan desde el panel de
   Railway. Ver `docs/despliegue.md` §2.
+- Que el `preDeployCommand` de Railway efectivamente corra. Está declarado en
+  `railway.json`, pero se comprobó que no se ejecutó en el despliegue que lo
+  introdujo. Ver `docs/despliegue.md` §1.
 
 Ya no están en esta lista:
 
-- **Contraste de color.** Medido sobre los tokens reales de la paleta en
-  `web/backend/src/frontend.contraste.test.ts`, contra los umbrales de WCAG 2.1
-  AA. La medición encontró un par por debajo del mínimo —el verde de estado daba
-  4.43:1 sobre su fondo, contra los 4.5:1 exigidos— y se corrigió. Falta todavía
-  pasar Lighthouse, que además mide el contraste efectivo de cada elemento
-  pintado y no sólo el de la paleta declarada.
+- **Contraste de color y accesibilidad del portal.** Medido con Lighthouse sobre
+  el sitio desplegado, no sólo sobre la paleta declarada. La primera corrida dio
+  **93/100** y encontró defectos que ninguna prueba veía: 17 elementos por debajo
+  del mínimo AA —el botón de WhatsApp daba 1.98:1 y el copete de opiniones
+  2.22:1— y 7 enlaces sin nombre accesible, que eran los íconos de redes sociales.
+  Corregido todo, la auditoría da **100/100 sin auditorías fallidas**. El motivo
+  por el que se escapaba es que `frontend.contraste.test.ts` medía únicamente
+  `css/componentes.css`, la hoja del backoffice, y el portal usa otra paleta en
+  `styles.css`; la prueba ahora cubre las dos.
+
+- **Los tres motores de navegador (RNF-05).** Verificado con Playwright sobre
+  Chromium —que es el de Chrome y el de Edge—, Gecko y WebKit, en las cinco
+  páginas, a 1280 px y a 375 px. Encontró un defecto real y reproducible en los
+  tres: las tarjetas de Bienestar Estudiantil medían 410 px dentro de una ventana
+  de 375 px y el texto quedaba cortado contra el borde. Corregido. La corrida
+  final no informa hallazgos.
 
 - **Rendimiento con la matrícula completa (RNF-03).** Medido en producción con
   5012 alumnos activos, cargados con `web/backend/scripts/carga-matricula.ts`.
@@ -526,12 +540,12 @@ pnpm start     # node dist/index.js
 
 ## 10. Pruebas
 
-**340 pruebas automatizadas**, y corren solas en cada PR
+**344 pruebas automatizadas**, y corren solas en cada PR
 (`.github/workflows/ci.yml`).
 
 | Suite | Cantidad | Comando |
 |---|---|---|
-| Backend | 253 | `pnpm --filter backend test` |
+| Backend | 257 | `pnpm --filter backend test` |
 | Reglas del motor | 17 | incluidas en `test:integracion` |
 | Móvil | 70 | `pnpm --filter mobile test` |
 

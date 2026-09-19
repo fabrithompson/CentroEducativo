@@ -48,8 +48,38 @@ reconfigurar nada a mano si se recrea el servicio.
 >
 > Mientras `railway.json` se siga leyendo, conviene confirmar en el panel que el
 > servicio tenga efectivamente un *pre-deploy command* configurado: lo del panel
-> y lo del archivo pueden no coincidir, y gana el panel. La salida definitiva es
-> migrar a `.railway/railway.ts` con `railway config migrate`.
+> y lo del archivo pueden no coincidir, y gana el panel. Esa es la primera
+> sospecha a descartar, porque explicaría por qué el archivo no tuvo efecto.
+
+### 1.1 El archivo de Infrastructure as Code
+
+`.railway/railway.ts` ya está en el repositorio, generado con
+`railway config migrate` a partir del `railway.json`. Declara lo mismo: build,
+start y el `preDeploy` que aplica las migraciones.
+
+**Los dos archivos conviven a propósito, y todavía no se puede borrar el
+viejo.** La diferencia está en cómo los toma Railway:
+
+| Archivo | Cómo se aplica |
+|---|---|
+| `railway.json` | Lo lee Railway solo, en cada despliegue |
+| `.railway/railway.ts` | Hay que aplicarlo con `railway config apply`, con sesión iniciada |
+
+Si se retira el `railway.json` antes de esa primera aplicación, los despliegues
+se quedan sin `preDeployCommand` — es decir, se rompe justamente lo que este
+apartado intenta arreglar. El orden correcto es aplicar primero y borrar
+después:
+
+```bash
+npx @railway/cli login
+npx @railway/cli link
+npx @railway/cli config plan     # muestra qué cambiaría, sin aplicar nada
+npx @railway/cli config apply
+```
+
+Recién cuando `config plan` no informe diferencias y un despliegue nuevo muestre
+las nueve migraciones aplicadas, corresponde eliminar `railway.json`. La fecha
+límite para hacerlo es el **01/12/2026**.
 >
 > **Cómo verificar que ya corre, sin esperar al próximo cambio de esquema.**
 > Después de un despliegue, `railway ssh --service backend -- sh -c 'cd

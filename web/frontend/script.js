@@ -462,8 +462,7 @@ function renderOpinionesAprobadas() {
             }
             if (data.opiniones.length === 0) {
                 const p = document.createElement('p');
-                p.style.color = '#64748b';
-                p.style.textAlign = 'center';
+                p.className = 'opiniones-vacio';
                 p.textContent = 'Aún no hay opiniones publicadas.';
                 display.appendChild(p);
                 return;

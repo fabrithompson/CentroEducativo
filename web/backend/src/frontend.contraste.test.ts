@@ -148,3 +148,88 @@ test('los cuatro badges cumplen AA en tema oscuro', () => {
     verificar(`badge ${tono}`, colorBadgeOscuro(tono), oscuro[`--c-${tono}-bg`], AA_TEXTO);
   }
 });
+
+// ==================================================================
+// Portal público — `styles.css`
+// ==================================================================
+//
+// Este bloque existe porque la primera versión de esta prueba medía sólo
+// `componentes.css`, que es la hoja del backoffice. El portal público usa otra
+// paleta, en `styles.css`, y nadie la había medido: Lighthouse sobre el sitio
+// desplegado encontró 17 elementos por debajo del mínimo AA, con casos de
+// 1.98:1 y 2.22:1. Ninguna prueba los atrapaba porque ninguna prueba miraba
+// ese archivo.
+//
+// Los pares que se verifican acá son exactamente los que Lighthouse reportó.
+
+const PORTAL = fs.readFileSync(
+  path.resolve(import.meta.dirname ?? __dirname, '..', '..', 'frontend', 'styles.css'),
+  'utf8',
+);
+
+/** Lee los tokens de `:root` de una hoja cualquiera. */
+function paleta(css: string, selector: string, archivo: string): Record<string, string> {
+  const i = css.indexOf(selector);
+  assert.ok(i >= 0, `no se encontró el bloque ${selector} en ${archivo}`);
+
+  const cuerpo = css.slice(css.indexOf('{', i) + 1, css.indexOf('}', i));
+  const tokens: Record<string, string> = {};
+
+  for (const [, nombre, valor] of cuerpo.matchAll(/(--[\w-]+)\s*:\s*(#[0-9a-fA-F]{3,6})\s*;/g)) {
+    tokens[nombre] = valor;
+  }
+  return tokens;
+}
+
+/**
+ * Busca el color literal de una propiedad dentro de una regla del portal.
+ * Se usa para los dos colores que no están en `:root` y viven sueltos en su
+ * regla: el verde de WhatsApp y el gris de las opiniones.
+ */
+function propiedadDeRegla(selector: string, propiedad: string): string {
+  const i = PORTAL.indexOf(selector);
+  assert.ok(i >= 0, `no se encontró la regla ${selector} en styles.css`);
+
+  const cuerpo = PORTAL.slice(i, PORTAL.indexOf('}', i));
+  const m = new RegExp(`${propiedad}:\\s*(#[0-9a-fA-F]{3,6})`).exec(cuerpo);
+  assert.ok(m, `${selector} no declara un ${propiedad} literal`);
+  return m[1];
+}
+
+const portal = paleta(PORTAL, ':root {', 'styles.css');
+
+test('el azul del portal cumple AA como texto y como fondo', () => {
+  // `--secondary` se usa de las dos formas: como color de texto sobre blanco
+  // (fechas de noticias, "leer más") y como fondo de los botones primarios con
+  // texto blanco encima. Las dos situaciones se reducen al mismo par.
+  verificar('secondary/blanco', portal['--secondary'], portal['--white'], AA_TEXTO);
+});
+
+test('el gris del portal cumple AA sobre las dos superficies', () => {
+  // Es el color de los copetes y de los textos de apoyo. Sobre el gris claro de
+  // las secciones es donde peor le va, y es el caso que Lighthouse marcó en
+  // 2.22:1.
+  verificar('gray/blanco', portal['--gray'], portal['--white'], AA_TEXTO);
+  verificar('gray/light', portal['--gray'], portal['--light'], AA_TEXTO);
+});
+
+test('el botón de WhatsApp cumple AA con su texto blanco', () => {
+  // El verde de marca de WhatsApp (#25d366) da 1.98:1 contra blanco, que es de
+  // los peores valores posibles. Se conserva el tono y se baja la luminosidad
+  // hasta cumplir: la marca se sigue reconociendo y el texto se lee.
+  verificar(
+    'btn-whatsapp',
+    portal['--white'],
+    propiedadDeRegla('.btn-whatsapp', 'background'),
+    AA_TEXTO,
+  );
+});
+
+test('el texto de las opiniones cumple AA sobre el fondo de su sección', () => {
+  verificar(
+    'opiniones',
+    propiedadDeRegla('.opiniones-vacio', 'color'),
+    portal['--light'],
+    AA_TEXTO,
+  );
+});
