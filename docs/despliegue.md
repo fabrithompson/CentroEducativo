@@ -51,36 +51,38 @@ reconfigurar nada a mano si se recrea el servicio.
 > y lo del archivo pueden no coincidir, y gana el panel. Esa es la primera
 > sospecha a descartar, porque explicaría por qué el archivo no tuvo efecto.
 
-### 1.1 El archivo de Infrastructure as Code
+### 1.1 La migración a Infrastructure as Code, pendiente
 
-`.railway/railway.ts` ya está en el repositorio, generado con
-`railway config migrate` a partir del `railway.json`. Declara lo mismo: build,
-start y el `preDeploy` que aplica las migraciones.
+Railway declaró obsoleto el formato de `railway.json`: la CLI avisa en cada
+despliegue que los archivos de Config as Code **siguen funcionando hasta el
+01/12/2026**. Después de esa fecha hay que haber migrado a `.railway/railway.ts`.
 
-**Los dos archivos conviven a propósito, y todavía no se puede borrar el
-viejo.** La diferencia está en cómo los toma Railway:
+**Todavía no está hecho, y hay un motivo para no apurarlo.** Se intentó con
+`railway config migrate`, que traduce el `railway.json` automáticamente, y el
+archivo que generó declaraba un servicio llamado `"CentroEducativo"`. El servicio
+real de este proyecto se llama **`backend`**. Aplicar ese archivo no habría
+migrado nada: habría intentado crear un servicio nuevo al lado del que está
+sirviendo.
 
-| Archivo | Cómo se aplica |
-|---|---|
-| `railway.json` | Lo lee Railway solo, en cada despliegue |
-| `.railway/railway.ts` | Hay que aplicarlo con `railway config apply`, con sesión iniciada |
-
-Si se retira el `railway.json` antes de esa primera aplicación, los despliegues
-se quedan sin `preDeployCommand` — es decir, se rompe justamente lo que este
-apartado intenta arreglar. El orden correcto es aplicar primero y borrar
-después:
+El camino correcto, cuando se encare:
 
 ```bash
 npx @railway/cli login
 npx @railway/cli link
+npx @railway/cli config pull     # importa la configuración REAL del proyecto
 npx @railway/cli config plan     # muestra qué cambiaría, sin aplicar nada
 npx @railway/cli config apply
 ```
 
-Recién cuando `config plan` no informe diferencias y un despliegue nuevo muestre
-las nueve migraciones aplicadas, corresponde eliminar `railway.json`. La fecha
-límite para hacerlo es el **01/12/2026**.
->
+`config pull` y no `config migrate`: el primero lee lo que el proyecto tiene
+configurado de verdad; el segundo sólo traduce un archivo que puede estar
+equivocado, que es exactamente lo que pasó acá.
+
+Y el orden importa: **el `railway.json` no se borra hasta que `config plan` no
+informe diferencias** y un despliegue nuevo muestre las nueve migraciones
+aplicadas. Borrarlo antes deja los despliegues sin `preDeployCommand`, que es
+justamente la pieza que este apartado intenta asegurar.
+
 > **Cómo verificar que ya corre, sin esperar al próximo cambio de esquema.**
 > Después de un despliegue, `railway ssh --service backend -- sh -c 'cd
 > web/backend && ./node_modules/.bin/prisma migrate status'` tiene que informar
@@ -94,10 +96,10 @@ límite para hacerlo es el **01/12/2026**.
 > la base vacía: eran dos contenedores distintos. Antes de sacar conclusiones de
 > algo leído por SSH, conviene confirmar contra qué despliegue se está hablando.
 
-### 1.2 El build fallaba, y por eso el pre-deploy no podía correr
+### 1.2 El build se rompió al forzar el builder, y se arregló sacándolo
 
-**Diagnóstico del 19/09/2026.** Los despliegues venían cortándose en el paso de
-instalación, antes de construir nada:
+**19/09/2026.** Al integrar `railway.json` a `main`, los despliegues empezaron a
+fallar en el paso de instalación, antes de construir nada:
 
 ```
 RUN npm install -g corepack@0.24.1 && corepack enable
@@ -108,44 +110,54 @@ RUN pnpm i --frozen-lockfile
   Node.js v24.10.0
 ```
 
-Nixpacks fija **corepack 0.24.1**, de principios de 2024, y elegía **Node
-24.10**. Ese corepack ejecuta el `pnpm.cjs` que descarga compilándolo con el
-módulo `vm`, sin registrar el callback de import dinámico que Node 24 exige. El
-build moría ahí.
+**La causa fue `"builder": "NIXPACKS"`.** Railway venía construyendo este
+proyecto con **Railpack**, que es su builder actual, y funcionaba. El
+`railway.json` traía ese campo y, al llegar a `main`, forzó el builder viejo.
+Nixpacks fija corepack en la versión 0.24.1, de principios de 2024, y resolvía
+`engines.node: ">=22.13"` a Node 24.10. Ese corepack ejecuta el `pnpm.cjs` que
+descarga compilándolo con el módulo `vm`, sin registrar el callback de import
+dinámico que Node 24 exige, y el build moría ahí.
 
-**Esto explica el apartado anterior.** El `preDeployCommand` no es que se
-ejecutara y fallara: nunca llegó a ejecutarse, porque el despliegue no pasaba
-del install. El contenedor viejo siguió sirviendo tráfico con normalidad, que es
-exactamente por qué el problema no se notó desde afuera.
+La línea de tiempo no deja lugar a dudas:
 
-**La causa de fondo no es corepack.** Es que el build de producción corría sobre
-una combinación que ninguna prueba cubría:
-
-| | Node | Cómo se instala pnpm |
+| Despliegue | Resultado | Qué había en `main` |
 |---|---|---|
-| CI (`.github/workflows/ci.yml`) | 22.13 | `pnpm/action-setup` con la versión fija |
-| Producción (antes) | 24.10 | corepack 0.24.1 |
-| Producción (ahora) | 22.13 | `npm install -g pnpm@11.1.1` |
+| 18/09 23:36 | ✅ SUCCESS | sin `railway.json` → Railpack |
+| 19/09 17:10 | ❌ FAILED | con `railway.json` → Nixpacks |
+| 19/09 17:30 | ❌ FAILED | ídem |
 
-Las 344 pruebas pasaban en verde sobre una configuración distinta de la que se
-desplegaba. Se corrige alineando las dos, con dos archivos en el repositorio:
+El log del despliegue fallido lo confirma: compila contra
+`/nix/store/...-nodejs-24.10.0`, que es Nixpacks; los exitosos anteriores
+reportan `[railpack]`.
 
-- **`.nvmrc`** fija Node en `22.13`, la misma versión que el CI verifica. Sin
-  esto, Nixpacks resuelve `engines.node: ">=22.13"` al Node más nuevo que haya
-  disponible, y el build cambia solo de un día para el otro sin que nadie toque
-  nada. Fue lo que pasó.
-- **`nixpacks.toml`** reemplaza el paso de instalación por `npm install -g
-  pnpm@11.1.1` más `pnpm install --frozen-lockfile`, que es lo que hace el CI.
-  Corepack deja de intervenir en el build.
+**La corrección es quitar el campo `builder`**, no hacer funcionar a Nixpacks.
+Sin ese campo, Railway usa el builder que el servicio tiene configurado —
+Railpack—, que es exactamente lo que venía funcionando. El resto de
+`railway.json` se conserva: `buildCommand`, `startCommand` y el
+`preDeployCommand`, que es la pieza que importa.
 
-El `packageManager` de `package.json` se conserva: sigue siendo lo correcto para
-el desarrollo local y es lo que mantiene a todos en la misma versión. Lo que se
-evita es que el **build** dependa de corepack.
+> **Lección, y es la que conviene recordar.** El campo se copió de un ejemplo sin
+> verificar contra qué builder estaba corriendo el servicio. Un valor que parece
+> documentar lo que ya pasa —"usamos Nixpacks"— puede en realidad estar
+> cambiándolo. Antes de fijar un builder en el archivo hay que mirar el log de un
+> despliegue que haya funcionado y ver cuál dice.
 
-> **Nota.** `railway.json` declara `"builder": "NIXPACKS"` y conviene que siga
-> así mientras exista `nixpacks.toml`, porque ese archivo sólo lo lee Nixpacks.
-> Si se cambiara el builder a Railpack, esta configuración quedaría ignorada y
-> habría que rehacerla en el formato del builder nuevo.
+**Lo que sí se conserva del intento.** `.nvmrc` fija Node en `22.13`, la misma
+versión que verifica el CI (`.github/workflows/ci.yml`). Railpack también lo
+respeta. Sin eso, la versión de Node del build la elige el builder y puede
+cambiar sola de un día para el otro, que es la clase de deriva que provocó este
+episodio. Que producción compile sobre la misma versión que las pruebas no es un
+detalle: las 344 pruebas no dicen nada sobre una versión que nunca se probó.
+
+> **Sobre el archivo de Infrastructure as Code.** Se había generado un
+> `.railway/railway.ts` con `railway config migrate` y se retiró. El comando
+> deriva el nombre del servicio del `railway.json` y había quedado
+> `"CentroEducativo"`, cuando el servicio real se llama **`backend`**. Aplicar
+> ese archivo no habría migrado nada: habría intentado crear un servicio nuevo.
+> Cuando llegue el momento de migrar —antes del 01/12/2026— corresponde generarlo
+> con `railway config pull`, que importa la configuración real del proyecto ya
+> vinculado, y revisarlo con `railway config plan` antes de aplicar.
+
 
 ### 1.3 La advertencia de secretos en el log del build
 
