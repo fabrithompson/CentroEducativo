@@ -99,7 +99,6 @@ Se consigna por honestidad metodológica:
 - Prueba en navegadores reales (Chrome, Firefox, Edge) y en dispositivo físico (RNF-05).
 - Envío real de SMS y de correo contra un proveedor comercial.
 - Lectura del QR con cámara sobre hardware real.
-- Medición de rendimiento con la matrícula completa (RNF-03).
 - Backups automáticos de la base (RNF-06): se habilitan desde el panel de
   Railway. Ver `docs/despliegue.md` §2.
 
@@ -111,6 +110,17 @@ Ya no están en esta lista:
   4.43:1 sobre su fondo, contra los 4.5:1 exigidos— y se corrigió. Falta todavía
   pasar Lighthouse, que además mide el contraste efectivo de cada elemento
   pintado y no sólo el de la paleta declarada.
+
+- **Rendimiento con la matrícula completa (RNF-03).** Medido en producción con
+  5012 alumnos activos, cargados con `web/backend/scripts/carga-matricula.ts`.
+  Peor de tres corridas: 2.40 s el listado paginado y 0.66 s la búsqueda por
+  apellido, contra un umbral de 3 s; 4.93 s el reporte de alumnos por materia
+  —9678 filas—, 4.15 s el de deportes y 3.60 s el de morosidad, contra un umbral
+  de 10 s. **Se cumple en los cinco casos.** Un matiz que conviene no perder: las
+  mediciones se tomaron desde fuera de Railway, por el proxy TCP público, así que
+  cada consulta carga con una latencia de internet que la aplicación desplegada no
+  paga. Son una cota pesimista, no el tiempo que ve un usuario. Ver
+  `docs/despliegue.md` §6.
 
 ---
 

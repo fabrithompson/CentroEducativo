@@ -34,14 +34,35 @@ aplica se ve como un despliegue en rojo, no como errores 500 media hora después
 Al estar en el repositorio, la configuración viaja con el código y no hay que
 reconfigurar nada a mano si se recrea el servicio.
 
-> **Verificar en el primer despliegue.** Esta configuración no se pudo probar
-> desde la máquina de desarrollo: hace falta un despliegue real. Lo que hay que
-> mirar en los logs es que el paso de pre-deploy encuentre el binario de Prisma.
-> `prisma` es una `devDependency`, así que si el build llegara a podar las
-> dependencias de desarrollo, el comando fallaría con "prisma: not found". Si
-> pasa eso, la salida es mover `prisma` a `dependencies` en
-> `web/backend/package.json`. No debería hacer falta: el build ya ejecuta
-> `prisma generate`, de modo que el binario tiene que estar presente igual.
+> **No funcionó, y hay que cambiarlo.** Al ir a cargar la matrícula (19/09/2026)
+> se descubrió que **este `preDeployCommand` nunca se ejecutó**: la base de
+> producción tenía cero tablas y ninguna de las 9 migraciones aplicada, tres días
+> después del despliegue que lo introdujo. No fue el problema del binario de
+> Prisma que se anticipaba arriba. La CLI lo avisa apenas se la invoca:
+>
+> ```
+> Config as Code (railway.json / railway.toml) is deprecated.
+> Prefer Infrastructure as Code (.railway/railway.ts).
+> Existing files keep working until 2026-12-01.
+> ```
+>
+> Mientras `railway.json` se siga leyendo, conviene confirmar en el panel que el
+> servicio tenga efectivamente un *pre-deploy command* configurado: lo del panel
+> y lo del archivo pueden no coincidir, y gana el panel. La salida definitiva es
+> migrar a `.railway/railway.ts` con `railway config migrate`.
+>
+> **Cómo verificar que ya corre, sin esperar al próximo cambio de esquema.**
+> Después de un despliegue, `railway ssh --service backend -- sh -c 'cd
+> web/backend && ./node_modules/.bin/prisma migrate status'` tiene que informar
+> las 9 migraciones aplicadas. Si dice "have not yet been applied", el pre-deploy
+> sigue sin correr y hay que aplicarlas a mano — sección 6.
+>
+> **Un detalle que costó horas.** `railway ssh` entra al despliegue *más
+> reciente*, que no es necesariamente el que está sirviendo tráfico. Durante el
+> diagnóstico la aplicación respondía consultas con normalidad mientras
+> `prisma migrate status`, corrido por SSH con la misma `DATABASE_URL`, informaba
+> la base vacía: eran dos contenedores distintos. Antes de sacar conclusiones de
+> algo leído por SSH, conviene confirmar contra qué despliegue se está hablando.
 
 ---
 
@@ -107,6 +128,89 @@ de la máquina de desarrollo.
 | Qué | Por qué no se hizo | Qué hace falta |
 |---|---|---|
 | RNF-05 — Firefox, Edge y Android físico | No hay forma de abrir un navegador ni un teléfono desde el entorno de desarrollo usado | Abrir el portal en Firefox y Edge, y la app desde Expo Go en un Android real, y anotar lo que rompa |
-| RNF-03 — tiempos con la matrícula completa | La base de desarrollo tiene 12 alumnos; los umbrales (3 s en consultas, 10 s en reportes) no se pueden medir con ese volumen | Cargar una matrícula realista y cronometrar los reportes, sobre todo `alumnos-por-materia` y `morosidad`, que recorren toda la tabla |
 | RNF-06 — backups | Se habilitan desde el panel de Railway | Sección 2 de este documento |
 | Contraste efectivo con Lighthouse | Requiere un navegador | La paleta ya está medida y verificada en `frontend.contraste.test.ts`; falta el contraste real de cada elemento pintado |
+
+---
+
+## 6. Carga de matrícula y medición del RNF-03
+
+El RNF-03 pide consultas en menos de 3 s y reportes en menos de 10 s. Con los 12
+alumnos de la base de desarrollo cualquier consulta entra, y el número no dice
+nada. `web/backend/scripts/carga-matricula.ts` genera una matrícula del tamaño de
+una escuela real y cronometra **las funciones de servicio que ejecuta la
+aplicación**, no consultas reescritas para la ocasión.
+
+### Medición registrada (19/09/2026, producción, 5012 alumnos activos)
+
+| Qué | Peor de 3 | Umbral | |
+|---|---|---|---|
+| Listado de alumnos paginado (50) | 2.40 s | 3 s | cumple |
+| Búsqueda por apellido | 0.66 s | 3 s | cumple |
+| `alumnos-por-materia` (RF-06) — 9678 filas, 27 materias | 4.93 s | 10 s | cumple |
+| `alumnos-por-deporte` | 4.15 s | 10 s | cumple |
+| `morosidad` | 3.60 s | 10 s | cumple |
+
+Dos advertencias, porque estos números solos dicen de más:
+
+- Se tomaron **desde fuera de Railway**, por el proxy TCP público, así que cada
+  consulta paga una latencia de internet que la aplicación desplegada no paga:
+  habla con `postgres.railway.internal`, en el mismo centro de datos. Son una
+  cota pesimista. Las mismas mediciones en local, con la misma carga, dan entre
+  0.01 y 0.03 s.
+- El listado paginado, con 2.40 s sobre un umbral de 3 s, es el único que queda
+  cerca. Si alguna vez aprieta, el lugar donde mirar es el
+  `ORDER BY apellido, nombres`: hoy ordena la matrícula activa entera para
+  devolver 50 filas, y un índice compuesto sobre esas dos columnas es la salida.
+
+### Cómo correrlo
+
+Los tres modos son explícitos y **ninguno que escriba funciona sin `--confirmar`**.
+Antes de escribir, el script informa contra qué base va a trabajar: puede terminar
+apuntado a producción con un `railway run`, y ahí la diferencia entre medir y
+arruinar la base es una variable de entorno.
+
+```bash
+# medir, sin escribir nada
+pnpm --filter backend matricula:medir
+
+# cargar
+pnpm --filter backend exec tsx scripts/carga-matricula.ts --cantidad=5000 --confirmar
+
+# deshacer
+pnpm --filter backend exec tsx scripts/carga-matricula.ts --limpiar --confirmar
+```
+
+Contra producción, anteponiendo el entorno de Railway:
+
+```bash
+npx @railway/cli run --service Postgres -- sh -c \
+  'cd web/backend && DATABASE_URL="$DATABASE_PUBLIC_URL" pnpm exec tsx scripts/carga-matricula.ts --medir'
+```
+
+> En PowerShell estos comandos no se pegan de a bloques: usan sintaxis POSIX
+> (`sh -c`, `&&`, `$VAR` entre comillas simples). Conviene correrlos desde Git
+> Bash y de a uno.
+
+### Por qué el borrado es exacto
+
+Todo lo que el script crea queda marcado: el legajo arranca con `CARGA-` y el DNI
+sale de 90.000.000 para arriba, donde el padrón argentino todavía no llega. Eso
+permite borrar exactamente lo cargado sin tocar un solo alumno real. Una carga de
+prueba que no se puede deshacer con precisión no es una prueba, es una
+contaminación.
+
+### Si la base de producción está vacía
+
+Es lo que pasó el 19/09/2026, por lo de la sección 1. El orden es:
+
+```bash
+npx @railway/cli run --service Postgres -- sh -c \
+  'cd web/backend && DATABASE_URL="$DATABASE_PUBLIC_URL" pnpm exec prisma migrate deploy'
+
+npx @railway/cli run --service Postgres -- sh -c \
+  'cd web/backend && DATABASE_URL="$DATABASE_PUBLIC_URL" pnpm exec tsx prisma/seed-sin-usuarios.ts'
+```
+
+El seed del dominio no es opcional: sin cursos, la carga no tiene dónde colgar los
+alumnos y falla con un mensaje que lo dice.
