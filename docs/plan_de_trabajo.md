@@ -5,7 +5,7 @@
 **Equipo:** **Naft** — Nahuel Alem · Fabricio Ceniquel Thompson
 **Localidad:** Resistencia, Chaco · Inicio previsto de actividades de la institución: marzo de 2027
 **Repositorio:** monorepo pnpm — `web/backend/` · `web/frontend/` · `mobile/`
-**Versión de este documento:** 2.0 — 16/09/2026 (reemplaza la versión 1.0 del 24/08/2026)
+**Versión de este documento:** 2.1 — 19/09/2026 (reemplaza la 2.0 del 16/09 y la 1.0 del 24/08/2026)
 
 ---
 
@@ -91,9 +91,9 @@ camino alternativo; una restricción del motor no.
 |---|---|---|---|
 | **RNF-01** Usabilidad | Interfaces claras; un administrativo sin conocimientos técnicos registra un alumno tras 30 minutos de capacitación | Formularios con etiquetas asociadas, mensajes de error en lenguaje llano, enlaces de salto, foco visible y objetivos táctiles de 44/48 px | Construido · **validación con la usuaria pendiente** |
 | **RNF-02** Seguridad | Usuario y contraseña, contraseñas cifradas, funciones habilitadas por rol | Contraseñas con bcrypt, sesión con JWT y refresco, control de rol en cada ruta y restricción de los tutores a sus propios hijos | ✅ Cubierto y probado |
-| **RNF-03** Rendimiento | Consultas habituales en menos de 3 s; reportes en menos de 10 s con la matrícula completa | Paginación obligatoria, índices sobre las claves de búsqueda y agregaciones resueltas en el motor | Construido · **medición con matrícula completa pendiente** |
+| **RNF-03** Rendimiento | Consultas habituales en menos de 3 s; reportes en menos de 10 s con la matrícula completa | Paginación obligatoria, índices sobre las claves de búsqueda y agregaciones resueltas en el motor | ✅ **Medido y cumplido.** 5012 alumnos activos en producción, peor de tres corridas: listado 2,40 s y búsqueda 0,66 s contra el umbral de 3 s; alumnos por materia 4,93 s, deportes 4,15 s y morosidad 3,60 s contra el de 10 s |
 | **RNF-04** Disponibilidad | Disponible en horario escolar y de recorridos; mantenimiento fuera de esa franja | Depende del entorno de despliegue | Pendiente (fase de implementación) |
-| **RNF-05** Compatibilidad | Chrome, Firefox y Edge vigentes, con diseño adaptable; móvil en Android e iOS | HTML y CSS estándar sin dependencias de navegador; tablas que se convierten en tarjetas en pantalla angosta; aplicación móvil en React Native | Construido · **prueba en navegadores y dispositivos pendiente** |
+| **RNF-05** Compatibilidad | Chrome, Firefox y Edge vigentes, con diseño adaptable; móvil en Android e iOS | HTML y CSS estándar sin dependencias de navegador; tablas que se convierten en tarjetas en pantalla angosta; aplicación móvil en React Native | ✅ **Navegadores verificados** en los tres motores vigentes —Chromium, que es el de Chrome y el de Edge; Gecko; y WebKit—, sobre las 5 páginas a 1280 y a 375 px. Encontró y se corrigió un desborde horizontal reproducible en los tres. Queda **pendiente el dispositivo físico** |
 | **RNF-06** Integridad y respaldo | Copias de seguridad diarias e integridad referencial | Integridad garantizada por claves foráneas, restricciones CHECK y disparadores; el respaldo automático se define en el despliegue | Integridad ✅ · respaldo pendiente |
 | **RNF-07** Escalabilidad | Crecimiento de la matrícula e incorporación de módulos sin rediseño | Módulos de dominio independientes bajo `src/modules/`; agregar uno no obliga a tocar los demás | ✅ Cubierto |
 | **RNF-08** Mantenibilidad | Código modular y documentado, versionado en Git | 13 módulos de dominio, documentación técnica en `docs/` y repositorio Git con *pull requests* revisados | ✅ Cubierto |
@@ -285,11 +285,11 @@ hará y si hay algún bloqueo. Lo acordado se refleja en el tablero de Jira.
 
 | Nivel | Alcance | Cantidad |
 |---|---|---|
-| Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 240 |
-| De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **240** |
+| Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 257 |
+| De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **257** |
 | Del motor de base de datos | Verifican que el motor **rechace efectivamente** el tercer deporte, el cruce de horarios, el quinto recorrido, el comprobante sin archivo, el tutor que no es padre y la reutilización de un código QR | **17** |
 | De la aplicación móvil | Cliente HTTP, formateo y equivalencia de la implementación propia de HMAC-SHA256 contra `node:crypto` en 300 casos aleatorios | **70** |
-| **Total** | | **327** |
+| **Total** | | **344** |
 
 **Entorno de pruebas.** La suite levanta una instancia real de PostgreSQL 15
 mediante `embedded-postgres`, aplica las nueve migraciones, carga las semillas y
@@ -348,7 +348,7 @@ produjo código que hubo que corregir o reemplazar.
 
 ---
 
-## 12. Estado de avance al 16/09/2026
+## 12. Estado de avance al 19/09/2026
 
 | Métrica | Valor |
 |---|---|
@@ -361,11 +361,21 @@ produjo código que hubo que corregir o reemplazar.
 | Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 15 879 |
 | Vistas web | 4 paneles (administración, docente, tutor, estudiante) más el portal público |
 | Pantallas móviles | 5 (ingreso, dashboard, finanzas, pago por transferencia, carnet) |
-| Pruebas automatizadas | **327**, todas en verde |
+| Pruebas automatizadas | **344**, todas en verde |
 | Base de datos de verificación | PostgreSQL 15.18 real |
 
-**Pendiente de verificación:** prueba en navegadores reales, prueba en
-dispositivo físico, envío real de SMS y de correo, lectura del QR con cámara,
-medición de contraste de color y medición de rendimiento con la matrícula
-completa. Todo ello queda asignado a la semana de pruebas y a la jornada del
-11/11.
+**Verificado desde la versión 2.0 de este documento:**
+
+- **Rendimiento con la matrícula completa (RNF-03).** Medido en producción con
+  5012 alumnos. Cumple los cinco casos.
+- **Navegadores (RNF-05).** Los tres motores vigentes —Chromium, que es el de
+  Chrome y el de Edge; Gecko; y WebKit— sobre las cinco páginas, a 1280 y a
+  375 px. Encontró un desborde horizontal reproducible en los tres, que se
+  corrigió.
+- **Contraste de color.** Medido con Lighthouse sobre el sitio desplegado: 93/100
+  en la primera corrida, con 17 elementos por debajo del mínimo AA y 7 enlaces
+  sin nombre accesible. Corregido, da 100/100 sin auditorías fallidas.
+
+**Pendiente de verificación:** prueba en un dispositivo físico, envío real de SMS
+y de correo, y lectura del QR con cámara sobre hardware real. Queda asignado a la
+semana de pruebas y a la jornada del 11/11.
