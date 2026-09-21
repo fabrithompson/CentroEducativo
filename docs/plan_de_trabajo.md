@@ -292,11 +292,11 @@ hará y si hay algún bloqueo. Lo acordado se refleja en el tablero de Jira.
 
 | Nivel | Alcance | Cantidad |
 |---|---|---|
-| Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 257 |
-| De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **257** |
+| Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 258 |
+| De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **258** |
 | Del motor de base de datos | Verifican que el motor **rechace efectivamente** el tercer deporte, el cruce de horarios, el quinto recorrido, el comprobante sin archivo, el tutor que no es padre y la reutilización de un código QR | **17** |
 | De la aplicación móvil | Cliente HTTP, formateo y equivalencia de la implementación propia de HMAC-SHA256 contra `node:crypto` en 300 casos aleatorios | **70** |
-| **Total** | | **344** |
+| **Total** | | **345** |
 
 **Entorno de pruebas.** La suite levanta una instancia real de PostgreSQL 15
 mediante `embedded-postgres`, aplica las nueve migraciones, carga las semillas y
@@ -370,7 +370,7 @@ produjo código que hubo que corregir o reemplazar.
 | Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 17 734 |
 | Vistas web | 4 paneles (administración, docente, tutor, estudiante) más el portal público |
 | Pantallas móviles | 5 (ingreso, dashboard, finanzas, pago por transferencia, carnet) |
-| Pruebas automatizadas | **344**, todas en verde |
+| Pruebas automatizadas | **345**, todas en verde |
 | Base de datos de verificación | PostgreSQL 15.18 real |
 
 **Verificado desde la versión 2.0 de este documento:**

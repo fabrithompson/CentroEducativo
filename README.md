@@ -556,7 +556,7 @@ pnpm start     # node dist/index.js
 
 ## 10. Pruebas
 
-**344 pruebas automatizadas**, y corren solas en cada PR
+**345 pruebas automatizadas**, y corren solas en cada PR
 (`.github/workflows/ci.yml`).
 
 | Suite | Cantidad | Comando |
