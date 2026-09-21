@@ -363,9 +363,9 @@ produjo código que hubo que corregir o reemplazar.
 | Modelos de datos | 40 |
 | Enumeraciones | 25 |
 | Migraciones aplicadas | 9 |
-| Endpoints REST | 129 |
+| Endpoints REST | 141 |
 | Módulos de dominio | 15 |
-| Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 16 889 |
+| Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 17 734 |
 | Vistas web | 4 paneles (administración, docente, tutor, estudiante) más el portal público |
 | Pantallas móviles | 5 (ingreso, dashboard, finanzas, pago por transferencia, carnet) |
 | Pruebas automatizadas | **344**, todas en verde |

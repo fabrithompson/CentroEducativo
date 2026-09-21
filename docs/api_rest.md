@@ -39,6 +39,7 @@ dos agrupaciones transversales.
 | Transporte y comedor | `modules/servicios/servicios.service.ts` | `servicios.routes.ts` |
 | Portal de tutores | — | `modules/padres/padres.routes.ts` |
 | Reportes | `modules/reportes/reportes.service.ts` | `reportes.routes.ts` |
+| Académico (niveles, cursos, materias) | `modules/administrador/academico.service.ts` | `academico.routes.ts` |
 | Alumnos (heredado) | — | `modules/alumnos/`: `estudiantes`, `calificaciones`, `asistencia` |
 | Profesores (heredado) | — | `modules/profesores/`: `planes`, `actividades` |
 | Administrador | — | `modules/administrador/`: `administrador`, `moderacion`, `comunicados`, `pagos` |
@@ -208,7 +209,48 @@ La baja **se niega si el profesor es responsable de algún deporte activo**. La
 regla de negocio exige que cada deporte tenga responsable; primero hay que
 reasignarlo.
 
-### 4.3 Deportes
+### 4.3 Estructura académica
+
+| Método | Ruta | Roles |
+|---|---|---|
+| GET | `/api/academico/niveles` | autenticado |
+| POST | `/api/academico/niveles` | ADMIN |
+| PATCH | `/api/academico/niveles/:id` | ADMIN |
+| DELETE | `/api/academico/niveles/:id` | ADMIN — baja lógica |
+| GET | `/api/academico/cursos` | autenticado |
+| POST | `/api/academico/cursos` | ADMIN |
+| PATCH | `/api/academico/cursos/:id` | ADMIN |
+| DELETE | `/api/academico/cursos/:id` | ADMIN — baja lógica |
+| GET | `/api/academico/materias` | autenticado |
+| POST | `/api/academico/materias` | ADMIN |
+| PATCH | `/api/academico/materias/:id` | ADMIN |
+| DELETE | `/api/academico/materias/:id` | ADMIN — baja lógica |
+
+Filtros: `activo` en los tres; `nivelId`, `anioLectivo` y `turno` en cursos;
+`cursoId`, `nivelId`, `profesorId` y `sinProfesor` en materias.
+
+La lectura queda abierta a cualquier sesión a propósito: es el catálogo con el
+que los paneles arman sus desplegables —a qué curso inscribir un alumno, qué
+materia asignarle a un profesor— y no contiene ningún dato personal. La
+escritura es exclusiva de ADMIN.
+
+Notas:
+
+- **Sin este módulo la API no se podía usar.** `POST /api/alumnos` exige un
+  `cursoId` y `POST /api/profesores/:id/materias` un `materiaId`, y no había
+  ningún endpoint que los listara: los ids existían en la base y eran
+  inalcanzables desde afuera.
+- Las bajas son **lógicas** y además **se niegan cuando todavía cuelga algo**:
+  un nivel con cursos activos, o un curso con alumnos activos. El mensaje dice
+  cuántos son, que es lo que hace falta para saber qué ordenar primero.
+- `PATCH /cursos/:id` **rechaza bajar el cupo por debajo de la matrícula ya
+  inscripta**: dejaría al curso en un estado que el propio alta de alumnos
+  considera inválido.
+- El catálogo se devuelve **sin paginar**. Son decenas de filas y los
+  desplegables las necesitan completas; el corte natural, si algún día dejara
+  de serlo, es `anioLectivo`, que ya es filtro de `GET /cursos`.
+
+### 4.4 Deportes
 
 | Método | Ruta | Roles |
 |---|---|---|
@@ -231,7 +273,7 @@ La inscripción corre en transacción `Serializable` y valida, en orden: alumno
 activo, deporte activo, no estar ya inscripto, **tope de 2**, **sin choques de
 horario**, y cupo. Las dos reglas críticas se revalidan en la base.
 
-### 4.4 Transporte y comedor
+### 4.5 Transporte y comedor
 
 | Método | Ruta | Roles |
 |---|---|---|
@@ -254,7 +296,7 @@ recorrido actualiza la inscripción existente, no crea otra (lo garantiza
 `GET /api/servicios/alumno/:id` devuelve la vista consolidada del período con el
 costo mensual estimado desglosado.
 
-### 4.5 Portal de tutores
+### 4.6 Portal de tutores
 
 | Método | Ruta |
 |---|---|
@@ -280,7 +322,7 @@ Las calificaciones y la asistencia siguen colgando de `User` (modelo del bloque 
 Si el alumno no tiene cuenta de campus —caso típico de Inicial— esos endpoints
 devuelven lista vacía con una nota, no un error.
 
-### 4.6 Reportes administrativos
+### 4.7 Reportes administrativos
 
 Todos exclusivos de ADMIN. Forma de respuesta común: `{ filtros, totales, ... }`.
 

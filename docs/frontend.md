@@ -37,9 +37,13 @@ frontend/
     api.js              Cliente de la API v0.4
     ui.js               Componentes: tabla, badge, filtros, indicadores, estados
     vistas/
-      reportes.js       Panel de admin — 5 reportes con filtros
-      docente-cursos.js Panel del docente — materias y alumnos
-      padre-hijos.js    Panel del tutor — ficha, deportes, servicios, cuenta
+      admin-alumnos.js    Panel de admin — ABM de alumnos (RF-01)
+      admin-profesores.js Panel de admin — ABM de profesores y materias a cargo (RF-04)
+      admin-academico.js  Panel de admin — niveles, cursos y materias
+      reportes.js         Panel de admin — 5 reportes con filtros
+      escaner.js          Panel de admin — lectura del carnet con QR
+      docente-cursos.js   Panel del docente — materias y alumnos
+      padre-hijos.js      Panel del tutor — ficha, deportes, servicios, cuenta
   css/
     componentes.css     Sistema de componentes + responsive + accesibilidad
 ```
@@ -258,7 +262,6 @@ funcione de punta a punta.
 
 | Pendiente | Nota |
 |---|---|
-| ABM de alumnos y profesores en el backoffice | Los endpoints existen; falta la pantalla |
 | Cola de comprobantes en el panel de admin | El endpoint existe; falta la pantalla |
 | Estado de los schedulers en el backoffice | El endpoint existe; falta la pantalla |
 | Página `restablecer.html` para el reseteo de contraseña | El mail ya apunta ahí |
