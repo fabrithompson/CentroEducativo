@@ -1,0 +1,151 @@
+name: Respaldo de la base
+
+# RNF-06 pide copias de seguridad diarias. Railway aporta dos mecanismos
+# propios —PITR y snapshots del volumen—, pero los dos viven dentro de la
+# cuenta de Railway: si se pierde la cuenta o alguien borra el proyecto, se van
+# con él. Esto es la tercera pata, un dump lógico que queda fuera.
+#
+# El dump corre acá y no en un cron del backend por dos razones: `node-cron`
+# escribiría en el disco del contenedor, y un respaldo guardado en la misma
+# máquina que la base no es un respaldo; y porque ninguna de las máquinas del
+# equipo tiene `pg_dump` instalado.
+
+on:
+  schedule:
+    # 03:15 UTC = 00:15 en Argentina. Fuera del horario escolar y después de
+    # los schedulers de facturación, que corren a las 21:00 locales.
+    - cron: '15 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: respaldo
+  cancel-in-progress: false
+
+jobs:
+  respaldar:
+    name: pg_dump de producción
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      major: ${{ steps.pg.outputs.major }}
+
+    steps:
+      - name: Detectar la versión del servidor
+        id: pg
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_RESPALDO }}
+        run: |
+          set -euo pipefail
+          # `psql` tolera conectarse a un servidor de otra versión; `pg_dump`
+          # se niega si el servidor es más nuevo que él. Por eso se pregunta
+          # primero y después se usa la imagen que corresponde: el día que
+          # Railway actualice el motor, esto sigue funcionando solo.
+          MAJOR=$(docker run --rm -e PGCONNECT_TIMEOUT=15 postgres:18-alpine \
+            psql "$DATABASE_URL" -Atc 'SHOW server_version_num' | cut -c1-2)
+          echo "Servidor PostgreSQL $MAJOR"
+          echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+
+      - name: Generar el dump
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_RESPALDO }}
+        run: |
+          set -euo pipefail
+          NOMBRE="educar-$(date -u +%Y%m%d-%H%M).sql"
+          docker run --rm -e PGCONNECT_TIMEOUT=15 \
+            postgres:${{ steps.pg.outputs.major }}-alpine \
+            pg_dump --no-owner --no-privileges --clean --if-exists \
+            "$DATABASE_URL" > "$NOMBRE"
+          # Un dump cortado por la mitad hay que detectarlo acá y no el día que
+          # haya que restaurarlo: pg_dump cierra el archivo con esa línea, así
+          # que si falta, la conexión se cayó a mitad de camino.
+          test -s "$NOMBRE"
+          grep -q 'PostgreSQL database dump complete' "$NOMBRE"
+          echo "Dump: $(du -h "$NOMBRE" | cut -f1)" >> "$GITHUB_STEP_SUMMARY"
+          gzip "$NOMBRE"
+          echo "ARCHIVO=$NOMBRE.gz" >> "$GITHUB_ENV"
+
+      - name: Cifrar
+        env:
+          CLAVE: ${{ secrets.RESPALDO_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          # El dump tiene datos personales de menores, domicilios, teléfonos de
+          # los tutores y hashes de contraseña. No queda en claro ni siquiera
+          # dentro de los artifacts privados del repositorio.
+          gpg --batch --yes --passphrase "$CLAVE" --cipher-algo AES256 \
+            --symmetric "$ARCHIVO"
+          rm "$ARCHIVO"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: respaldo-${{ github.run_id }}
+          path: '*.sql.gz.gpg'
+          retention-days: 90
+          if-no-files-found: error
+
+  verificar:
+    name: Restaurar el dump en una base limpia
+    needs: respaldar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Un respaldo que nunca se restauró no es un respaldo: es un archivo. Este
+    # job es el que convierte "hicimos backup" en un hecho verificado, y corre
+    # todos los días junto con el dump.
+    services:
+      postgres:
+        image: postgres:${{ needs.respaldar.outputs.major }}-alpine
+        env:
+          POSTGRES_USER: educar
+          POSTGRES_PASSWORD: educar
+          POSTGRES_DB: educar_restaurado
+          POSTGRES_INITDB_ARGS: '--encoding=UTF8'
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U educar -d educar_restaurado"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: respaldo-${{ github.run_id }}
+
+      - name: Descifrar y restaurar
+        env:
+          CLAVE: ${{ secrets.RESPALDO_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          gpg --batch --yes --passphrase "$CLAVE" --decrypt *.sql.gz.gpg \
+            | gunzip > dump.sql
+          # --network host para alcanzar el service container en 127.0.0.1.
+          # ON_ERROR_STOP porque psql, por omisión, sigue adelante después de
+          # un error y terminaría declarando exitosa una restauración parcial.
+          docker run --rm --network host -v "$PWD:/w" -e PGPASSWORD=educar \
+            postgres:${{ needs.respaldar.outputs.major }}-alpine \
+            psql -h 127.0.0.1 -U educar -d educar_restaurado \
+            -v ON_ERROR_STOP=1 -q -f /w/dump.sql
+
+      - name: Contar lo restaurado
+        run: |
+          set -euo pipefail
+          consultar() {
+            docker run --rm --network host -e PGPASSWORD=educar \
+              postgres:${{ needs.respaldar.outputs.major }}-alpine \
+              psql -h 127.0.0.1 -U educar -d educar_restaurado -Atc "$1"
+          }
+          TABLAS=$(consultar "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'")
+          ALUMNOS=$(consultar 'SELECT count(*) FROM "Alumno"')
+          COMPROBANTES=$(consultar 'SELECT count(*) FROM "ComprobantePago"')
+          {
+            echo "| Restaurado | Cantidad |"
+            echo "|---|---|"
+            echo "| Tablas | $TABLAS |"
+            echo "| Alumnos | $ALUMNOS |"
+            echo "| Comprobantes | $COMPROBANTES |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # El esquema ronda las 40 tablas más `_prisma_migrations`. Bastante
+          # menos que eso significa que se restauró sólo una parte.
+          test "$TABLAS" -ge 30
