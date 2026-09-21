@@ -13,7 +13,9 @@ código nuevo salía a servir contra una base con el esquema viejo. Eso no falla
 al desplegar: falla más tarde, en la primera consulta que toca una columna que
 no existe, y para entonces la versión anterior ya no está.
 
-**Ahora:** `railway.json`, en la raíz del repositorio, declara el ciclo completo.
+**Ahora:** [`.railway/railway.ts`](../.railway/railway.ts) declara el ciclo completo.
+Hasta el 21/09/2026 esto vivía en un `railway.json` en la raíz, con la forma que
+se muestra abajo; la migración a Infrastructure as Code está explicada en §1.1.
 
 ```json
 {
@@ -51,20 +53,23 @@ reconfigurar nada a mano si se recrea el servicio.
 > y lo del archivo pueden no coincidir, y gana el panel. Esa es la primera
 > sospecha a descartar, porque explicaría por qué el archivo no tuvo efecto.
 
-### 1.1 La migración a Infrastructure as Code, pendiente
+### 1.1 La migración a Infrastructure as Code
 
-Railway declaró obsoleto el formato de `railway.json`: la CLI avisa en cada
-despliegue que los archivos de Config as Code **siguen funcionando hasta el
-01/12/2026**. Después de esa fecha hay que haber migrado a `.railway/railway.ts`.
+**Hecha el 21/09/2026.** Railway declaró obsoleto el formato de `railway.json`
+—la CLI avisaba en cada despliegue que Config as Code funcionaba hasta el
+01/12/2026—, así que la configuración pasó a
+[`.railway/railway.ts`](../.railway/railway.ts) y el `railway.json` se eliminó.
 
-**Todavía no está hecho, y hay un motivo para no apurarlo.** Se intentó con
-`railway config migrate`, que traduce el `railway.json` automáticamente, y el
-archivo que generó declaraba un servicio llamado `"CentroEducativo"`. El servicio
-real de este proyecto se llama **`backend`**. Aplicar ese archivo no habría
-migrado nada: habría intentado crear un servicio nuevo al lado del que está
-sirviendo.
+**Por qué el primer intento se había frenado, que es lo que vale la pena
+recordar.** Se probó con `railway config migrate`, que traduce el `railway.json`
+automáticamente, y el archivo que generó declaraba un servicio llamado
+`"CentroEducativo"`. El servicio real de este proyecto se llama **`backend`**.
+Aplicar ese archivo no habría migrado nada: habría intentado crear un servicio
+nuevo al lado del que está sirviendo. Por eso se hizo con `config pull`, que
+importa la configuración real del proyecto en lugar de traducir un archivo que
+puede estar equivocado.
 
-El camino correcto, cuando se encare:
+El camino que se siguió:
 
 ```bash
 npx @railway/cli login
@@ -79,9 +84,16 @@ configurado de verdad; el segundo sólo traduce un archivo que puede estar
 equivocado, que es exactamente lo que pasó acá.
 
 Y el orden importa: **el `railway.json` no se borra hasta que `config plan` no
-informe diferencias** y un despliegue nuevo muestre las nueve migraciones
-aplicadas. Borrarlo antes deja los despliegues sin `preDeployCommand`, que es
-justamente la pieza que este apartado intenta asegurar.
+informe diferencias** y un despliegue nuevo muestre las migraciones aplicadas.
+Borrarlo antes deja los despliegues sin `preDeployCommand`, que es justamente la
+pieza que este apartado intenta asegurar.
+
+**Un detalle que se corrigió después de migrar.** Los `watchPatterns` que trajo
+el `config pull` seguían vigilando `/railway.json`, un archivo que la propia
+migración eliminaba, y no incluían `.railway/`. Con eso, un cambio en la
+configuración de infraestructura no habría disparado despliegue y Railway lo
+habría salteado en silencio —el mismo modo de fallar que ya se había cobrado
+varios despliegues del frontend, descrito en §1.4—. Ahora vigila `/.railway/**`.
 
 > **Cómo verificar que ya corre, sin esperar al próximo cambio de esquema.**
 > Después de un despliegue, `railway ssh --service backend -- sh -c 'cd

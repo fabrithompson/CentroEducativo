@@ -105,16 +105,23 @@ Se consigna por honestidad metodológica:
   se verificaron; lo que falta es un Android real, con su cámara y su teclado.
 - Envío real de SMS y de correo contra un proveedor comercial.
 - Lectura del QR con cámara sobre hardware real.
-- **Lo institucional del RNF-09**: inscripción de la base ante la AAIP,
-  designación del responsable y una política de retención con purga automática.
-  El relevamiento y la lista completa están en
-  [`docs/politica_de_datos.md`](docs/politica_de_datos.md); nada de eso se
-  resuelve programando.
-- Que el `preDeployCommand` de Railway efectivamente corra. Está declarado en
-  `railway.json`, pero se comprobó que no se ejecutó en el despliegue que lo
-  introdujo. Ver `docs/despliegue.md` §1.
+- **Lo institucional del RNF-09**: inscripción de la base ante la AAIP y
+  designación del responsable. También confirmar los plazos de retención: la
+  purga ya corre todas las noches, pero en modo informe hasta que alguien los
+  valide. El relevamiento completo está en
+  [`docs/politica_de_datos.md`](docs/politica_de_datos.md).
 
 Ya no están en esta lista:
+
+- **Que el despliegue de Railway tome los cambios.** Los push a `main` figuraban
+  como SKIPPED con el motivo "No changes to watched files": el servicio tenía
+  configurado `watchPatterns: ["/backend/**"]` y en este monorepo el backend
+  vive en `web/backend/`, así que el patrón no coincidía con nada. Como efecto
+  secundario, el `railway.json` del repositorio estaba siendo ignorado entero y
+  el build corría el comando guardado en el panel. Se corrigió migrando la
+  configuración a [`.railway/railway.ts`](.railway/railway.ts), que es ahora la
+  única fuente de verdad. Verificado sobre el sitio en vivo: las rutas nuevas
+  responden 401 en lugar de 404 y `restablecer.html` existe.
 
 - **Backups de la base (RNF-06).** Resueltos en
   [`.github/workflows/respaldo.yml`](.github/workflows/respaldo.yml), que corre

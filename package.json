@@ -18,5 +18,8 @@
     "node": ">=22.13",
     "pnpm": ">=9"
   },
-  "packageManager": "pnpm@11.1.1"
+  "packageManager": "pnpm@11.1.1",
+  "devDependencies": {
+    "railway": "^3.11.0"
+  }
 }
