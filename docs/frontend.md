@@ -40,6 +40,8 @@ frontend/
       admin-alumnos.js    Panel de admin — ABM de alumnos (RF-01)
       admin-profesores.js Panel de admin — ABM de profesores y materias a cargo (RF-04)
       admin-academico.js  Panel de admin — niveles, cursos y materias
+      admin-comprobantes.js Panel de admin — cola de comprobantes de transferencia
+      admin-tareas.js     Panel de admin — estado y disparo de las tareas programadas
       reportes.js         Panel de admin — 5 reportes con filtros
       escaner.js          Panel de admin — lectura del carnet con QR
       docente-cursos.js   Panel del docente — materias y alumnos
@@ -262,7 +264,4 @@ funcione de punta a punta.
 
 | Pendiente | Nota |
 |---|---|
-| Cola de comprobantes en el panel de admin | El endpoint existe; falta la pantalla |
-| Estado de los schedulers en el backoffice | El endpoint existe; falta la pantalla |
-| Página `restablecer.html` para el reseteo de contraseña | **El mail ya apunta ahí, así que hoy el enlace da 404.** El endpoint `POST /api/auth/reset-password` ya existe; falta sólo la página |
 | Probar con lector de pantalla | El contraste ya se midió con Lighthouse sobre el sitio desplegado (100/100) y en Chromium sobre los avisos nuevos; falta NVDA o VoiceOver sobre los formularios |

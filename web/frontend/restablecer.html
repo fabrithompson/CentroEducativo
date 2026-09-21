@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restablecer contraseña — Transformar Para Educar</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/componentes.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--light);
+            padding: 20px;
+        }
+
+        .restablecer {
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 4px 24px rgba(16, 24, 40, 0.10);
+            padding: 32px;
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .restablecer__marca {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .restablecer__marca span { font-size: 1.6rem; }
+
+        .restablecer__marca strong {
+            font-size: 1.05rem;
+            color: var(--primary);
+        }
+
+        .restablecer h1 {
+            font-size: 1.35rem;
+            color: var(--primary);
+            margin: 0 0 6px;
+        }
+
+        .restablecer__ayuda {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin: 0 0 22px;
+            line-height: 1.5;
+        }
+
+        .restablecer .campo { margin-bottom: 16px; }
+
+        .restablecer__requisitos {
+            font-size: 0.82rem;
+            color: var(--gray);
+            margin: 6px 0 0;
+            padding-left: 18px;
+        }
+
+        .restablecer__requisitos li { margin: 2px 0; }
+
+        .restablecer__boton {
+            width: 100%;
+            padding: 13px;
+            font-size: 1rem;
+            justify-content: center;
+        }
+
+        .restablecer__volver {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            font-size: 0.9rem;
+            color: #1a5f8f;
+        }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#contenido-principal">Saltar al contenido principal</a>
+    <main class="restablecer" id="contenido-principal" tabindex="-1">
+        <div class="restablecer__marca">
+            <span aria-hidden="true">🎓</span>
+            <strong>Transformar Para Educar</strong>
+        </div>
+
+        <h1 id="titulo">Elegí una contraseña nueva</h1>
+        <p class="restablecer__ayuda" id="ayuda">
+            El enlace del correo vale por un solo uso. Una vez que guardes la contraseña,
+            vas a poder entrar con ella.
+        </p>
+
+        <form id="formRestablecer">
+            <div class="campo">
+                <label for="password" class="requerido">Contraseña nueva</label>
+                <input type="password" id="password" name="password" required
+                       minlength="8" maxlength="72" autocomplete="new-password"
+                       aria-describedby="requisitos">
+                <ul class="restablecer__requisitos" id="requisitos">
+                    <li>Al menos 8 caracteres.</li>
+                    <li>Tiene que combinar letras y números.</li>
+                </ul>
+            </div>
+
+            <div class="campo">
+                <label for="repetir" class="requerido">Repetir la contraseña</label>
+                <input type="password" id="repetir" name="repetir" required
+                       minlength="8" maxlength="72" autocomplete="new-password">
+            </div>
+
+            <p class="campo__error" id="error" role="alert" hidden></p>
+
+            <button type="submit" class="btn btn--primario restablecer__boton" id="guardar">
+                <i class="fas fa-key" aria-hidden="true"></i> Guardar contraseña
+            </button>
+        </form>
+
+        <a class="restablecer__volver" href="index.html">Volver al inicio</a>
+    </main>
+
+    <script src="toast.js"></script>
+    <script>
+        (function () {
+            const form = document.getElementById('formRestablecer');
+            const error = document.getElementById('error');
+            const boton = document.getElementById('guardar');
+
+            // El token viaja en la query del enlace que manda el correo
+            // (password.service.ts arma `/restablecer.html?token=...`).
+            const token = new URLSearchParams(window.location.search).get('token') || '';
+
+            function mostrarError(texto) {
+                error.textContent = texto;
+                error.hidden = false;
+            }
+
+            // El backend responde `mensaje` cuando sale bien y `message` cuando
+            // falla, y manda el detalle campo por campo en `details`. Es el
+            // mismo criterio que usa el formulario de ingreso del portal.
+            function mensajeDeError(data, porDefecto) {
+                if (data && data.details) {
+                    const detalles = Object.values(data.details).flat().filter(Boolean);
+                    if (detalles.length > 0) return detalles.join(' ');
+                }
+                return (data && (data.mensaje || data.message)) || porDefecto;
+            }
+
+            // Sin token no tiene sentido mostrar el formulario: cualquier cosa
+            // que escriba la persona se va a rechazar igual del otro lado.
+            if (token.length !== 64) {
+                document.getElementById('titulo').textContent = 'El enlace no es válido';
+                document.getElementById('ayuda').textContent =
+                    'Puede que lo hayas copiado incompleto, o que ya lo hayas usado. ' +
+                    'Pedí uno nuevo desde "¿Olvidaste tu contraseña?" en la pantalla de ingreso.';
+                form.hidden = true;
+                return;
+            }
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                error.hidden = true;
+
+                const password = document.getElementById('password').value;
+                const repetir = document.getElementById('repetir').value;
+
+                // Se compara acá y no en el servidor porque el servidor recibe
+                // una sola contraseña: la repetición existe para atajar el
+                // error de tipeo antes de que quede guardada.
+                if (password !== repetir) {
+                    mostrarError('Las dos contraseñas no coinciden.');
+                    document.getElementById('repetir').focus();
+                    return;
+                }
+
+                boton.disabled = true;
+
+                fetch('/api/auth/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token, password: password })
+                })
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        if (data.exito) {
+                            document.getElementById('titulo').textContent = 'Listo';
+                            document.getElementById('ayuda').textContent =
+                                data.mensaje || 'Contraseña actualizada. Ya podés iniciar sesión.';
+                            form.hidden = true;
+                            if (window.toastSuccess) window.toastSuccess('Contraseña actualizada.');
+                            setTimeout(function () { window.location.href = 'index.html'; }, 2500);
+                            return;
+                        }
+                        mostrarError(mensajeDeError(data, 'No se pudo cambiar la contraseña.'));
+                        boton.disabled = false;
+                    })
+                    .catch(function (err) {
+                        console.error(err);
+                        mostrarError('No se pudo conectar con el servidor. Probá de nuevo en un momento.');
+                        boton.disabled = false;
+                    });
+            });
+        })();
+    </script>
+</body>
+</html>

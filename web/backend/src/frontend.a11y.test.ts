@@ -22,6 +22,7 @@ const FRONTEND = path.resolve(import.meta.dirname ?? __dirname, '..', '..', 'fro
 
 const PAGINAS = [
   'index.html',
+  'restablecer.html',
   'panel_admin.html',
   'panel_docente.html',
   'panel_padre.html',

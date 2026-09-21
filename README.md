@@ -55,6 +55,8 @@ desprenden cuatro problemas concretos que el sistema resuelve:
 | **Backoffice** — módulo Profesores | ✅ | [`modules/profesores/`](web/backend/src/modules/profesores/) |
 | **Backoffice** — módulo Administrador (ABM, roles, reportes) | ✅ | [`modules/administrador/`](web/backend/src/modules/administrador/) · [`modules/reportes/`](web/backend/src/modules/reportes/) |
 | **Manual de usuario** — por rol, con el alta de alumno paso a paso | ✅ | [`docs/manual_de_usuario.md`](docs/manual_de_usuario.md) |
+| **Recuperación de contraseña** — correo con enlace de un solo uso | ✅ | [`restablecer.html`](web/frontend/restablecer.html) · [`modules/auth/`](web/backend/src/modules/auth/) |
+| **Backoffice** — cola de comprobantes y tareas programadas | ✅ | [`admin-comprobantes.js`](web/frontend/js/vistas/admin-comprobantes.js) · [`admin-tareas.js`](web/frontend/js/vistas/admin-tareas.js) |
 | **Política de datos personales** (RNF-09, Ley 25.326) | ✅ | [`docs/politica_de_datos.md`](docs/politica_de_datos.md) |
 | **App móvil** — autenticación segura y RBAC | ✅ | [`mobile/src/auth/`](mobile/src/auth/) |
 | **App móvil** — cuotas, vencimientos e historial | ✅ | [`mobile/src/pantallas/Finanzas.tsx`](mobile/src/pantallas/Finanzas.tsx) |

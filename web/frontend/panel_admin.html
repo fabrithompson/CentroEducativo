@@ -88,6 +88,8 @@
                 <li><a class="nav-link" onclick="switchView('opiniones', this); cargarOpiniones();"><i class="fas fa-comment-dots"></i> Opiniones <span id="badgeOpiniones" class="chat-list-unread" style="display:none;">0</span></a></li>
                 <li><a class="nav-link" onclick="switchView('empleo', this); cargarPostulaciones();"><i class="fas fa-briefcase"></i> Postulaciones empleo <span id="badgeEmpleo" class="chat-list-unread" style="display:none;">0</span></a></li>
                 <li><a class="nav-link" onclick="switchView('vinculos', this); cargarLinks();"><i class="fas fa-link"></i> Vínculos Padre-Hijo</a></li>
+                <li><a class="nav-link" onclick="switchView('comprobantes', this); window.abrirComprobantes();"><i class="fas fa-receipt"></i> Comprobantes <span id="badgeComprobantes" class="chat-list-unread" style="display:none;">0</span></a></li>
+                <li><a class="nav-link" onclick="switchView('tareas', this); window.abrirTareas();"><i class="fas fa-clock"></i> Tareas programadas</a></li>
                 <li><a class="nav-link" onclick="switchView('cuotas', this); cargarUsuarios();"><i class="fas fa-money-bill"></i> Cargar Cuota</a></li>
                 <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments"></i> Mensajes</a></li>
                 <li><a class="nav-link" onclick="switchView('anuncios', this); cargarAnuncios();"><i class="fas fa-bullhorn"></i> Anuncios</a></li>
@@ -113,6 +115,16 @@
             <section id="m-academico" class="view-section" aria-labelledby="t-m-academico">
                 <h2 class="section-title" id="t-m-academico">Estructura académica</h2>
                 <div id="vista-admin-academico"></div>
+            </section>
+
+            <section id="comprobantes" class="view-section" aria-labelledby="t-comprobantes">
+                <h2 class="section-title" id="t-comprobantes">Comprobantes de transferencia</h2>
+                <div id="vista-comprobantes"></div>
+            </section>
+
+            <section id="tareas" class="view-section" aria-labelledby="t-tareas">
+                <h2 class="section-title" id="t-tareas">Tareas programadas</h2>
+                <div id="vista-tareas"></div>
             </section>
 
             <section id="reportes" class="view-section" aria-labelledby="t-reportes">
@@ -1046,6 +1058,30 @@
   window.abrirAdminAlumnos = () => iniciarAdminAlumnos('vista-admin-alumnos');
   window.abrirAdminProfesores = () => iniciarAdminProfesores('vista-admin-profesores');
   window.abrirAdminAcademico = () => iniciarAdminAcademico('vista-admin-academico');
+</script>
+
+<script type="module">
+  import { iniciarComprobantes } from './js/vistas/admin-comprobantes.js';
+  import { iniciarTareas } from './js/vistas/admin-tareas.js';
+  import api from './js/api.js';
+
+  window.abrirComprobantes = () => iniciarComprobantes('vista-comprobantes');
+  window.abrirTareas = () => iniciarTareas('vista-tareas');
+
+  // Contador en el menú: si hay comprobantes esperando, la cuota le figura a
+  // la familia como "en revisión" y el recordatorio del día 20 la sigue
+  // contando como deuda. Conviene que se vea sin entrar a la pantalla.
+  api.facturacion
+    .pendientes()
+    .then((r) => {
+      const badge = document.getElementById('badgeComprobantes');
+      if (!badge || !r.cantidad) return;
+      badge.textContent = String(r.cantidad);
+      badge.style.display = '';
+    })
+    .catch(() => {
+      /* el contador es informativo: si falla, la pantalla sigue andando */
+    });
 </script>
 
 <script type="module">

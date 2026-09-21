@@ -386,4 +386,3 @@ está disponible en la máquina de desarrollo.
 | Unificar la política de contraseñas con `register` | 3 |
 | Revocación real de refresh tokens (el campo `v` no se contrasta contra nada) | 3 |
 | Migrar el limitador de intentos a Redis | fuera de alcance del TP |
-| Página `restablecer.html` en el frontend — **el correo de recuperación ya enlaza ahí y la página no existe: el flujo termina en un 404** | 2 |
