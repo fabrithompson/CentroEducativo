@@ -54,6 +54,7 @@ desprenden cuatro problemas concretos que el sistema resuelve:
 | **Backoffice** — módulo Alumnos | ✅ | [`modules/alumnos/`](web/backend/src/modules/alumnos/) · [`panel_admin.html`](web/frontend/panel_admin.html) |
 | **Backoffice** — módulo Profesores | ✅ | [`modules/profesores/`](web/backend/src/modules/profesores/) |
 | **Backoffice** — módulo Administrador (ABM, roles, reportes) | ✅ | [`modules/administrador/`](web/backend/src/modules/administrador/) · [`modules/reportes/`](web/backend/src/modules/reportes/) |
+| **Manual de usuario** — por rol, con el alta de alumno paso a paso | ✅ | [`docs/manual_de_usuario.md`](docs/manual_de_usuario.md) |
 | **App móvil** — autenticación segura y RBAC | ✅ | [`mobile/src/auth/`](mobile/src/auth/) |
 | **App móvil** — cuotas, vencimientos e historial | ✅ | [`mobile/src/pantallas/Finanzas.tsx`](mobile/src/pantallas/Finanzas.tsx) |
 | **App móvil** — pago por transferencia, 1 o más comprobantes | ✅ | [`PagoTransferencia.tsx`](mobile/src/pantallas/PagoTransferencia.tsx) |

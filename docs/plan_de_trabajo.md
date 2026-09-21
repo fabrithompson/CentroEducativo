@@ -89,7 +89,7 @@ camino alternativo; una restricción del motor no.
 
 | RNF | Enunciado | Cómo se aborda | Estado |
 |---|---|---|---|
-| **RNF-01** Usabilidad | Interfaces claras; un administrativo sin conocimientos técnicos registra un alumno tras 30 minutos de capacitación | Formularios con etiquetas asociadas, mensajes de error en lenguaje llano, enlaces de salto, foco visible y objetivos táctiles de 44/48 px | Construido · **validación con la usuaria pendiente** |
+| **RNF-01** Usabilidad | Interfaces claras; un administrativo sin conocimientos técnicos registra un alumno tras 30 minutos de capacitación | Formularios con etiquetas asociadas, mensajes de error en lenguaje llano, enlaces de salto, foco visible y objetivos táctiles de 44/48 px, más el manual de usuario con el alta de alumno paso a paso | Construido · **validación con la usuaria pendiente** |
 | **RNF-02** Seguridad | Usuario y contraseña, contraseñas cifradas, funciones habilitadas por rol | Contraseñas con bcrypt, sesión con JWT y refresco, control de rol en cada ruta y restricción de los tutores a sus propios hijos | ✅ Cubierto y probado |
 | **RNF-03** Rendimiento | Consultas habituales en menos de 3 s; reportes en menos de 10 s con la matrícula completa | Paginación obligatoria, índices sobre las claves de búsqueda y agregaciones resueltas en el motor | ✅ **Medido y cumplido.** 5012 alumnos activos en producción, peor de tres corridas: listado 2,40 s y búsqueda 0,66 s contra el umbral de 3 s; alumnos por materia 4,93 s, deportes 4,15 s y morosidad 3,60 s contra el de 10 s |
 | **RNF-04** Disponibilidad | Disponible en horario escolar y de recorridos; mantenimiento fuera de esa franja | Depende del entorno de despliegue | Pendiente (fase de implementación) |
@@ -351,7 +351,8 @@ produjo código que hubo que corregir o reemplazar.
 | Informe de uso de IA | 17/11/2026 | `docs/informe_final_ia.md` |
 | Bitácora de IA | 17/11/2026 | `docs/bitacora_ia.md` |
 | Documentación técnica | 22/11/2026 | `docs/modelo_de_datos.md`, `docs/api_rest.md`, `docs/frontend.md`, `docs/aplicacion_movil.md`, `docs/facturacion_y_schedulers.md`, `docs/carnet_digital_qr.md` |
-| Sistema desplegado y capacitación | 21/11/2026 | Entorno de producción y manual de usuario |
+| Manual de usuario | 21/11/2026 | `docs/manual_de_usuario.md` ✅ |
+| Sistema desplegado y capacitación | 21/11/2026 | Entorno de producción |
 
 ---
 
