@@ -264,5 +264,5 @@ funcione de punta a punta.
 |---|---|
 | Cola de comprobantes en el panel de admin | El endpoint existe; falta la pantalla |
 | Estado de los schedulers en el backoffice | El endpoint existe; falta la pantalla |
-| Página `restablecer.html` para el reseteo de contraseña | El mail ya apunta ahí |
-| Medir contraste y probar con lector de pantalla | Requiere navegador |
+| Página `restablecer.html` para el reseteo de contraseña | **El mail ya apunta ahí, así que hoy el enlace da 404.** El endpoint `POST /api/auth/reset-password` ya existe; falta sólo la página |
+| Probar con lector de pantalla | El contraste ya se midió con Lighthouse sobre el sitio desplegado (100/100) y en Chromium sobre los avisos nuevos; falta NVDA o VoiceOver sobre los formularios |

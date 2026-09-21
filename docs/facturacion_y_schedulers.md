@@ -302,5 +302,4 @@ falta PostgreSQL, que sigue sin estar disponible en la máquina de desarrollo.
 | Factura en PDF real | Hoy es HTML; requiere sumar una dependencia de renderizado |
 | Reintento automático de correos fallidos | Hoy quedan registrados en `EmailLog` pero nadie los reintenta |
 | Estado del scheduler en el panel de admin | El endpoint existe; falta la pantalla |
-| Limitador de intentos en `POST /api/auth/login` | Viene de Sprint 2 |
 | Migrar `/api/payments` de `ParentStudentLink` a `TutorAlumno` | El endpoint vulnerable del hallazgo 5.2 ya se retiró |
