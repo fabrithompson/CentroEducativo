@@ -133,9 +133,13 @@ export async function confirmarReset(
   const hash = await bcrypt.hash(input.nuevaPassword, BCRYPT_ROUNDS);
 
   await prisma.$transaction([
+    // `tokenVersion` sube junto con la contraseña: es lo que invalida los
+    // refresh tokens ya emitidos. Sin esto, quien hubiera robado la sesión
+    // seguiría entrando durante siete días aunque la víctima cambiara la
+    // clave, que es justamente lo primero que uno hace al sospecharlo.
     prisma.user.update({
       where: { id: registro.userId },
-      data: { password: hash },
+      data: { password: hash, tokenVersion: { increment: 1 } },
     }),
     prisma.passwordResetToken.update({
       where: { id: registro.id },
@@ -170,9 +174,15 @@ export async function cambiarPassword(
     throw HttpError.badRequest('La contraseña nueva debe ser distinta de la actual.');
   }
 
+  // Igual que en el reset: cambiar la contraseña cierra las sesiones abiertas.
+  // Incluida la que está haciendo el cambio, que tendrá que renovar su token;
+  // es el precio de que "cambié la clave" signifique algo.
   await prisma.user.update({
     where: { id: userId },
-    data: { password: await bcrypt.hash(nueva, BCRYPT_ROUNDS) },
+    data: {
+      password: await bcrypt.hash(nueva, BCRYPT_ROUNDS),
+      tokenVersion: { increment: 1 },
+    },
   });
 }
 

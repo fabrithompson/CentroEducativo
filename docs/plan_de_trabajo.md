@@ -90,7 +90,7 @@ camino alternativo; una restricción del motor no.
 | RNF | Enunciado | Cómo se aborda | Estado |
 |---|---|---|---|
 | **RNF-01** Usabilidad | Interfaces claras; un administrativo sin conocimientos técnicos registra un alumno tras 30 minutos de capacitación | Formularios con etiquetas asociadas, mensajes de error en lenguaje llano, enlaces de salto, foco visible y objetivos táctiles de 44/48 px, más el manual de usuario con el alta de alumno paso a paso | Construido · **validación con la usuaria pendiente** |
-| **RNF-02** Seguridad | Usuario y contraseña, contraseñas cifradas, funciones habilitadas por rol | Contraseñas con bcrypt, sesión con JWT y refresco, control de rol en cada ruta y restricción de los tutores a sus propios hijos | ✅ Cubierto y probado |
+| **RNF-02** Seguridad | Usuario y contraseña, contraseñas cifradas, funciones habilitadas por rol | Contraseñas con bcrypt, sesión con JWT y refresco con revocación —cambiar la contraseña cierra las sesiones abiertas—, control de rol en cada ruta y restricción de los tutores a sus propios hijos | ✅ Cubierto y probado |
 | **RNF-03** Rendimiento | Consultas habituales en menos de 3 s; reportes en menos de 10 s con la matrícula completa | Paginación obligatoria, índices sobre las claves de búsqueda y agregaciones resueltas en el motor | ✅ **Medido y cumplido.** 5012 alumnos activos en producción, peor de tres corridas: listado 2,40 s y búsqueda 0,66 s contra el umbral de 3 s; alumnos por materia 4,93 s, deportes 4,15 s y morosidad 3,60 s contra el de 10 s |
 | **RNF-04** Disponibilidad | Disponible en horario escolar y de recorridos; mantenimiento fuera de esa franja | Depende del entorno de despliegue | Pendiente (fase de implementación) |
 | **RNF-05** Compatibilidad | Chrome, Firefox y Edge vigentes, con diseño adaptable; móvil en Android e iOS | HTML y CSS estándar sin dependencias de navegador; tablas que se convierten en tarjetas en pantalla angosta; aplicación móvil en React Native | ✅ **Navegadores verificados** en los tres motores vigentes —Chromium, que es el de Chrome y el de Edge; Gecko; y WebKit—, sobre las 5 páginas públicas a 1280 y a 375 px, y en Chromium sobre los 4 paneles del backoffice a 1366 y a 375 px. Encontró y se corrigieron dos desbordes horizontales: uno en el portal y otro en los paneles, donde el `<style>` propio de cada uno pisaba el CSS adaptable compartido. Queda **pendiente el dispositivo físico** |
@@ -364,7 +364,7 @@ produjo código que hubo que corregir o reemplazar.
 | Requerimientos funcionales cubiertos | **8 de 8** |
 | Modelos de datos | 39 |
 | Enumeraciones | 25 |
-| Migraciones aplicadas | 10 |
+| Migraciones aplicadas | 11 |
 | Endpoints REST | 141 |
 | Módulos de dominio | 15 |
 | Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 17 734 |

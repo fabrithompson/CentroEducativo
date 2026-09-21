@@ -143,31 +143,32 @@ supresión**, y hay que poder distinguirlas cuando alguien la solicite.
 | **Acceso** — saber qué datos hay sobre uno | El tutor ve la ficha completa de sus hijos desde el panel o la app; el estudiante ve la suya | Un mecanismo para pedir el legajo completo en un archivo, y para quien no sea usuario del sistema |
 | **Rectificación** — corregir un dato erróneo | Administración edita la ficha desde el panel | Un canal formal para pedirlo y un plazo de respuesta |
 | **Supresión** — que se borren | No existe. La baja es lógica | Definir qué se puede borrar de verdad y qué hay que conservar por obligación legal, y por cuánto |
-| **Consentimiento informado** | **No existe.** Ningún formulario público avisa qué se hace con los datos | Un aviso en los tres formularios públicos, antes de enviar |
+| **Consentimiento informado** | Los cuatro formularios públicos —inscripción, empleo, opiniones y contacto— avisan para qué se usan los datos, quién los ve y a dónde escribir para pedir la baja | El consentimiento expreso de los responsables legales para los datos de menores, que es otra cosa y hoy no se pide |
 
 ---
 
 ## 6. Lo que falta para cumplir formalmente
 
-Ordenado por urgencia. Los dos primeros son de software y se pueden resolver en
-el repositorio; el resto son obligaciones institucionales.
+Ordenado por urgencia. El primero es lo último que queda del lado del software,
+y aun así necesita una decisión de la institución; el resto son obligaciones
+institucionales que no se resuelven programando.
 
-1. **Aviso de tratamiento en los formularios públicos.** Hoy inscripción,
-   empleo y opiniones no dicen nada. Es lo más barato de agregar y lo más
-   visible.
-2. **Política de retención con purga automática.** Definir plazos por tipo de
-   dato —postulaciones, solicitudes rechazadas, accesos, posiciones del
-   transporte— e implementarlos como una tarea programada, igual que ya se hace
-   con los tokens vencidos.
-3. **Inscripción de la base ante la AAIP.** La Agencia de Acceso a la
+1. **Política de retención con purga automática.** Es lo único que queda del
+   lado del software, y no se puede resolver sin la institución: hay que
+   definir cuánto se conserva cada cosa —postulaciones, solicitudes
+   rechazadas, historial de accesos, posiciones del transporte— y recién ahí
+   implementarlo como tarea programada, igual que ya se hace con los tokens
+   vencidos. Poner plazos por cuenta propia sería decidir por la escuela algo
+   que después borra datos de verdad.
+2. **Inscripción de la base ante la AAIP.** La Agencia de Acceso a la
    Información Pública lleva el registro de bases de datos personales. Es un
    trámite de la institución.
-4. **Designar responsable de la base.** Una persona identificable a la que
+3. **Designar responsable de la base.** Una persona identificable a la que
    dirigir los reclamos de acceso, rectificación y supresión.
-5. **Consentimiento de los responsables legales para los datos de menores**, y
+4. **Consentimiento de los responsables legales para los datos de menores**, y
    en particular para el historial de accesos y la geolocalización del
    transporte, que son los dos tratamientos menos evidentes para una familia.
-6. **Contrato con los proveedores.** Railway aloja la base y el proveedor de
+5. **Contrato con los proveedores.** Railway aloja la base y el proveedor de
    correo recibe direcciones de las familias. La ley trata esto como cesión de
    datos a un tercero.
 
@@ -179,6 +180,11 @@ Para no dejar sólo la lista de deudas:
 
 - **Contraseñas con bcrypt.** No se guardan en claro y no hay forma de
   revertirlas. Ni siquiera administración puede leer la contraseña de alguien.
+- **Cambiar la contraseña cierra las sesiones abiertas.** Cada token de
+  refresco lleva la versión que tenía la cuenta al emitirse, y al cambiar la
+  contraseña esa versión sube: los tokens anteriores dejan de servir. Sin eso,
+  quien hubiera robado una sesión seguiría entrando durante siete días aunque
+  la víctima cambiara la clave.
 - **Minimización en los clientes.** El navegador y la app no guardan datos
   personales; los piden cuando los muestran.
 - **Aislamiento entre familias verificado por pruebas**, no sólo por revisión:

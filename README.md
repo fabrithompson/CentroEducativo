@@ -237,7 +237,7 @@ guarda copia local de los datos. El panel web del tutor y la app móvil consumen
 
 ## 6. Base de datos
 
-**39 tablas · 25 enumeraciones · 10 migraciones · 7 funciones PL/pgSQL ·
+**39 tablas · 25 enumeraciones · 11 migraciones · 7 funciones PL/pgSQL ·
 6 disparadores · 12 restricciones CHECK.**
 
 ### 6.1 MER — Modelo Entidad-Relación

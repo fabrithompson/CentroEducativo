@@ -165,6 +165,12 @@ model User {
   /// quienes lo tengan cargado; al resto se los contacta por correo.
   telefono  String?
   isActive  Boolean  @default(true)
+  /// Versión de los tokens de refresco. El refresh token la lleva adentro y
+  /// `/api/auth/refresh` la contrasta: al incrementarla, todos los tokens
+  /// emitidos antes dejan de servir. Es lo que hace que cambiar la contraseña
+  /// cierre de verdad las sesiones abiertas —incluida la de quien la hubiera
+  /// robado—, en lugar de sólo impedir ingresos nuevos.
+  tokenVersion Int   @default(1)
   createdAt DateTime @default(now())
 
   notasRecibidas Grade[]             @relation("EstudianteGrades")

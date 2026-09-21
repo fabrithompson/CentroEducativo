@@ -391,5 +391,4 @@ está disponible en la máquina de desarrollo.
 | Pendiente | Sprint |
 |---|---|
 | Unificar la política de contraseñas con `register` | 3 |
-| Revocación real de refresh tokens (el campo `v` no se contrasta contra nada) | 3 |
 | Migrar el limitador de intentos a Redis | fuera de alcance del TP |

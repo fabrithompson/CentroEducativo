@@ -196,7 +196,7 @@ router.post(
         usuario: user.usuario,
         role: user.role,
       });
-      const refresh = signRefreshToken({ id: user.id, v: 1 });
+      const refresh = signRefreshToken({ id: user.id, v: user.tokenVersion });
       res.cookie(REFRESH_COOKIE, refresh, refreshCookieOpts);
 
       res.json({
@@ -228,8 +228,17 @@ router.post('/refresh', async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { id: payload.id } });
     if (!user || !user.isActive) throw HttpError.unauthorized('Cuenta deshabilitada.');
 
+    // Acá está la revocación. La versión anterior incrementaba `v` en cada
+    // renovación y no la contrastaba contra nada, así que el campo no servía
+    // para nada: un token robado valía sus siete días completos. Ahora, al
+    // cambiar la contraseña se incrementa `tokenVersion` y todos los tokens
+    // emitidos antes dejan de validar acá.
+    if (payload.v !== user.tokenVersion) {
+      throw HttpError.unauthorized('Tu sesión se cerró porque cambió la contraseña de la cuenta.');
+    }
+
     const access = signAccessToken({ id: user.id, usuario: user.usuario, role: user.role });
-    const newRefresh = signRefreshToken({ id: user.id, v: payload.v + 1 });
+    const newRefresh = signRefreshToken({ id: user.id, v: user.tokenVersion });
     res.cookie(REFRESH_COOKIE, newRefresh, refreshCookieOpts);
 
     res.json({
