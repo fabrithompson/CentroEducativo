@@ -38,15 +38,15 @@ async function cargarCatalogos() {
 
   // Si alguno falla, el reporte igual tiene que poder mostrarse: los filtros
   // que dependan de ese catálogo quedan vacíos, no se rompe la pantalla.
-  const [deportes, recorridos, profesores, materias] = await Promise.allSettled([
+  const [deportes, recorridos, profesores, materias, niveles] = await Promise.allSettled([
     api.deportes.catalogo(),
     api.servicios.recorridos(periodoActual()),
     api.profesores.listar({ pageSize: 100 }),
-    // No hay endpoint de catálogo de materias. El resumen del reporte RF-06 sin
-    // filtrar ya trae todas —incluidas las que no tienen inscriptos, que son
-    // justamente las que la Dirección necesita ver— así que se usa como
-    // catálogo en vez de agregar una ruta nueva al backend.
+    // El resumen del reporte RF-06 sin filtrar trae todas las materias
+    // —incluidas las que no tienen inscriptos, que son justamente las que la
+    // Dirección necesita ver—, así que sigue sirviendo de catálogo acá.
     api.reportes.alumnosPorMateria({}),
+    api.academico.niveles({ activo: true }),
   ]);
 
   catalogos = {
@@ -54,6 +54,7 @@ async function cargarCatalogos() {
     recorridos: recorridos.status === 'fulfilled' ? (recorridos.value.recorridos ?? []) : [],
     profesores: profesores.status === 'fulfilled' ? (profesores.value.items ?? []) : [],
     materias: materias.status === 'fulfilled' ? (materias.value.resumenPorMateria ?? []) : [],
+    niveles: niveles.status === 'fulfilled' ? (niveles.value.niveles ?? []) : [],
   };
 
   return catalogos;
@@ -61,11 +62,13 @@ async function cargarCatalogos() {
 
 const opcion = (valor, texto) => ({ valor, texto });
 
+// Los niveles salían de una lista fija con los ids 1, 2 y 3 porque no existía
+// endpoint de catálogo. Ahora se leen de la base: si la institución agrega un
+// nivel, el filtro lo toma solo. Si la petición falla, el filtro queda en
+// "todos los niveles" en vez de ofrecer ids que podrían no existir.
 const opcionesNivel = () => [
   opcion('', 'Todos los niveles'),
-  opcion('1', 'Inicial'),
-  opcion('2', 'Primario'),
-  opcion('3', 'Secundario'),
+  ...(catalogos?.niveles ?? []).map((n) => opcion(String(n.id), n.nombre)),
 ];
 
 const opcionesAnio = () => {

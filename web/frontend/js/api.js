@@ -161,6 +161,26 @@ export const api = {
     quitarMateria: (materiaId) => del(`/profesores/materias/${materiaId}`),
   },
 
+  // Catálogo académico: niveles, cursos y materias. Es lo que alimenta los
+  // desplegables del alta de alumnos (a qué curso) y de profesores (qué
+  // materia); sin esto la API pedía ids que no había forma de averiguar.
+  academico: {
+    niveles: (filtros) => get('/academico/niveles', filtros),
+    crearNivel: (datos) => post('/academico/niveles', datos),
+    actualizarNivel: (id, datos) => patch(`/academico/niveles/${id}`, datos),
+    darDeBajaNivel: (id) => del(`/academico/niveles/${id}`),
+
+    cursos: (filtros) => get('/academico/cursos', filtros),
+    crearCurso: (datos) => post('/academico/cursos', datos),
+    actualizarCurso: (id, datos) => patch(`/academico/cursos/${id}`, datos),
+    darDeBajaCurso: (id) => del(`/academico/cursos/${id}`),
+
+    materias: (filtros) => get('/academico/materias', filtros),
+    crearMateria: (datos) => post('/academico/materias', datos),
+    actualizarMateria: (id, datos) => patch(`/academico/materias/${id}`, datos),
+    darDeBajaMateria: (id) => del(`/academico/materias/${id}`),
+  },
+
   deportes: {
     catalogo: (filtros) => get('/deportes', filtros),
     obtener: (id) => get(`/deportes/${id}`),

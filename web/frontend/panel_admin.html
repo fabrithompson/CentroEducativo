@@ -77,6 +77,9 @@
             </div>
             <ul class="sidebar-menu">
                 <li><a class="nav-link active" onclick="switchView('dashboard', this); cargarStats();"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a class="nav-link" onclick="switchView('m-alumnos', this); window.abrirAdminAlumnos();"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
+                <li><a class="nav-link" onclick="switchView('m-profesores', this); window.abrirAdminProfesores();"><i class="fas fa-chalkboard-user"></i> Profesores</a></li>
+                <li><a class="nav-link" onclick="switchView('m-academico', this); window.abrirAdminAcademico();"><i class="fas fa-graduation-cap"></i> Niveles, cursos y materias</a></li>
                 <li><a class="nav-link" onclick="switchView('escaner', this); window.abrirEscaner();"><i class="fas fa-qrcode"></i> Escanear carnet</a></li>
                 <li><a class="nav-link" onclick="switchView('reportes', this); window.abrirReportes();"><i class="fas fa-chart-column"></i> Reportes</a></li>
                 <li><a class="nav-link" onclick="switchView('usuarios', this); cargarUsuarios();"><i class="fas fa-users"></i> Usuarios</a></li>
@@ -95,6 +98,21 @@
             <section id="dashboard" class="view-section active">
                 <h3 class="section-title">Dashboard institucional</h3>
                 <div id="statsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;"></div>
+            </section>
+
+            <section id="m-alumnos" class="view-section" aria-labelledby="t-m-alumnos">
+                <h2 class="section-title" id="t-m-alumnos">Módulo Alumnos</h2>
+                <div id="vista-admin-alumnos"></div>
+            </section>
+
+            <section id="m-profesores" class="view-section" aria-labelledby="t-m-profesores">
+                <h2 class="section-title" id="t-m-profesores">Módulo Profesores</h2>
+                <div id="vista-admin-profesores"></div>
+            </section>
+
+            <section id="m-academico" class="view-section" aria-labelledby="t-m-academico">
+                <h2 class="section-title" id="t-m-academico">Estructura académica</h2>
+                <div id="vista-admin-academico"></div>
             </section>
 
             <section id="reportes" class="view-section" aria-labelledby="t-reportes">
@@ -1018,6 +1036,16 @@
   import { iniciarReportes } from './js/vistas/reportes.js';
   // Se expone en window porque la navegación del panel usa onclick inline.
   window.abrirReportes = () => iniciarReportes('vista-reportes');
+</script>
+
+<script type="module">
+  import { iniciarAdminAlumnos } from './js/vistas/admin-alumnos.js';
+  import { iniciarAdminProfesores } from './js/vistas/admin-profesores.js';
+  import { iniciarAdminAcademico } from './js/vistas/admin-academico.js';
+
+  window.abrirAdminAlumnos = () => iniciarAdminAlumnos('vista-admin-alumnos');
+  window.abrirAdminProfesores = () => iniciarAdminProfesores('vista-admin-profesores');
+  window.abrirAdminAcademico = () => iniciarAdminAcademico('vista-admin-academico');
 </script>
 
 <script type="module">

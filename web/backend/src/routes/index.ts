@@ -30,6 +30,7 @@ import { actividadesRouter } from '../modules/profesores/actividades.routes';
 import { administradorRouter } from '../modules/administrador/administrador.routes';
 import { comunicadosRouter } from '../modules/administrador/comunicados.routes';
 import { pagosRouter } from '../modules/administrador/pagos.routes';
+import { academicoRouter } from '../modules/administrador/academico.routes';
 import {
   moderacionPublicaRouter,
   moderacionAdminRouter,
@@ -100,6 +101,7 @@ router.use('/forum', foroRouter);
 // El muro público va antes del backoffice porque no exige sesión. El router de
 // moderación se cuelga de /admin después de administradorRouter y detrás de su
 // propio guard: el orden importa, invertirlo dejaría rutas sin verificar.
+router.use('/academico', academicoRouter);
 router.use('/payments', pagosRouter);
 router.use('/public', moderacionPublicaRouter);
 router.use('/admin', administradorRouter);
