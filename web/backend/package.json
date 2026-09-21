@@ -26,9 +26,10 @@
     "db:test:up": "tsx scripts/db-test.ts up",
     "db:test:down": "tsx scripts/db-test.ts down",
     "test:integracion": "tsx scripts/test-integracion.ts",
-    "test:humo": "tsx scripts/humo-academico.ts && tsx scripts/humo-auth.ts",
+    "test:humo": "tsx scripts/humo-academico.ts && tsx scripts/humo-auth.ts && tsx scripts/humo-retencion.ts",
     "test:humo:academico": "tsx scripts/humo-academico.ts",
     "test:humo:auth": "tsx scripts/humo-auth.ts",
+    "test:humo:retencion": "tsx scripts/humo-retencion.ts",
     "qa": "tsx scripts/servidor-qa.ts"
   },
   "dependencies": {

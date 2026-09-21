@@ -115,6 +115,68 @@ function historial(ejecuciones) {
 }
 
 // ==================================================================
+// Retención de datos (RNF-09)
+// ==================================================================
+
+async function bloqueRetencion() {
+  let informe;
+  try {
+    informe = await api.admin.retencion();
+  } catch (err) {
+    return `<p class="campo__error">No se pudo leer el informe de retención: ${esc(err?.message ?? '')}</p>`;
+  }
+
+  const conDatos = (informe.lineas ?? []).filter((l) => l.alcanzados > 0);
+
+  const estado = informe.purgaActiva
+    ? '<span class="badge badge--alerta">purga activa</span>'
+    : '<span class="badge badge--espera">modo informe</span>';
+
+  const explicacion = informe.purgaActiva
+    ? 'La tarea de la 01:00 borra lo que figura acá abajo.'
+    : 'La tarea de la 01:00 <strong>no borra nada</strong>: sólo cuenta. Los plazos son una ' +
+      'propuesta y hay que confirmarlos con la institución antes de activar la purga ' +
+      '(<code>RETENCION_ACTIVA=true</code>).';
+
+  const tablaLineas =
+    conDatos.length > 0
+      ? tabla({
+          caption: 'Datos que superaron su plazo de conservación',
+          columnas: [
+            { clave: 'concepto', titulo: 'Qué' },
+            { clave: 'modelo', titulo: 'Tabla' },
+            {
+              clave: 'plazoDias',
+              titulo: 'Plazo',
+              alinear: 'centro',
+              render: (l) => `${l.plazoDias} días`,
+            },
+            {
+              clave: 'alcanzados',
+              titulo: informe.purgaActiva ? 'Se borran' : 'Se borrarían',
+              alinear: 'derecha',
+              render: (l) => `<strong>${l.alcanzados}</strong>`,
+            },
+          ],
+          filas: conDatos,
+        })
+      : estadoVacio('Nada superó todavía su plazo de conservación.', 'fa-circle-check');
+
+  return `
+    <div class="ficha" style="margin: 22px 0">
+      <h3 class="ficha__titulo">
+        <i class="fas fa-broom" aria-hidden="true"></i> Retención de datos ${estado}
+      </h3>
+      <p class="subtitulo">${explicacion}</p>
+      ${tablaLineas}
+      <p class="subtitulo" style="margin-top:12px">
+        No alcanza a alumnos, calificaciones, asistencias ni facturas: tienen obligación
+        de conservación documental y sus bajas son lógicas.
+      </p>
+    </div>`;
+}
+
+// ==================================================================
 // Disparo manual
 // ==================================================================
 
@@ -239,6 +301,7 @@ async function dibujar() {
     return `
       ${estado}
       ${tarjetasProgramadas(scheduler)}
+      ${await bloqueRetencion()}
       ${barraDisparo()}
       ${historial(datos.ejecuciones)}`;
   });

@@ -161,6 +161,12 @@ export const api = {
     quitarMateria: (materiaId) => del(`/profesores/materias/${materiaId}`),
   },
 
+  admin: {
+    // Informe de retención (RNF-09). Siempre en seco: cuenta qué superó su
+    // plazo y nunca borra. El borrado lo hace la tarea programada.
+    retencion: () => get('/admin/retencion'),
+  },
+
   // Catálogo académico: niveles, cursos y materias. Es lo que alimenta los
   // desplegables del alta de alumnos (a qué curso) y de profesores (qué
   // materia); sin esto la API pedía ids que no había forma de averiguar.

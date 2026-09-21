@@ -8,10 +8,32 @@ import { HttpError } from '../../utils/httpError';
 import { requireAuth, requireRole } from '../../middleware/auth';
 import { vincularTutor, desvincularTutor } from '../alumnos/alumnos.service';
 import { passwordSchema } from '../auth/politicaPassword';
+import { aplicarRetencion } from '../shared/retencion';
+import { env } from '../../config/env';
 
 const router = Router();
 
 router.use(requireAuth, requireRole(Role.ADMIN));
+
+/**
+ * Informe de retención (RNF-09).
+ *
+ * Siempre en seco: cuenta qué superó su plazo y nunca borra, sin importar cómo
+ * esté `RETENCION_ACTIVA`. El borrado lo hace la tarea programada de la 01:00;
+ * esto es para mirar el estado desde el backoffice y poder discutir los plazos
+ * con números antes de encenderla.
+ */
+router.get('/retencion', async (_req, res, next) => {
+  try {
+    const informe = await aplicarRetencion(prisma, { activa: false });
+
+    res.json({
+      exito: true,
+      purgaActiva: env.RETENCION_ACTIVA,
+      ...informe,
+    });
+  } catch (err) { next(err); }
+});
 
 router.get('/stats', async (_req, res, next) => {
   try {

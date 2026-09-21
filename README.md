@@ -58,6 +58,7 @@ desprenden cuatro problemas concretos que el sistema resuelve:
 | **Recuperación de contraseña** — correo con enlace de un solo uso | ✅ | [`restablecer.html`](web/frontend/restablecer.html) · [`modules/auth/`](web/backend/src/modules/auth/) |
 | **Backoffice** — cola de comprobantes y tareas programadas | ✅ | [`admin-comprobantes.js`](web/frontend/js/vistas/admin-comprobantes.js) · [`admin-tareas.js`](web/frontend/js/vistas/admin-tareas.js) |
 | **Política de datos personales** (RNF-09, Ley 25.326) | ✅ | [`docs/politica_de_datos.md`](docs/politica_de_datos.md) |
+| **Purga de retención** — diaria, en modo informe hasta confirmar plazos | ✅ | [`shared/retencion.ts`](web/backend/src/modules/shared/retencion.ts) |
 | **App móvil** — autenticación segura y RBAC | ✅ | [`mobile/src/auth/`](mobile/src/auth/) |
 | **App móvil** — cuotas, vencimientos e historial | ✅ | [`mobile/src/pantallas/Finanzas.tsx`](mobile/src/pantallas/Finanzas.tsx) |
 | **App móvil** — pago por transferencia, 1 o más comprobantes | ✅ | [`PagoTransferencia.tsx`](mobile/src/pantallas/PagoTransferencia.tsx) |
@@ -558,7 +559,7 @@ pnpm start     # node dist/index.js
 
 ## 10. Pruebas
 
-**345 pruebas automatizadas**, y corren solas en cada PR
+**358 pruebas automatizadas**, y corren solas en cada PR
 (`.github/workflows/ci.yml`).
 
 | Suite | Cantidad | Comando |

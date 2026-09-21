@@ -40,11 +40,15 @@ after(() => {
   detenerScheduler?.();
 });
 
-test('el scheduler arranca y registra las tres tareas', () => {
+test('el scheduler arranca y registra las cuatro tareas', () => {
   detenerScheduler();
 
   const cantidad = iniciarScheduler();
-  assert.equal(cantidad, 3, 'facturación, recordatorio y marcado de vencimientos');
+  assert.equal(
+    cantidad,
+    4,
+    'facturación, recordatorio, marcado de vencimientos y retención de datos',
+  );
   assert.equal(estadoScheduler().activo, true);
 
   detenerScheduler();
@@ -57,8 +61,9 @@ test('llamar a iniciarScheduler dos veces no duplica las tareas', () => {
   iniciarScheduler();
   const segunda = iniciarScheduler();
 
-  // Duplicarlas mandaría los mails dos veces.
-  assert.equal(segunda, 3);
+  // Duplicarlas mandaría los mails dos veces, y con la retención activa
+  // correría dos veces la purga en la misma noche.
+  assert.equal(segunda, 4);
 
   detenerScheduler();
 });
@@ -69,9 +74,9 @@ test('las tareas usan el huso horario de Argentina', () => {
   assert.equal(estadoScheduler().timezone, 'America/Argentina/Buenos_Aires');
 });
 
-test('el estado describe las tres tareas con su condición de disparo', () => {
+test('el estado describe las cuatro tareas con su condición de disparo', () => {
   const estado = estadoScheduler();
-  assert.equal(estado.tareas.length, 3);
+  assert.equal(estado.tareas.length, 4);
 
   const facturacion = estado.tareas.find((t) => t.nombre === 'Facturación mensual');
   assert.ok(facturacion);
@@ -80,6 +85,27 @@ test('el estado describe las tres tareas con su condición de disparo', () => {
   const recordatorio = estado.tareas.find((t) => t.nombre === 'Recordatorio de deuda');
   assert.ok(recordatorio);
   assert.match(recordatorio.condicion, new RegExp(`día ${DIA_RECORDATORIO}`));
+
+  // La retención tiene que declarar si está borrando o sólo informando: es la
+  // diferencia entre una tarea inocua y una que borra datos todas las noches,
+  // y quien mire el backoffice necesita saber cuál de las dos está corriendo.
+  const retencion = estado.tareas.find((t) => t.nombre === 'Retención de datos');
+  assert.ok(retencion);
+  assert.match(retencion.condicion, /modo informe|borra lo que superó/i);
+});
+
+test('la retención corre después del respaldo nocturno', () => {
+  // El respaldo sale 00:15 (.github/workflows/respaldo.yml). Si la purga
+  // corriera antes, el respaldo de esa noche sería el primero sin esos datos y
+  // no quedaría ninguna copia con ellos.
+  const retencion = estadoScheduler().tareas.find((t) => t.nombre === 'Retención de datos');
+  assert.ok(retencion);
+
+  const [minuto, hora] = retencion.cron.split(' ').map(Number);
+  assert.ok(
+    hora > 0 || (hora === 0 && minuto > 15),
+    `la retención corre a las ${hora}:${String(minuto).padStart(2, '0')}, antes del respaldo`,
+  );
 });
 
 test('las expresiones cron son diarias: la condición fina la evalúa el job', () => {

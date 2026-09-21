@@ -17,6 +17,8 @@ import { logger } from '../../utils/logger';
 import { prisma } from '../../db/prisma';
 import { esUltimoDiaHabilDelMes, periodoAnterior, periodoDe, DIA_RECORDATORIO } from '../facturacion/periodos';
 import { ejecutarFacturacionMensual, ejecutarRecordatorioDeuda, marcarFacturasVencidas } from './jobs';
+import { aplicarRetencion, registrarResultado } from '../shared/retencion';
+import { env } from '../../config/env';
 
 const TIMEZONE = 'America/Argentina/Buenos_Aires';
 
@@ -24,6 +26,10 @@ const TIMEZONE = 'America/Argentina/Buenos_Aires';
 const HORA_FACTURACION = '0 20 * * *'; // 20:00, todos los días
 const HORA_RECORDATORIO = '0 9 * * *'; // 09:00, todos los días
 const HORA_VENCIMIENTOS = '30 0 * * *'; // 00:30, todos los días
+// Después del respaldo de las 00:15, para que lo que se purgue ya esté en la
+// copia del día. Si se purgara antes, el respaldo de esa noche sería el primero
+// sin esos datos y no quedaría ninguna copia con ellos.
+const HORA_RETENCION = '0 1 * * *'; // 01:00, todos los días
 
 let tareas: ScheduledTask[] = [];
 
@@ -104,9 +110,27 @@ export function iniciarScheduler(): number {
     ),
   );
 
+  // ---------------------------------------------------------------
+  // Mantenimiento diario — retención de datos (RNF-09)
+  // ---------------------------------------------------------------
+  tareas.push(
+    cron.schedule(
+      HORA_RETENCION,
+      async () => {
+        try {
+          registrarResultado(await aplicarRetencion(prisma, { activa: env.RETENCION_ACTIVA }));
+        } catch (err) {
+          logger.error('[scheduler] la retención de datos terminó con error', err);
+        }
+      },
+      { timezone: TIMEZONE },
+    ),
+  );
+
   logger.info(
     `[scheduler] ${tareas.length} tareas registradas (huso ${TIMEZONE}): ` +
-      'facturación 20:00, recordatorio 09:00, vencimientos 00:30.',
+      'facturación 20:00, recordatorio 09:00, vencimientos 00:30, retención 01:00' +
+      `${env.RETENCION_ACTIVA ? '' : ' (en modo informe)'}.`,
   );
 
   return tareas.length;
@@ -141,6 +165,17 @@ export function estadoScheduler() {
         cron: HORA_VENCIMIENTOS,
         condicion: 'Diaria.',
         descripcion: 'Pasa a VENCIDA las facturas impagas cuyo vencimiento quedó atrás.',
+      },
+      {
+        nombre: 'Retención de datos',
+        cron: HORA_RETENCION,
+        condicion: env.RETENCION_ACTIVA
+          ? 'Diaria. Borra lo que superó su plazo.'
+          : 'Diaria, en MODO INFORME: cuenta qué borraría y no borra.',
+        descripcion:
+          'Purga posiciones del transporte, registros de acceso, correos y ' +
+          'postulaciones e inscripciones ya resueltas, según los plazos de ' +
+          'shared/retencion.ts. Se activa con RETENCION_ACTIVA=true.',
       },
     ],
   };

@@ -112,21 +112,37 @@ Dos decisiones que sostienen esto:
 
 ## 4. Cuánto tiempo se conservan
 
-**Acá está la brecha más concreta del sistema: no hay política de retención
-implementada.** Lo único que se purga automáticamente son los tokens vencidos de
-recuperación de contraseña.
+La política vive en `src/modules/shared/retencion.ts` y la aplica una tarea
+programada a la 01:00, después del respaldo nocturno —si purgara antes, el
+respaldo de esa noche sería el primero sin esos datos y no quedaría ninguna
+copia con ellos—.
 
-Todo lo demás se conserva indefinidamente, incluido:
+| Qué | Plazo | Por qué ese número |
+|---|---|---|
+| Posiciones del transporte | 90 días | Telemetría pura: el rastreo sólo mira los últimos minutos. Es además lo que más volumen acumula |
+| Registros de acceso | 400 días | Un ciclo lectivo más margen. Es el historial de movimientos de un menor: lo justo para resolver un reclamo del año en curso |
+| Correos enviados | 365 días | Evidencia de que se notificó una deuda |
+| Avisos por mensajería | 365 días | Constancia de que el aviso salió |
+| Postulaciones de empleo **resueltas** | 365 días | CV de alguien que no entró a la institución |
+| Solicitudes de inscripción **resueltas** | 365 días | Solicitud que no prosperó |
+| Opiniones **rechazadas** | 180 días | No se publican ni se van a publicar |
 
-- Las **postulaciones de empleo con su CV**, de personas que quizá nunca
-  entraron a la institución.
-- Las **solicitudes de inscripción** que fueron rechazadas.
-- El **historial de accesos** de cada alumno, sin tope de antigüedad.
-- Las **posiciones del transporte**, que se acumulan por cada recorrido y día.
+Dos salvaguardas, y la segunda es la que importa:
 
-La ley pide que los datos se conserven mientras sean necesarios para la
-finalidad que justificó su recolección. Un CV rechazado hace tres años no
-cumple esa condición.
+- **Arranca en modo informe.** Sin `RETENCION_ACTIVA=true` cuenta qué borraría y
+  no borra. El informe se ve en el panel de administración, en *Tareas
+  programadas*. Los plazos de arriba son una propuesta razonada, no una
+  decisión de la institución: hay que mirarlos unos días con números reales,
+  ajustarlos y recién entonces activar la purga.
+- **Sólo se purga lo que ya terminó su ciclo.** Una postulación pendiente, una
+  inscripción sin resolver o una opinión aprobada no se tocan por más viejas
+  que sean. Que lleven un año sin resolverse es un problema de gestión, no una
+  autorización para borrarlas.
+
+**Lo que la política no alcanza, a propósito:** alumnos, calificaciones,
+asistencias y facturas. Tienen obligación de conservación documental y sus
+bajas son lógicas. Borrarlos requiere una decisión caso por caso, no una tarea
+automática — y hay una prueba que falla si alguien los agrega.
 
 Las bajas del sistema son **lógicas**: un alumno dado de baja deja de estar
 activo pero sus datos siguen en la base, porque tiene calificaciones,
@@ -142,24 +158,20 @@ supresión**, y hay que poder distinguirlas cuando alguien la solicite.
 |---|---|---|
 | **Acceso** — saber qué datos hay sobre uno | El tutor ve la ficha completa de sus hijos desde el panel o la app; el estudiante ve la suya | Un mecanismo para pedir el legajo completo en un archivo, y para quien no sea usuario del sistema |
 | **Rectificación** — corregir un dato erróneo | Administración edita la ficha desde el panel | Un canal formal para pedirlo y un plazo de respuesta |
-| **Supresión** — que se borren | No existe. La baja es lógica | Definir qué se puede borrar de verdad y qué hay que conservar por obligación legal, y por cuánto |
+| **Supresión** — que se borren | Automática para lo que superó su plazo (ver §4), aunque todavía en modo informe. Para el resto la baja es lógica | Confirmar los plazos con la institución y activar la purga; y un canal para pedir la supresión de un dato puntual |
 | **Consentimiento informado** | Los cuatro formularios públicos —inscripción, empleo, opiniones y contacto— avisan para qué se usan los datos, quién los ve y a dónde escribir para pedir la baja | El consentimiento expreso de los responsables legales para los datos de menores, que es otra cosa y hoy no se pide |
 
 ---
 
 ## 6. Lo que falta para cumplir formalmente
 
-Ordenado por urgencia. El primero es lo último que queda del lado del software,
-y aun así necesita una decisión de la institución; el resto son obligaciones
-institucionales que no se resuelven programando.
+Ninguno de estos se resuelve programando: el primero necesita que la
+institución confirme unos plazos, y el resto son obligaciones formales.
 
-1. **Política de retención con purga automática.** Es lo único que queda del
-   lado del software, y no se puede resolver sin la institución: hay que
-   definir cuánto se conserva cada cosa —postulaciones, solicitudes
-   rechazadas, historial de accesos, posiciones del transporte— y recién ahí
-   implementarlo como tarea programada, igual que ya se hace con los tokens
-   vencidos. Poner plazos por cuenta propia sería decidir por la escuela algo
-   que después borra datos de verdad.
+1. **Confirmar los plazos de retención y activar la purga.** El mecanismo ya
+   está y corre todas las noches, pero en modo informe: lo que falta es que la
+   institución mire los números del panel, ajuste los plazos de §4 si
+   corresponde y confirme. Recién ahí se pone `RETENCION_ACTIVA=true`.
 2. **Inscripción de la base ante la AAIP.** La Agencia de Acceso a la
    Información Pública lleva el registro de bases de datos personales. Es un
    trámite de la institución.

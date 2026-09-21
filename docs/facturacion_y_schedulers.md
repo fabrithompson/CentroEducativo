@@ -297,6 +297,7 @@ falta PostgreSQL, que sigue sin estar disponible en la máquina de desarrollo.
 
 | Pendiente | Nota |
 |---|---|
+| Confirmar los plazos de retención y activar la purga | La tarea de la 01:00 corre en modo informe; ver `docs/politica_de_datos.md` §4 |
 | Feriados de 2028 en adelante | Cargar el calendario cuando se publique |
 | Recargo por mora | El campo `recargo` existe en `Factura` pero nadie lo calcula todavía |
 | Factura en PDF real | Hoy es HTML; requiere sumar una dependencia de renderizado |

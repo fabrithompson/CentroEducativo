@@ -27,6 +27,19 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional().default(''),
   SMTP_PASS: z.string().optional().default(''),
   SMTP_FROM: z.string().optional().default(''),
+
+  /**
+   * Purga de datos vencidos según la política de retención (RNF-09).
+   *
+   * Arranca apagada a propósito: mientras sea `false` la tarea informa qué
+   * borraría y no borra. Los plazos de `shared/retencion.ts` son una propuesta
+   * razonada, no una decisión de la institución, y encenderla antes de que
+   * alguien los confirme sería decidir por la escuela algo irreversible.
+   */
+  RETENCION_ACTIVA: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
 });
 
 const parsed = envSchema.safeParse(process.env);

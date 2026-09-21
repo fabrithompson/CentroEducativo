@@ -97,7 +97,7 @@ camino alternativo; una restricción del motor no.
 | **RNF-06** Integridad y respaldo | Copias de seguridad diarias e integridad referencial | Integridad garantizada por claves foráneas, restricciones CHECK y disparadores; respaldo diario con `pg_dump` desde GitHub Actions, cifrado y con restauración verificada | ✅ **Cubierto.** Integridad por el motor. El respaldo corre a las 00:15 de Argentina, cifra el volcado con AES256 —contiene datos de menores— y lo guarda 90 días. Un segundo trabajo lo restaura todos los días sobre una base limpia y cuenta las tablas: un respaldo que nunca se restauró no es un respaldo |
 | **RNF-07** Escalabilidad | Crecimiento de la matrícula e incorporación de módulos sin rediseño | Módulos de dominio independientes bajo `src/modules/`; agregar uno no obliga a tocar los demás | ✅ Cubierto |
 | **RNF-08** Mantenibilidad | Código modular y documentado, versionado en Git | 15 módulos de dominio, documentación técnica en `docs/` y repositorio Git con *pull requests* revisados | ✅ Cubierto |
-| **RNF-09** Legal | Ley Nacional N° 25.326 de Protección de Datos Personales | Minimización: los clientes no almacenan datos personales ni financieros de menores. La única excepción es el secreto criptográfico del carnet, que vive en el almacén seguro del teléfono. El relevamiento completo está en `docs/politica_de_datos.md` | Construido · política **documentada** y aviso de tratamiento agregado a los cuatro formularios públicos · **pendiente lo institucional**: inscripción de la base ante la AAIP, responsable designado y política de retención con purga automática |
+| **RNF-09** Legal | Ley Nacional N° 25.326 de Protección de Datos Personales | Minimización: los clientes no almacenan datos personales ni financieros de menores. La única excepción es el secreto criptográfico del carnet, que vive en el almacén seguro del teléfono. El relevamiento completo está en `docs/politica_de_datos.md` | Construido · política **documentada**, aviso de tratamiento en los cuatro formularios públicos y **purga de retención implementada** —corre a diario en modo informe hasta que la institución confirme los plazos— · **pendiente lo institucional**: inscripción de la base ante la AAIP y responsable designado |
 
 ---
 
@@ -292,11 +292,11 @@ hará y si hay algún bloqueo. Lo acordado se refleja en el tablero de Jira.
 
 | Nivel | Alcance | Cantidad |
 |---|---|---|
-| Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 258 |
-| De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **258** |
+| Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 271 |
+| De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **271** |
 | Del motor de base de datos | Verifican que el motor **rechace efectivamente** el tercer deporte, el cruce de horarios, el quinto recorrido, el comprobante sin archivo, el tutor que no es padre y la reutilización de un código QR | **17** |
 | De la aplicación móvil | Cliente HTTP, formateo y equivalencia de la implementación propia de HMAC-SHA256 contra `node:crypto` en 300 casos aleatorios | **70** |
-| **Total** | | **345** |
+| **Total** | | **358** |
 
 **Entorno de pruebas.** La suite levanta una instancia real de PostgreSQL 15
 mediante `embedded-postgres`, aplica las nueve migraciones, carga las semillas y
@@ -370,7 +370,7 @@ produjo código que hubo que corregir o reemplazar.
 | Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 17 734 |
 | Vistas web | 4 paneles (administración, docente, tutor, estudiante) más el portal público |
 | Pantallas móviles | 5 (ingreso, dashboard, finanzas, pago por transferencia, carnet) |
-| Pruebas automatizadas | **345**, todas en verde |
+| Pruebas automatizadas | **358**, todas en verde |
 | Base de datos de verificación | PostgreSQL 15.18 real |
 
 **Verificado desde la versión 2.0 de este documento:**
