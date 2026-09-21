@@ -258,8 +258,6 @@ funcione de punta a punta.
 
 | Pendiente | Nota |
 |---|---|
-| Migrar el panel del padre de `/api/parent/hijos` a `/api/padres/mis-hijos` | La vista vieja sigue usando el endpoint vulnerable |
-| Retirar `POST /api/parent/vincular` | Depende de lo anterior |
 | ABM de alumnos y profesores en el backoffice | Los endpoints existen; falta la pantalla |
 | Cola de comprobantes en el panel de admin | El endpoint existe; falta la pantalla |
 | Estado de los schedulers en el backoffice | El endpoint existe; falta la pantalla |

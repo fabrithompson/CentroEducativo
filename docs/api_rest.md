@@ -25,8 +25,10 @@ queries: eso vive en los servicios. Los servicios no conocen Express: reciben
 `PrismaClient` como parámetro, que es lo que permite testearlos con un doble de
 prueba y sin base de datos.
 
-Los routers preexistentes (`src/routes/`) quedaron intactos. Los módulos nuevos
-conviven con ellos bajo el mismo `apiRouter`.
+Todo router vive dentro de su módulo. `src/routes/` quedó sólo con el `index.ts`
+que compone la API: importa cada router y lo cuelga de su prefijo, agrupados por
+el recorte de la consigna (Alumnos, Profesores, Administrador), más Padres y las
+dos agrupaciones transversales.
 
 | Módulo | Servicio | Controlador |
 |---|---|---|
@@ -37,6 +39,10 @@ conviven con ellos bajo el mismo `apiRouter`.
 | Transporte y comedor | `modules/servicios/servicios.service.ts` | `servicios.routes.ts` |
 | Portal de tutores | — | `modules/padres/padres.routes.ts` |
 | Reportes | `modules/reportes/reportes.service.ts` | `reportes.routes.ts` |
+| Alumnos (heredado) | — | `modules/alumnos/`: `estudiantes`, `calificaciones`, `asistencia` |
+| Profesores (heredado) | — | `modules/profesores/`: `planes`, `actividades` |
+| Administrador | — | `modules/administrador/`: `administrador`, `moderacion`, `comunicados`, `pagos` |
+| Comunicación | — | `modules/comunicacion/`: `foro`, `mensajes`, `notificaciones` |
 
 ---
 
@@ -113,10 +119,14 @@ ADMIN puede crearlo**, quedando registrado quién lo hizo. En la base:
 - Un trigger verifica que el tutor tenga rol `PADRE`.
 - Un índice único parcial garantiza un solo responsable de facturación por alumno.
 
-`ParentStudentLink` y `POST /api/parent/vincular` siguen existiendo porque el panel
-de padres actual los usa. **El endpoint viejo sigue siendo vulnerable**: se retira
-en Sprint 3, cuando el frontend migre. Mientras tanto, todo lo nuevo pasa por
-`TutorAlumno`.
+`POST /api/parent/vincular` **ya se retiró**, junto con todo el router `/api/parent`:
+el panel de padres pasó a `GET /api/padres/mis-hijos` y el alta de vínculos quedó
+donde corresponde, en el panel de administración.
+
+La tabla `ParentStudentLink` todavía existe porque tres endpoints heredados la usan
+para autorizar al tutor —`/api/grades`, `/api/attendance` y `/api/payments`—. Ya no
+se puede escribir en ella salvo desde `/api/admin/links`, así que la vía de abuso
+está cerrada; lo que queda es unificarlos contra `TutorAlumno`.
 
 ### 3.2 La matriz de acceso
 
@@ -331,7 +341,7 @@ está disponible en la máquina de desarrollo.
 | Pendiente | Sprint |
 |---|---|
 | Rate limiting en `POST /api/auth/login` | 2 |
-| Retirar `POST /api/parent/vincular` (el endpoint vulnerable) y `ParentStudentLink` | 3 |
+| Migrar `/api/grades`, `/api/attendance` y `/api/payments` de `ParentStudentLink` a `TutorAlumno` | 3 |
 | Unificar la política de contraseñas con `register` | 3 |
 | Revocación real de refresh tokens (el campo `v` no se contrasta contra nada) | 3 |
 | Migrar el limitador de intentos a Redis | fuera de alcance del TP |

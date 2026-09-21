@@ -96,7 +96,7 @@ camino alternativo; una restricción del motor no.
 | **RNF-05** Compatibilidad | Chrome, Firefox y Edge vigentes, con diseño adaptable; móvil en Android e iOS | HTML y CSS estándar sin dependencias de navegador; tablas que se convierten en tarjetas en pantalla angosta; aplicación móvil en React Native | ✅ **Navegadores verificados** en los tres motores vigentes —Chromium, que es el de Chrome y el de Edge; Gecko; y WebKit—, sobre las 5 páginas a 1280 y a 375 px. Encontró y se corrigió un desborde horizontal reproducible en los tres. Queda **pendiente el dispositivo físico** |
 | **RNF-06** Integridad y respaldo | Copias de seguridad diarias e integridad referencial | Integridad garantizada por claves foráneas, restricciones CHECK y disparadores; el respaldo automático se define en el despliegue | Integridad ✅ · respaldo pendiente |
 | **RNF-07** Escalabilidad | Crecimiento de la matrícula e incorporación de módulos sin rediseño | Módulos de dominio independientes bajo `src/modules/`; agregar uno no obliga a tocar los demás | ✅ Cubierto |
-| **RNF-08** Mantenibilidad | Código modular y documentado, versionado en Git | 13 módulos de dominio, documentación técnica en `docs/` y repositorio Git con *pull requests* revisados | ✅ Cubierto |
+| **RNF-08** Mantenibilidad | Código modular y documentado, versionado en Git | 15 módulos de dominio, documentación técnica en `docs/` y repositorio Git con *pull requests* revisados | ✅ Cubierto |
 | **RNF-09** Legal | Ley Nacional N° 25.326 de Protección de Datos Personales | Minimización: los clientes no almacenan datos personales ni financieros de menores. La única excepción es el secreto criptográfico del carnet, que vive en el almacén seguro del teléfono | Construido · **política formal de tratamiento pendiente** |
 
 ---
@@ -192,9 +192,16 @@ PostgreSQL en cada corrida de pruebas.
 Prisma, de modo que sus reglas se pueden probar sin levantar un servidor ni una
 base de datos.
 
-**Módulos de dominio.** `alumnos`, `auth`, `avisos`, `credenciales`, `deportes`,
-`facturacion`, `padres`, `profesores`, `reportes`, `scheduler`, `servicios`,
-`shared` y `transporte`.
+**Módulos de dominio.** El recorte que pide la consigna son tres —`alumnos`,
+`profesores` y `administrador`—, a los que se suma `padres`: es un actor con una
+regla propia que atraviesa todo el sistema (RF-03, sólo ve a sus propios hijos)
+y por eso no se disuelve dentro de los otros tres.
+
+Alrededor, los servicios que un alumno contrata —`deportes`, `transporte`,
+`servicios`, `facturacion`, `credenciales` y `reportes`— y lo transversal a los
+cuatro actores: `auth`, `avisos`, `comunicacion`, `scheduler` y `shared`. Quince
+en total. Cada router vive dentro de su módulo; `src/routes/` quedó sólo con el
+`index.ts` que los cuelga de su prefijo.
 
 ---
 
@@ -356,9 +363,9 @@ produjo código que hubo que corregir o reemplazar.
 | Modelos de datos | 40 |
 | Enumeraciones | 25 |
 | Migraciones aplicadas | 9 |
-| Endpoints REST | 140 |
-| Módulos de dominio | 13 |
-| Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 15 879 |
+| Endpoints REST | 129 |
+| Módulos de dominio | 15 |
+| Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 16 889 |
 | Vistas web | 4 paneles (administración, docente, tutor, estudiante) más el portal público |
 | Pantallas móviles | 5 (ingreso, dashboard, finanzas, pago por transferencia, carnet) |
 | Pruebas automatizadas | **344**, todas en verde |

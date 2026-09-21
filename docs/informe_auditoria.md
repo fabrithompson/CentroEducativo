@@ -191,7 +191,7 @@ Sin iniciar. Es el ítem de mayor riesgo del cronograma.
 
 ### 5.1 🔴 Crítico — El flujo de pago contradice la regla de negocio
 
-[payments.routes.ts:69-118](../web/backend/src/routes/payments.routes.ts#L69-L118) expone
+[pagos.routes.ts:69-118](../web/backend/src/modules/administrador/pagos.routes.ts#L69-L118) expone
 `POST /api/payments/:id/pay`, que marca la cuota como `PAGADO` de inmediato, sin adjuntar
 comprobante ni requerir validación administrativa.
 
@@ -205,10 +205,13 @@ hacia `Factura` + `ItemFactura`; no se descarta.
 
 ### 5.2 🔴 Crítico — Cualquier padre puede vincularse a cualquier alumno
 
-[parent.routes.ts:30-54](../web/backend/src/routes/parent.routes.ts#L30-L54): `POST /api/parent/vincular`
-acepta un DNI y crea el vínculo padre–hijo **sin ninguna verificación**. Con sólo conocer el DNI de
-un alumno, cualquier usuario con rol `PADRE` accede a sus calificaciones, asistencia, cuotas y
-mensajería.
+> **Resuelto.** El router `/api/parent` se retiró por completo al reorganizar los módulos. El
+> panel de padres pasó a `GET /api/padres/mis-hijos`, que resuelve el vínculo contra
+> `TutorAlumno`, y el alta de vínculos quedó únicamente en manos de un administrador.
+
+`POST /api/parent/vincular` aceptaba un DNI y creaba el vínculo padre–hijo **sin ninguna
+verificación**. Con sólo conocer el DNI de un alumno, cualquier usuario con rol `PADRE` accedía a
+sus calificaciones, asistencia, cuotas y mensajería.
 
 Esto rompe directamente la regla *"los padres SOLO pueden ver y gestionar información de sus
 propios hijos"*. El resto del código respeta el aislamiento correctamente; la falla está
