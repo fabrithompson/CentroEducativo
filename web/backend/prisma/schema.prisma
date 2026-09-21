@@ -165,12 +165,16 @@ model User {
   /// quienes lo tengan cargado; al resto se los contacta por correo.
   telefono  String?
   isActive  Boolean  @default(true)
+  /// Versión de los tokens de refresco. El refresh token la lleva adentro y
+  /// `/api/auth/refresh` la contrasta: al incrementarla, todos los tokens
+  /// emitidos antes dejan de servir. Es lo que hace que cambiar la contraseña
+  /// cierre de verdad las sesiones abiertas —incluida la de quien la hubiera
+  /// robado—, en lugar de sólo impedir ingresos nuevos.
+  tokenVersion Int   @default(1)
   createdAt DateTime @default(now())
 
   notasRecibidas Grade[]             @relation("EstudianteGrades")
   notasDadas     Grade[]             @relation("DocenteGrades")
-  hijos          ParentStudentLink[] @relation("PadreLinks")
-  padres         ParentStudentLink[] @relation("EstudianteLinks")
 
   asistencias           Attendance[]
   pagosEstudiante       Payment[]      @relation("PaymentStudent")
@@ -216,7 +220,7 @@ model User {
 
 /// Regla de negocio: los padres SÓLO pueden ver información de sus propios hijos.
 ///
-/// Reemplaza a `ParentStudentLink`, que tenía dos problemas: vinculaba User con
+/// Reemplazó a `ParentStudentLink` (eliminada), que tenía dos problemas: vinculaba User con
 /// User (y un alumno de Inicial no tiene User), y lo creaba el propio padre
 /// informando un DNI, sin verificación alguna. Acá el vínculo lo crea un ADMIN
 /// y queda registrado quién lo hizo.
@@ -713,17 +717,6 @@ model Grade {
 
   @@index([estudianteId])
   @@index([docenteId])
-}
-
-model ParentStudentLink {
-  id           Int  @id @default(autoincrement())
-  padreId      Int
-  padre        User @relation("PadreLinks", fields: [padreId], references: [id], onDelete: Cascade)
-  estudianteId Int
-  estudiante   User @relation("EstudianteLinks", fields: [estudianteId], references: [id], onDelete: Cascade)
-
-  @@unique([padreId, estudianteId])
-  @@index([estudianteId])
 }
 
 model Attendance {

@@ -2,9 +2,10 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { PaymentStatus, Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { HttpError } from '../utils/httpError';
-import { requireAuth, requireRole } from '../middleware/auth';
+import { prisma } from '../../db/prisma';
+import { HttpError } from '../../utils/httpError';
+import { requireAuth, requireRole } from '../../middleware/auth';
+import { esHijoDelTutor, usuariosDeLosHijos } from '../shared/authz';
 
 const router = Router();
 
@@ -14,11 +15,7 @@ router.get('/', requireAuth, requireRole(Role.PADRE, Role.ADMIN), async (req, re
     let estudianteIds: number[] = [];
 
     if (me.role === Role.PADRE) {
-      const links = await prisma.parentStudentLink.findMany({
-        where: { padreId: me.id },
-        select: { estudianteId: true },
-      });
-      estudianteIds = links.map((l) => l.estudianteId);
+      estudianteIds = await usuariosDeLosHijos(prisma, me.id);
     } else {
       const ids = req.query.estudiante_id ? [Number(req.query.estudiante_id)] : [];
       estudianteIds = ids.filter((n) => Number.isFinite(n));
@@ -74,11 +71,8 @@ router.post('/:id/pay', requireAuth, requireRole(Role.PADRE, Role.ADMIN), async 
     const payment = await prisma.payment.findUnique({ where: { id } });
     if (!payment) throw HttpError.notFound('Cuota no encontrada.');
 
-    if (me.role === Role.PADRE) {
-      const link = await prisma.parentStudentLink.findUnique({
-        where: { padreId_estudianteId: { padreId: me.id, estudianteId: payment.estudianteId } },
-      });
-      if (!link) throw HttpError.forbidden('No podés pagar la cuota de un alumno no vinculado.');
+    if (me.role === Role.PADRE && !(await esHijoDelTutor(prisma, me.id, payment.estudianteId))) {
+      throw HttpError.forbidden('No podés pagar la cuota de un alumno no vinculado.');
     }
 
     if (payment.status === PaymentStatus.PAGADO) {
@@ -118,4 +112,4 @@ router.post('/:id/pay', requireAuth, requireRole(Role.PADRE, Role.ADMIN), async 
   }
 });
 
-export { router as paymentsRouter };
+export { router as pagosRouter };

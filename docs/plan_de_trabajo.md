@@ -89,15 +89,15 @@ camino alternativo; una restricción del motor no.
 
 | RNF | Enunciado | Cómo se aborda | Estado |
 |---|---|---|---|
-| **RNF-01** Usabilidad | Interfaces claras; un administrativo sin conocimientos técnicos registra un alumno tras 30 minutos de capacitación | Formularios con etiquetas asociadas, mensajes de error en lenguaje llano, enlaces de salto, foco visible y objetivos táctiles de 44/48 px | Construido · **validación con la usuaria pendiente** |
-| **RNF-02** Seguridad | Usuario y contraseña, contraseñas cifradas, funciones habilitadas por rol | Contraseñas con bcrypt, sesión con JWT y refresco, control de rol en cada ruta y restricción de los tutores a sus propios hijos | ✅ Cubierto y probado |
+| **RNF-01** Usabilidad | Interfaces claras; un administrativo sin conocimientos técnicos registra un alumno tras 30 minutos de capacitación | Formularios con etiquetas asociadas, mensajes de error en lenguaje llano, enlaces de salto, foco visible y objetivos táctiles de 44/48 px, más el manual de usuario con el alta de alumno paso a paso | Construido · **validación con la usuaria pendiente** |
+| **RNF-02** Seguridad | Usuario y contraseña, contraseñas cifradas, funciones habilitadas por rol | Contraseñas con bcrypt, sesión con JWT y refresco con revocación —cambiar la contraseña cierra las sesiones abiertas—, control de rol en cada ruta y restricción de los tutores a sus propios hijos | ✅ Cubierto y probado |
 | **RNF-03** Rendimiento | Consultas habituales en menos de 3 s; reportes en menos de 10 s con la matrícula completa | Paginación obligatoria, índices sobre las claves de búsqueda y agregaciones resueltas en el motor | ✅ **Medido y cumplido.** 5012 alumnos activos en producción, peor de tres corridas: listado 2,40 s y búsqueda 0,66 s contra el umbral de 3 s; alumnos por materia 4,93 s, deportes 4,15 s y morosidad 3,60 s contra el de 10 s |
 | **RNF-04** Disponibilidad | Disponible en horario escolar y de recorridos; mantenimiento fuera de esa franja | Depende del entorno de despliegue | Pendiente (fase de implementación) |
-| **RNF-05** Compatibilidad | Chrome, Firefox y Edge vigentes, con diseño adaptable; móvil en Android e iOS | HTML y CSS estándar sin dependencias de navegador; tablas que se convierten en tarjetas en pantalla angosta; aplicación móvil en React Native | ✅ **Navegadores verificados** en los tres motores vigentes —Chromium, que es el de Chrome y el de Edge; Gecko; y WebKit—, sobre las 5 páginas a 1280 y a 375 px. Encontró y se corrigió un desborde horizontal reproducible en los tres. Queda **pendiente el dispositivo físico** |
-| **RNF-06** Integridad y respaldo | Copias de seguridad diarias e integridad referencial | Integridad garantizada por claves foráneas, restricciones CHECK y disparadores; el respaldo automático se define en el despliegue | Integridad ✅ · respaldo pendiente |
+| **RNF-05** Compatibilidad | Chrome, Firefox y Edge vigentes, con diseño adaptable; móvil en Android e iOS | HTML y CSS estándar sin dependencias de navegador; tablas que se convierten en tarjetas en pantalla angosta; aplicación móvil en React Native | ✅ **Navegadores verificados** en los tres motores vigentes —Chromium, que es el de Chrome y el de Edge; Gecko; y WebKit—, sobre las 5 páginas públicas a 1280 y a 375 px, y en Chromium sobre los 4 paneles del backoffice a 1366 y a 375 px. Encontró y se corrigieron dos desbordes horizontales: uno en el portal y otro en los paneles, donde el `<style>` propio de cada uno pisaba el CSS adaptable compartido. Queda **pendiente el dispositivo físico** |
+| **RNF-06** Integridad y respaldo | Copias de seguridad diarias e integridad referencial | Integridad garantizada por claves foráneas, restricciones CHECK y disparadores; respaldo diario con `pg_dump` desde GitHub Actions, cifrado y con restauración verificada | ✅ **Cubierto.** Integridad por el motor. El respaldo corre a las 00:15 de Argentina, cifra el volcado con AES256 —contiene datos de menores— y lo guarda 90 días. Un segundo trabajo lo restaura todos los días sobre una base limpia y cuenta las tablas: un respaldo que nunca se restauró no es un respaldo |
 | **RNF-07** Escalabilidad | Crecimiento de la matrícula e incorporación de módulos sin rediseño | Módulos de dominio independientes bajo `src/modules/`; agregar uno no obliga a tocar los demás | ✅ Cubierto |
-| **RNF-08** Mantenibilidad | Código modular y documentado, versionado en Git | 13 módulos de dominio, documentación técnica en `docs/` y repositorio Git con *pull requests* revisados | ✅ Cubierto |
-| **RNF-09** Legal | Ley Nacional N° 25.326 de Protección de Datos Personales | Minimización: los clientes no almacenan datos personales ni financieros de menores. La única excepción es el secreto criptográfico del carnet, que vive en el almacén seguro del teléfono | Construido · **política formal de tratamiento pendiente** |
+| **RNF-08** Mantenibilidad | Código modular y documentado, versionado en Git | 15 módulos de dominio, documentación técnica en `docs/` y repositorio Git con *pull requests* revisados | ✅ Cubierto |
+| **RNF-09** Legal | Ley Nacional N° 25.326 de Protección de Datos Personales | Minimización: los clientes no almacenan datos personales ni financieros de menores. La única excepción es el secreto criptográfico del carnet, que vive en el almacén seguro del teléfono. El relevamiento completo está en `docs/politica_de_datos.md` | Construido · política **documentada** y aviso de tratamiento agregado a los cuatro formularios públicos · **pendiente lo institucional**: inscripción de la base ante la AAIP, responsable designado y política de retención con purga automática |
 
 ---
 
@@ -192,9 +192,16 @@ PostgreSQL en cada corrida de pruebas.
 Prisma, de modo que sus reglas se pueden probar sin levantar un servidor ni una
 base de datos.
 
-**Módulos de dominio.** `alumnos`, `auth`, `avisos`, `credenciales`, `deportes`,
-`facturacion`, `padres`, `profesores`, `reportes`, `scheduler`, `servicios`,
-`shared` y `transporte`.
+**Módulos de dominio.** El recorte que pide la consigna son tres —`alumnos`,
+`profesores` y `administrador`—, a los que se suma `padres`: es un actor con una
+regla propia que atraviesa todo el sistema (RF-03, sólo ve a sus propios hijos)
+y por eso no se disuelve dentro de los otros tres.
+
+Alrededor, los servicios que un alumno contrata —`deportes`, `transporte`,
+`servicios`, `facturacion`, `credenciales` y `reportes`— y lo transversal a los
+cuatro actores: `auth`, `avisos`, `comunicacion`, `scheduler` y `shared`. Quince
+en total. Cada router vive dentro de su módulo; `src/routes/` quedó sólo con el
+`index.ts` que los cuelga de su prefijo.
 
 ---
 
@@ -285,11 +292,11 @@ hará y si hay algún bloqueo. Lo acordado se refleja en el tablero de Jira.
 
 | Nivel | Alcance | Cantidad |
 |---|---|---|
-| Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 257 |
-| De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **257** |
+| Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 258 |
+| De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **258** |
 | Del motor de base de datos | Verifican que el motor **rechace efectivamente** el tercer deporte, el cruce de horarios, el quinto recorrido, el comprobante sin archivo, el tutor que no es padre y la reutilización de un código QR | **17** |
 | De la aplicación móvil | Cliente HTTP, formateo y equivalencia de la implementación propia de HMAC-SHA256 contra `node:crypto` en 300 casos aleatorios | **70** |
-| **Total** | | **344** |
+| **Total** | | **345** |
 
 **Entorno de pruebas.** La suite levanta una instancia real de PostgreSQL 15
 mediante `embedded-postgres`, aplica las nueve migraciones, carga las semillas y
@@ -344,7 +351,9 @@ produjo código que hubo que corregir o reemplazar.
 | Informe de uso de IA | 17/11/2026 | `docs/informe_final_ia.md` |
 | Bitácora de IA | 17/11/2026 | `docs/bitacora_ia.md` |
 | Documentación técnica | 22/11/2026 | `docs/modelo_de_datos.md`, `docs/api_rest.md`, `docs/frontend.md`, `docs/aplicacion_movil.md`, `docs/facturacion_y_schedulers.md`, `docs/carnet_digital_qr.md` |
-| Sistema desplegado y capacitación | 21/11/2026 | Entorno de producción y manual de usuario |
+| Manual de usuario | 21/11/2026 | `docs/manual_de_usuario.md` ✅ |
+| Política de tratamiento de datos (RNF-09) | 21/11/2026 | `docs/politica_de_datos.md` ✅ |
+| Sistema desplegado y capacitación | 21/11/2026 | Entorno de producción |
 
 ---
 
@@ -353,15 +362,15 @@ produjo código que hubo que corregir o reemplazar.
 | Métrica | Valor |
 |---|---|
 | Requerimientos funcionales cubiertos | **8 de 8** |
-| Modelos de datos | 40 |
+| Modelos de datos | 39 |
 | Enumeraciones | 25 |
-| Migraciones aplicadas | 9 |
-| Endpoints REST | 140 |
-| Módulos de dominio | 13 |
-| Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 15 879 |
+| Migraciones aplicadas | 11 |
+| Endpoints REST | 141 |
+| Módulos de dominio | 15 |
+| Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 17 734 |
 | Vistas web | 4 paneles (administración, docente, tutor, estudiante) más el portal público |
 | Pantallas móviles | 5 (ingreso, dashboard, finanzas, pago por transferencia, carnet) |
-| Pruebas automatizadas | **344**, todas en verde |
+| Pruebas automatizadas | **345**, todas en verde |
 | Base de datos de verificación | PostgreSQL 15.18 real |
 
 **Verificado desde la versión 2.0 de este documento:**
@@ -369,9 +378,16 @@ produjo código que hubo que corregir o reemplazar.
 - **Rendimiento con la matrícula completa (RNF-03).** Medido en producción con
   5012 alumnos. Cumple los cinco casos.
 - **Navegadores (RNF-05).** Los tres motores vigentes —Chromium, que es el de
-  Chrome y el de Edge; Gecko; y WebKit— sobre las cinco páginas, a 1280 y a
-  375 px. Encontró un desborde horizontal reproducible en los tres, que se
-  corrigió.
+  Chrome y el de Edge; Gecko; y WebKit— sobre las cinco páginas públicas, a
+  1280 y a 375 px. Encontró un desborde horizontal reproducible en los tres,
+  que se corrigió.
+- **Backoffice en pantalla angosta (RNF-05).** Los cuatro paneles en Chromium a
+  1366 y a 375 px. Los cuatro se desplazaban en horizontal: el CSS adaptable
+  compartido existía, pero el `<style>` propio de cada panel lo pisaba. Los
+  cuatro miden ahora 375 px de ancho de desplazamiento.
+- **ABM académico y alta de alumnos y profesores.** Recorrido completo por HTTP
+  contra PostgreSQL real (`pnpm --filter backend test:humo`): 21 comprobaciones,
+  incluidos el rechazo del DNI repetido y las dos guardas de baja.
 - **Contraste de color.** Medido con Lighthouse sobre el sitio desplegado: 93/100
   en la primera corrida, con 17 elementos por debajo del mínimo AA y 7 enlaces
   sin nombre accesible. Corregido, da 100/100 sin auditorías fallidas.

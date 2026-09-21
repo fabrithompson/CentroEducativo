@@ -2,10 +2,10 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { HttpError } from '../utils/httpError';
-import { requireAuth } from '../middleware/auth';
-import { emitToUser } from '../sockets/io';
+import { prisma } from '../../db/prisma';
+import { HttpError } from '../../utils/httpError';
+import { requireAuth } from '../../middleware/auth';
+import { emitToUser } from '../../sockets/io';
 
 const router = Router();
 
@@ -177,4 +177,4 @@ router.post('/', requireAuth, async (req, res, next) => {
   }
 });
 
-export { router as messagesRouter };
+export { router as mensajesRouter };

@@ -25,7 +25,11 @@
     "matricula:limpiar": "tsx scripts/carga-matricula.ts --limpiar",
     "db:test:up": "tsx scripts/db-test.ts up",
     "db:test:down": "tsx scripts/db-test.ts down",
-    "test:integracion": "tsx scripts/test-integracion.ts"
+    "test:integracion": "tsx scripts/test-integracion.ts",
+    "test:humo": "tsx scripts/humo-academico.ts && tsx scripts/humo-auth.ts",
+    "test:humo:academico": "tsx scripts/humo-academico.ts",
+    "test:humo:auth": "tsx scripts/humo-auth.ts",
+    "qa": "tsx scripts/servidor-qa.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

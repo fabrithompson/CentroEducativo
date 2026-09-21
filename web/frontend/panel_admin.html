@@ -43,8 +43,8 @@
         <div class="header-top">
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div class="contact-info">
-                    <span><i class="fas fa-phone"></i> (011) 1234-5678</span>
-                    <span><i class="fas fa-envelope"></i> info@centromixto.edu</span>
+                    <span><i class="fas fa-phone"></i> (362) 442-5100</span>
+                    <span><i class="fas fa-envelope"></i> info@et.edu.ar</span>
                 </div>
             </div>
         </div>
@@ -77,6 +77,9 @@
             </div>
             <ul class="sidebar-menu">
                 <li><a class="nav-link active" onclick="switchView('dashboard', this); cargarStats();"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a class="nav-link" onclick="switchView('m-alumnos', this); window.abrirAdminAlumnos();"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
+                <li><a class="nav-link" onclick="switchView('m-profesores', this); window.abrirAdminProfesores();"><i class="fas fa-chalkboard-user"></i> Profesores</a></li>
+                <li><a class="nav-link" onclick="switchView('m-academico', this); window.abrirAdminAcademico();"><i class="fas fa-graduation-cap"></i> Niveles, cursos y materias</a></li>
                 <li><a class="nav-link" onclick="switchView('escaner', this); window.abrirEscaner();"><i class="fas fa-qrcode"></i> Escanear carnet</a></li>
                 <li><a class="nav-link" onclick="switchView('reportes', this); window.abrirReportes();"><i class="fas fa-chart-column"></i> Reportes</a></li>
                 <li><a class="nav-link" onclick="switchView('usuarios', this); cargarUsuarios();"><i class="fas fa-users"></i> Usuarios</a></li>
@@ -85,6 +88,8 @@
                 <li><a class="nav-link" onclick="switchView('opiniones', this); cargarOpiniones();"><i class="fas fa-comment-dots"></i> Opiniones <span id="badgeOpiniones" class="chat-list-unread" style="display:none;">0</span></a></li>
                 <li><a class="nav-link" onclick="switchView('empleo', this); cargarPostulaciones();"><i class="fas fa-briefcase"></i> Postulaciones empleo <span id="badgeEmpleo" class="chat-list-unread" style="display:none;">0</span></a></li>
                 <li><a class="nav-link" onclick="switchView('vinculos', this); cargarLinks();"><i class="fas fa-link"></i> Vínculos Padre-Hijo</a></li>
+                <li><a class="nav-link" onclick="switchView('comprobantes', this); window.abrirComprobantes();"><i class="fas fa-receipt"></i> Comprobantes <span id="badgeComprobantes" class="chat-list-unread" style="display:none;">0</span></a></li>
+                <li><a class="nav-link" onclick="switchView('tareas', this); window.abrirTareas();"><i class="fas fa-clock"></i> Tareas programadas</a></li>
                 <li><a class="nav-link" onclick="switchView('cuotas', this); cargarUsuarios();"><i class="fas fa-money-bill"></i> Cargar Cuota</a></li>
                 <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments"></i> Mensajes</a></li>
                 <li><a class="nav-link" onclick="switchView('anuncios', this); cargarAnuncios();"><i class="fas fa-bullhorn"></i> Anuncios</a></li>
@@ -95,6 +100,31 @@
             <section id="dashboard" class="view-section active">
                 <h3 class="section-title">Dashboard institucional</h3>
                 <div id="statsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;"></div>
+            </section>
+
+            <section id="m-alumnos" class="view-section" aria-labelledby="t-m-alumnos">
+                <h2 class="section-title" id="t-m-alumnos">Módulo Alumnos</h2>
+                <div id="vista-admin-alumnos"></div>
+            </section>
+
+            <section id="m-profesores" class="view-section" aria-labelledby="t-m-profesores">
+                <h2 class="section-title" id="t-m-profesores">Módulo Profesores</h2>
+                <div id="vista-admin-profesores"></div>
+            </section>
+
+            <section id="m-academico" class="view-section" aria-labelledby="t-m-academico">
+                <h2 class="section-title" id="t-m-academico">Estructura académica</h2>
+                <div id="vista-admin-academico"></div>
+            </section>
+
+            <section id="comprobantes" class="view-section" aria-labelledby="t-comprobantes">
+                <h2 class="section-title" id="t-comprobantes">Comprobantes de transferencia</h2>
+                <div id="vista-comprobantes"></div>
+            </section>
+
+            <section id="tareas" class="view-section" aria-labelledby="t-tareas">
+                <h2 class="section-title" id="t-tareas">Tareas programadas</h2>
+                <div id="vista-tareas"></div>
             </section>
 
             <section id="reportes" class="view-section" aria-labelledby="t-reportes">
@@ -125,7 +155,7 @@
                             <option value="ADMIN">Admin</option>
                         </select>
                         <input type="text" id="newCurso" placeholder="Curso (solo estudiante)" class="form-input">
-                        <input type="password" id="newPassword" placeholder="Contraseña inicial" required minlength="6" class="form-input">
+                        <input type="password" id="newPassword" placeholder="Mínimo 8, con letras y números" required minlength="8" maxlength="72" class="form-input">
                         <button type="submit" class="btn-action" style="grid-column: 1 / -1; justify-self: end;"><i class="fas fa-user-plus"></i> Crear</button>
                     </form>
                 </details>
@@ -151,7 +181,7 @@
                 <p style="color:#64748b; margin-bottom:14px;">Estos usuarios se registraron como docentes y necesitan tu autorización para poder iniciar sesión.</p>
                 <table class="data-table" id="tablaDocentesPend">
                     <thead><tr><th>ID</th><th>Nombre</th><th>Usuario</th><th>DNI</th><th>Email</th><th>Solicitado</th><th>Acciones</th></tr></thead>
-                    <tbody><tr><td colspan="7" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
+                    <tbody><tr><td colspan="8" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
                 </table>
             </section>
 
@@ -208,21 +238,32 @@
 
                 <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
                     <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#8b5cf6;"></i> Crear vínculo</summary>
-                    <form onsubmit="crearVinculo(event)" style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;">
+                    <form onsubmit="crearVinculo(event)" style="margin-top: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end;">
                         <div>
-                            <label style="font-size:0.85rem; font-weight:600;" for="vincPadre">Padre</label>
+                            <label style="font-size:0.85rem; font-weight:600;" for="vincPadre">Tutor</label>
                             <select id="vincPadre" required class="form-select"></select>
                         </div>
                         <div>
-                            <label style="font-size:0.85rem; font-weight:600;" for="vincEstudiante">Estudiante</label>
+                            <label style="font-size:0.85rem; font-weight:600;" for="vincEstudiante">Alumno</label>
                             <select id="vincEstudiante" required class="form-select"></select>
+                        </div>
+                        <div>
+                            <label style="font-size:0.85rem; font-weight:600;" for="vincParentesco">Parentesco</label>
+                            <input type="text" id="vincParentesco" class="form-input" maxlength="40" placeholder="Madre, padre, tutor…">
+                        </div>
+                        <div>
+                            <label style="font-size:0.85rem; font-weight:600;" for="vincFacturacion">Responsable de facturación</label>
+                            <select id="vincFacturacion" class="form-select">
+                                <option value="false">No</option>
+                                <option value="true">Sí</option>
+                            </select>
                         </div>
                         <button type="submit" class="btn-action">Vincular</button>
                     </form>
                 </details>
 
                 <table class="data-table" id="tablaVinculos">
-                    <thead><tr><th>ID</th><th>Padre</th><th>DNI</th><th>Estudiante</th><th>DNI</th><th>Curso</th><th>Acciones</th></tr></thead>
+                    <thead><tr><th>Tutor</th><th>DNI</th><th>Parentesco</th><th>Alumno</th><th>Legajo</th><th>Curso</th><th>Factura</th><th>Acciones</th></tr></thead>
                     <tbody><tr><td colspan="7" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
                 </table>
             </section>
@@ -455,11 +496,31 @@
             const padres = _usuariosCache.filter(u => u.role === 'PADRE' && u.isActive);
             const estudiantes = _usuariosCache.filter(u => u.role === 'ESTUDIANTE' && u.isActive);
             const sp = document.getElementById('vincPadre');
-            const se = document.getElementById('vincEstudiante');
             const sec = document.getElementById('cuotaEst');
             if (sp) sp.innerHTML = padres.map(p => `<option value="${p.id}">${p.nombre} (DNI ${p.dni})</option>`).join('');
-            if (se) se.innerHTML = estudiantes.map(e => `<option value="${e.id}">${e.nombre} — ${e.curso || ''}</option>`).join('');
+            // La cuota manual sigue yendo por id de usuario: es lo que espera
+            // POST /api/admin/payments.
             if (sec) sec.innerHTML = estudiantes.map(e => `<option value="${e.id}">${e.nombre} — ${e.curso || ''}</option>`).join('');
+        }
+
+        // El vínculo se carga contra el alumno del padrón, no contra su cuenta
+        // de usuario: hay alumnos sin cuenta y también necesitan tutor.
+        async function llenarSelectAlumnos() {
+            const se = document.getElementById('vincEstudiante');
+            if (!se) return;
+            try {
+                const data = await window.apiGet('/api/alumnos?estado=ACTIVO&pageSize=100');
+                const alumnos = data.items || [];
+                se.innerHTML = alumnos.length === 0
+                    ? '<option value="">No hay alumnos activos cargados</option>'
+                    : alumnos.map(a => {
+                        const curso = a.curso ? `${a.curso.nombre} "${a.curso.division}"` : 'sin curso';
+                        return `<option value="${a.id}">${window.escapeHtml(a.apellido)}, ${window.escapeHtml(a.nombres)} — ${window.escapeHtml(curso)} (${a.legajo})</option>`;
+                    }).join('');
+            } catch (err) {
+                console.error(err);
+                se.innerHTML = '<option value="">No se pudieron cargar los alumnos</option>';
+            }
         }
 
         async function crearUsuario(e) {
@@ -835,19 +896,21 @@
            ============================================================ */
         async function cargarLinks() {
             await cargarUsuarios();
+            await llenarSelectAlumnos();
             const data = await window.apiGet('/api/admin/links');
             const tbody = document.querySelector('#tablaVinculos tbody');
             if (!data.exito) return;
             tbody.innerHTML = data.links.length === 0
-                ? '<tr><td colspan="7" style="text-align:center; color:#64748b;">Sin vínculos cargados.</td></tr>'
+                ? '<tr><td colspan="8" style="text-align:center; color:#64748b;">Sin vínculos cargados.</td></tr>'
                 : data.links.map(l => `
                     <tr>
-                        <td>${l.id}</td>
-                        <td><b>${window.escapeHtml(l.padre.nombre)}</b></td>
-                        <td>${l.padre.dni}</td>
-                        <td><b>${window.escapeHtml(l.estudiante.nombre)}</b></td>
-                        <td>${l.estudiante.dni}</td>
-                        <td>${window.escapeHtml(l.estudiante.curso || '—')}</td>
+                        <td><b>${window.escapeHtml(l.tutor.nombre)}</b></td>
+                        <td>${window.escapeHtml(l.tutor.dni || '—')}</td>
+                        <td>${window.escapeHtml(l.parentesco || '—')}</td>
+                        <td><b>${window.escapeHtml(l.alumno.nombre)}</b></td>
+                        <td>${window.escapeHtml(l.alumno.legajo)}</td>
+                        <td>${window.escapeHtml(l.alumno.curso || '—')}</td>
+                        <td style="text-align:center;">${l.esResponsableFacturacion ? '<span class="badge badge--ok">sí</span>' : '—'}</td>
                         <td><button class="btn-danger" onclick="borrarVinculo(${l.id})">Eliminar</button></td>
                     </tr>
                 `).join('');
@@ -855,12 +918,24 @@
 
         async function crearVinculo(e) {
             e.preventDefault();
+            const alumnoId = document.getElementById('vincEstudiante').value;
+            if (!alumnoId) { toastError('Elegí un alumno.'); return; }
+
             const r = await window.apiPost('/api/admin/links', {
-                padreId: document.getElementById('vincPadre').value,
-                estudianteId: document.getElementById('vincEstudiante').value,
+                tutorId: document.getElementById('vincPadre').value,
+                alumnoId: alumnoId,
+                parentesco: document.getElementById('vincParentesco').value.trim() || null,
+                esResponsableFacturacion: document.getElementById('vincFacturacion').value === 'true',
             });
-            if (r.exito) { toastSuccess('Vínculo creado.'); cargarLinks(); }
-            else toastError(r.mensaje || 'Error.');
+            if (r.exito) {
+                toastSuccess(r.mensaje || 'Vínculo creado.');
+                document.getElementById('vincParentesco').value = '';
+                cargarLinks();
+            } else {
+                // El backend responde `message` cuando falla, y ahí viene el
+                // motivo real: tutor sin rol PADRE, vínculo ya existente, etc.
+                toastError(r.mensaje || r.message || 'No se pudo crear el vínculo.');
+            }
         }
 
         async function borrarVinculo(id) {
@@ -1018,6 +1093,40 @@
   import { iniciarReportes } from './js/vistas/reportes.js';
   // Se expone en window porque la navegación del panel usa onclick inline.
   window.abrirReportes = () => iniciarReportes('vista-reportes');
+</script>
+
+<script type="module">
+  import { iniciarAdminAlumnos } from './js/vistas/admin-alumnos.js';
+  import { iniciarAdminProfesores } from './js/vistas/admin-profesores.js';
+  import { iniciarAdminAcademico } from './js/vistas/admin-academico.js';
+
+  window.abrirAdminAlumnos = () => iniciarAdminAlumnos('vista-admin-alumnos');
+  window.abrirAdminProfesores = () => iniciarAdminProfesores('vista-admin-profesores');
+  window.abrirAdminAcademico = () => iniciarAdminAcademico('vista-admin-academico');
+</script>
+
+<script type="module">
+  import { iniciarComprobantes } from './js/vistas/admin-comprobantes.js';
+  import { iniciarTareas } from './js/vistas/admin-tareas.js';
+  import api from './js/api.js';
+
+  window.abrirComprobantes = () => iniciarComprobantes('vista-comprobantes');
+  window.abrirTareas = () => iniciarTareas('vista-tareas');
+
+  // Contador en el menú: si hay comprobantes esperando, la cuota le figura a
+  // la familia como "en revisión" y el recordatorio del día 20 la sigue
+  // contando como deuda. Conviene que se vea sin entrar a la pantalla.
+  api.facturacion
+    .pendientes()
+    .then((r) => {
+      const badge = document.getElementById('badgeComprobantes');
+      if (!badge || !r.cantidad) return;
+      badge.textContent = String(r.cantidad);
+      badge.style.display = '';
+    })
+    .catch(() => {
+      /* el contador es informativo: si falla, la pantalla sigue andando */
+    });
 </script>
 
 <script type="module">

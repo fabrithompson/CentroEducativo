@@ -3,9 +3,11 @@ import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { HttpError } from '../utils/httpError';
-import { requireAuth, requireRole } from '../middleware/auth';
+import { prisma } from '../../db/prisma';
+import { HttpError } from '../../utils/httpError';
+import { requireAuth, requireRole } from '../../middleware/auth';
+import { vincularTutor, desvincularTutor } from '../alumnos/alumnos.service';
+import { passwordSchema } from '../auth/politicaPassword';
 
 const router = Router();
 
@@ -82,7 +84,7 @@ const createUserSchema = z.object({
   nombre: z.string().min(2),
   role: z.enum(['ESTUDIANTE', 'DOCENTE', 'PADRE', 'ADMIN']),
   curso: z.string().optional().nullable(),
-  password: z.string().min(6),
+  password: passwordSchema,
 });
 
 router.post('/users', async (req, res, next) => {
@@ -118,7 +120,7 @@ const updateUserSchema = z.object({
   role: z.enum(['ESTUDIANTE', 'DOCENTE', 'PADRE', 'ADMIN']).optional(),
   curso: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
-  password: z.string().min(6).optional(),
+  password: passwordSchema.optional(),
 });
 
 router.patch('/users/:id', async (req, res, next) => {
@@ -180,44 +182,80 @@ router.delete('/users/:id', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+/**
+ * Vínculos tutor–alumno.
+ *
+ * Operaban sobre `ParentStudentLink`, que vinculaba dos cuentas de usuario y
+ * era una segunda fuente de verdad en paralelo a `TutorAlumno`. El problema no
+ * era la duplicación en sí: era que las notas, la asistencia y las cuotas
+ * resolvían el vínculo contra una tabla y el resto del sistema contra la otra,
+ * así que un vínculo cargado acá no servía para el portal del tutor y al revés.
+ *
+ * Ahora esto delega en el mismo servicio que `POST /api/alumnos/:id/tutores`,
+ * con lo que el alta queda auditada —queda registrado quién la hizo—, el motor
+ * verifica que el tutor tenga rol PADRE y se respeta el único responsable de
+ * facturación por alumno. El alumno se identifica por su id de dominio, no por
+ * su cuenta: hay alumnos sin cuenta de usuario y también necesitan tutor.
+ */
 const linkSchema = z.object({
-  padreId: z.coerce.number().int().positive(),
-  estudianteId: z.coerce.number().int().positive(),
+  tutorId: z.coerce.number().int().positive(),
+  alumnoId: z.coerce.number().int().positive(),
+  parentesco: z.string().trim().max(40).nullable().optional(),
+  esResponsableFacturacion: z.coerce.boolean().optional(),
 });
 
 router.get('/links', async (_req, res, next) => {
   try {
-    const links = await prisma.parentStudentLink.findMany({
+    const vinculos = await prisma.tutorAlumno.findMany({
       include: {
-        padre: { select: { id: true, nombre: true, dni: true } },
-        estudiante: { select: { id: true, nombre: true, dni: true, curso: true } },
+        tutor: { select: { id: true, nombre: true, dni: true, email: true } },
+        alumno: {
+          select: {
+            id: true,
+            legajo: true,
+            apellido: true,
+            nombres: true,
+            dni: true,
+            curso: { select: { nombre: true, division: true } },
+          },
+        },
       },
       orderBy: { id: 'desc' },
     });
-    res.json({ exito: true, links });
+
+    res.json({
+      exito: true,
+      links: vinculos.map((v) => ({
+        id: v.id,
+        parentesco: v.parentesco,
+        esResponsableFacturacion: v.esResponsableFacturacion,
+        tutor: v.tutor,
+        alumno: {
+          id: v.alumno.id,
+          legajo: v.alumno.legajo,
+          nombre: `${v.alumno.apellido}, ${v.alumno.nombres}`,
+          dni: v.alumno.dni,
+          curso: v.alumno.curso
+            ? `${v.alumno.curso.nombre} "${v.alumno.curso.division}"`
+            : null,
+        },
+      })),
+    });
   } catch (err) { next(err); }
 });
 
 router.post('/links', async (req, res, next) => {
   try {
     const data = linkSchema.parse(req.body);
-    const padre = await prisma.user.findUnique({ where: { id: data.padreId } });
-    const est = await prisma.user.findUnique({ where: { id: data.estudianteId } });
-    if (!padre || padre.role !== Role.PADRE) throw HttpError.badRequest('El padre no es válido.');
-    if (!est || est.role !== Role.ESTUDIANTE) throw HttpError.badRequest('El estudiante no es válido.');
-    const link = await prisma.parentStudentLink.upsert({
-      where: { padreId_estudianteId: { padreId: data.padreId, estudianteId: data.estudianteId } },
-      update: {},
-      create: { padreId: data.padreId, estudianteId: data.estudianteId },
-    });
-    res.json({ exito: true, link });
+    const vinculo = await vincularTutor(prisma, { ...data, creadoPorId: req.authUser!.id });
+    res.status(201).json({ exito: true, mensaje: 'Tutor vinculado al alumno.', link: vinculo });
   } catch (err) { next(err); }
 });
 
 router.delete('/links/:id', async (req, res, next) => {
   try {
-    await prisma.parentStudentLink.delete({ where: { id: Number(req.params.id) } });
-    res.json({ exito: true });
+    await desvincularTutor(prisma, Number(req.params.id));
+    res.json({ exito: true, mensaje: 'Vínculo eliminado.' });
   } catch (err) { next(err); }
 });
 
@@ -231,14 +269,19 @@ const createPaymentSchema = z.object({
 router.post('/payments', async (req, res, next) => {
   try {
     const data = createPaymentSchema.parse(req.body);
-    const link = await prisma.parentStudentLink.findFirst({
-      where: { estudianteId: data.estudianteId },
-      select: { padreId: true },
+    // El responsable de facturación del alumno, si tiene cuenta y vínculo
+    // cargado. Se prefiere el marcado como responsable; si no hay ninguno, el
+    // primero que aparezca. Sin vínculo la cuota queda sin padre asociado, que
+    // es lo que hacía la versión anterior.
+    const vinculo = await prisma.tutorAlumno.findFirst({
+      where: { alumno: { userId: data.estudianteId } },
+      orderBy: { esResponsableFacturacion: 'desc' },
+      select: { tutorId: true },
     });
     const payment = await prisma.payment.create({
       data: {
         estudianteId: data.estudianteId,
-        padreId: link?.padreId ?? null,
+        padreId: vinculo?.tutorId ?? null,
         concepto: data.concepto,
         monto: data.monto,
         vencimiento: new Date(data.vencimiento),
@@ -298,4 +341,4 @@ router.delete('/teachers/:id/reject', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-export { router as adminRouter };
+export { router as administradorRouter };

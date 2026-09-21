@@ -47,14 +47,14 @@ after(async () => {
 // Estructura
 // ==================================================================
 
-test('las migraciones crearon las 40 tablas del modelo', async () => {
+test('las migraciones crearon las 39 tablas del modelo', async () => {
   const filas = await prisma.$queryRaw<{ n: bigint }[]>`
     SELECT COUNT(*)::bigint AS n
     FROM information_schema.tables
     WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
       AND table_name <> '_prisma_migrations'`;
 
-  assert.equal(Number(filas[0]!.n), 40);
+  assert.equal(Number(filas[0]!.n), 39);
 });
 
 test('las tablas de RF-07 y RF-08 existen', async () => {

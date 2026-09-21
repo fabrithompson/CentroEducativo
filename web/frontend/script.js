@@ -208,6 +208,23 @@ function showUserPanel() {
     }
 }
 
+/**
+ * El backend devuelve `mensaje` cuando la operación sale bien y `message`
+ * cuando falla (middleware/errorHandler.ts). Los errores de validación viajan
+ * siempre con el texto genérico "Datos inválidos" y el motivo real campo por
+ * campo en `details`. Leer sólo `mensaje` descartaba las tres cosas: la
+ * persona no se enteraba de si su cuenta de docente estaba pendiente de
+ * aprobación, de si el usuario era demasiado corto o de si la contraseña
+ * estaba mal.
+ */
+function mensajeDeError(data, porDefecto) {
+    if (data && data.details) {
+        const detalles = Object.values(data.details).flat().filter(Boolean);
+        if (detalles.length > 0) return detalles.join(' ');
+    }
+    return (data && (data.mensaje || data.message)) || porDefecto;
+}
+
 // Enviar formulario de Login al PHP
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
@@ -231,7 +248,7 @@ if (loginForm) {
                     this.reset();
                     showUserPanel();
                 } else {
-                    toastError(data.mensaje || 'No se pudo iniciar sesión.');
+                    toastError(mensajeDeError(data, 'No se pudo iniciar sesión.'));
                 }
             })
             .catch(error => {
@@ -276,11 +293,7 @@ if (registerForm) {
                         openLoginModal();
                     }
                 } else {
-                    // El backend responde `mensaje` en los casos de éxito y
-                    // `message` cuando devuelve un error (errorHandler.ts).
-                    // Leer solo `mensaje` descartaba el motivo real y dejaba
-                    // siempre el texto genérico.
-                    toastError(data.mensaje || data.message || 'No se pudo completar el registro.');
+                    toastError(mensajeDeError(data, 'No se pudo completar el registro.'));
                 }
             })
             .catch(error => {

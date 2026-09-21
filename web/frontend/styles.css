@@ -726,6 +726,37 @@ ul {
     text-align: center;
 }
 
+/* Aviso de tratamiento de datos en los formularios públicos (RNF-09).
+   Usa --gray, que ya está verificado contra blanco y contra --light en
+   frontend.contraste.test.ts: un color nuevo acá tendría que volver a
+   medirse. */
+.aviso-datos {
+    color: var(--gray);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    background: var(--light);
+    border-radius: 6px;
+}
+
+/* Azul más oscuro que --secondary, y sólo acá dentro. --secondary está
+   verificado sobre blanco (4.62:1), pero este aviso va sobre --light y ahí
+   cae a 3.94:1, por debajo del mínimo AA para texto. Medido en el navegador:
+   #1a5f8f da 5.95:1 sobre --light. */
+.aviso-datos i,
+.aviso-datos a {
+    color: #1a5f8f;
+}
+
+.aviso-datos i {
+    margin-right: 6px;
+}
+
+.aviso-datos a {
+    text-decoration: underline;
+}
+
 .opiniones-display h3 {
     text-align: center;
     margin-bottom: 20px;

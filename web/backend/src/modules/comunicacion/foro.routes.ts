@@ -2,9 +2,9 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { HttpError } from '../utils/httpError';
-import { requireAuth, requireRole } from '../middleware/auth';
+import { prisma } from '../../db/prisma';
+import { HttpError } from '../../utils/httpError';
+import { requireAuth, requireRole } from '../../middleware/auth';
 
 const router = Router();
 
@@ -148,4 +148,4 @@ router.post('/:id/pin', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN), asyn
   } catch (err) { next(err); }
 });
 
-export { router as forumRouter };
+export { router as foroRouter };

@@ -53,7 +53,11 @@ desprenden cuatro problemas concretos que el sistema resuelve:
 | Portal de login unificado (4 roles) | ✅ | [`web/frontend/js/`](web/frontend/js/) |
 | **Backoffice** — módulo Alumnos | ✅ | [`modules/alumnos/`](web/backend/src/modules/alumnos/) · [`panel_admin.html`](web/frontend/panel_admin.html) |
 | **Backoffice** — módulo Profesores | ✅ | [`modules/profesores/`](web/backend/src/modules/profesores/) |
-| **Backoffice** — módulo Administrador (ABM, roles, reportes) | ✅ | [`routes/admin.routes.ts`](web/backend/src/routes/admin.routes.ts) · [`modules/reportes/`](web/backend/src/modules/reportes/) |
+| **Backoffice** — módulo Administrador (ABM, roles, reportes) | ✅ | [`modules/administrador/`](web/backend/src/modules/administrador/) · [`modules/reportes/`](web/backend/src/modules/reportes/) |
+| **Manual de usuario** — por rol, con el alta de alumno paso a paso | ✅ | [`docs/manual_de_usuario.md`](docs/manual_de_usuario.md) |
+| **Recuperación de contraseña** — correo con enlace de un solo uso | ✅ | [`restablecer.html`](web/frontend/restablecer.html) · [`modules/auth/`](web/backend/src/modules/auth/) |
+| **Backoffice** — cola de comprobantes y tareas programadas | ✅ | [`admin-comprobantes.js`](web/frontend/js/vistas/admin-comprobantes.js) · [`admin-tareas.js`](web/frontend/js/vistas/admin-tareas.js) |
+| **Política de datos personales** (RNF-09, Ley 25.326) | ✅ | [`docs/politica_de_datos.md`](docs/politica_de_datos.md) |
 | **App móvil** — autenticación segura y RBAC | ✅ | [`mobile/src/auth/`](mobile/src/auth/) |
 | **App móvil** — cuotas, vencimientos e historial | ✅ | [`mobile/src/pantallas/Finanzas.tsx`](mobile/src/pantallas/Finanzas.tsx) |
 | **App móvil** — pago por transferencia, 1 o más comprobantes | ✅ | [`PagoTransferencia.tsx`](mobile/src/pantallas/PagoTransferencia.tsx) |
@@ -100,13 +104,24 @@ Se consigna por honestidad metodológica:
   se verificaron; lo que falta es un Android real, con su cámara y su teclado.
 - Envío real de SMS y de correo contra un proveedor comercial.
 - Lectura del QR con cámara sobre hardware real.
-- Backups automáticos de la base (RNF-06): se habilitan desde el panel de
-  Railway. Ver `docs/despliegue.md` §2.
+- **Lo institucional del RNF-09**: inscripción de la base ante la AAIP,
+  designación del responsable y una política de retención con purga automática.
+  El relevamiento y la lista completa están en
+  [`docs/politica_de_datos.md`](docs/politica_de_datos.md); nada de eso se
+  resuelve programando.
 - Que el `preDeployCommand` de Railway efectivamente corra. Está declarado en
   `railway.json`, pero se comprobó que no se ejecutó en el despliegue que lo
   introdujo. Ver `docs/despliegue.md` §1.
 
 Ya no están en esta lista:
+
+- **Backups de la base (RNF-06).** Resueltos en
+  [`.github/workflows/respaldo.yml`](.github/workflows/respaldo.yml), que corre
+  todos los días a las 00:15 de Argentina. Vuelca con `pg_dump`, comprueba que
+  el archivo no haya quedado cortado, lo cifra con AES256 —tiene domicilios y
+  teléfonos de menores, y hashes de contraseña— y lo guarda 90 días. Un segundo
+  trabajo lo **restaura sobre una base limpia todos los días** y exige al menos
+  30 tablas: un respaldo que nunca se restauró no es un respaldo, es un archivo.
 
 - **Contraste de color y accesibilidad del portal.** Medido con Lighthouse sobre
   el sitio desplegado, no sólo sobre la paleta declarada. La primera corrida dio
@@ -177,7 +192,7 @@ Ya no están en esta lista:
                     └───────────┬────────────┘
                     ┌───────────▼────────────┐
                     │      PostgreSQL        │
-                    │ 40 tablas · 6 triggers │
+                    │ 39 tablas · 6 triggers │
                     │ 7 funciones · 12 CHECK │
                     └────────────────────────┘
 ```
@@ -201,8 +216,8 @@ guarda copia local de los datos. El panel web del tutor y la app móvil consumen
 │   │   ├── prisma/           Esquema, 9 migraciones y semillas
 │   │   ├── scripts/          PostgreSQL embebido y verificación de integración
 │   │   └── src/
-│   │       ├── modules/      13 módulos de dominio
-│   │       ├── routes/       Rutas del campus (foro, notas, mensajería interna)
+│   │       ├── modules/      15 módulos de dominio
+│   │       ├── routes/       Composición de la API (index.ts)
 │   │       ├── middleware/   Autenticación, errores, subida de archivos
 │   │       └── config/       Variables de entorno validadas al arrancar
 │   └── frontend/             Portal público y backoffice
@@ -211,15 +226,18 @@ guarda copia local de los datos. El panel web del tutor y la app móvil consumen
 └── docker-compose.yml        PostgreSQL 15 para desarrollo
 ```
 
-**Los 13 módulos de dominio:** `alumnos`, `auth`, `avisos`, `credenciales`,
-`deportes`, `facturacion`, `padres`, `profesores`, `reportes`, `scheduler`,
-`servicios`, `shared`, `transporte`.
+**Los 15 módulos de dominio.** Los tres que recorta la consigna —`alumnos`,
+`profesores` y `administrador`— más `padres`, que es un actor con reglas propias
+(RF-03: sólo ve a sus propios hijos). Los servicios que un alumno contrata:
+`deportes`, `transporte`, `servicios`, `facturacion`, `credenciales` y
+`reportes`. Y lo transversal: `auth`, `avisos`, `comunicacion`, `scheduler` y
+`shared`.
 
 ---
 
 ## 6. Base de datos
 
-**40 tablas · 25 enumeraciones · 9 migraciones · 7 funciones PL/pgSQL ·
+**39 tablas · 25 enumeraciones · 11 migraciones · 7 funciones PL/pgSQL ·
 6 disparadores · 12 restricciones CHECK.**
 
 ### 6.1 MER — Modelo Entidad-Relación
@@ -540,7 +558,7 @@ pnpm start     # node dist/index.js
 
 ## 10. Pruebas
 
-**344 pruebas automatizadas**, y corren solas en cada PR
+**345 pruebas automatizadas**, y corren solas en cada PR
 (`.github/workflows/ci.yml`).
 
 | Suite | Cantidad | Comando |

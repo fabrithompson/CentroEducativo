@@ -2,9 +2,10 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { AttendanceStatus, Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { HttpError } from '../utils/httpError';
-import { requireAuth, requireRole } from '../middleware/auth';
+import { prisma } from '../../db/prisma';
+import { HttpError } from '../../utils/httpError';
+import { requireAuth, requireRole } from '../../middleware/auth';
+import { esHijoDelTutor } from '../shared/authz';
 
 const router = Router();
 
@@ -102,11 +103,8 @@ router.get('/', requireAuth, async (req, res, next) => {
     if (me.role === Role.ESTUDIANTE && me.id !== estudiante_id) {
       throw HttpError.forbidden('Solo podés ver tus propias asistencias.');
     }
-    if (me.role === Role.PADRE) {
-      const link = await prisma.parentStudentLink.findUnique({
-        where: { padreId_estudianteId: { padreId: me.id, estudianteId: estudiante_id } },
-      });
-      if (!link) throw HttpError.forbidden('No tenés a ese alumno vinculado.');
+    if (me.role === Role.PADRE && !(await esHijoDelTutor(prisma, me.id, estudiante_id))) {
+      throw HttpError.forbidden('No tenés a ese alumno vinculado.');
     }
 
     const where: { estudianteId: number; fecha?: { gte?: Date; lte?: Date } } = {
@@ -165,4 +163,4 @@ router.get('/by-date', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN), async
   }
 });
 
-export { router as attendanceRouter };
+export { router as asistenciaRouter };

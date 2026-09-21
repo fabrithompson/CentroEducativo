@@ -358,6 +358,14 @@ html[data-theme='dark'] .badge--neutro { color: #cbd5e1; }
   flex-wrap: wrap;
 }
 
+/* Dentro de una celda de tabla los botones envuelven y estiran la fila al
+   doble de alto. La tabla ya tiene desplazamiento horizontal propio, así que
+   conviene que sigan en una línea; en el modo tarjeta de pantalla angosta la
+   celda ocupa todo el ancho y entran igual. */
+.tabla .acciones-fila {
+  flex-wrap: nowrap;
+}
+
 /* --------------------------------------------------------------------------
    Estados
    -------------------------------------------------------------------------- */
@@ -600,16 +608,20 @@ html[data-theme='dark'] .badge--neutro { color: #cbd5e1; }
     overflow: auto;
   }
 
+  /* Los cuatro paneles declaran su maquetación en un <style> propio, que va
+     después de esta hoja: con igual especificidad gana el de ellos y la barra
+     seguía siendo una columna de 260 px, desbordando la página a lo ancho.
+     De ahí el !important, que ya venía usándose acá para `width`. */
   .app-wrapper {
-    flex-direction: column;
-    overflow: visible;
+    flex-direction: column !important;
+    overflow: visible !important;
   }
 
   .sidebar {
     width: 100% !important;
-    flex-direction: row;
-    overflow-x: auto;
-    overflow-y: hidden;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
     position: sticky;
     top: 0;
     z-index: 50;
@@ -643,12 +655,46 @@ html[data-theme='dark'] .badge--neutro { color: #cbd5e1; }
   }
 
   .main-content {
-    padding: 16px;
-    overflow: visible;
+    padding: 16px !important;
+    overflow: visible !important;
+  }
+
+  /* La cabecera de los paneles se arma con estilos en línea, que ganan a
+     cualquier regla de esta hoja. Sin esto, el título más el menú de usuario
+     no entran en 375 px y empujaban la página a lo ancho: la barra lateral ya
+     se contenía, pero el desborde seguía viniendo de acá. */
+  body.panel-app header .container {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  body.panel-app .logo h1 {
+    font-size: 1rem !important;
+  }
+
+  body.panel-app .nav-links {
+    gap: 14px !important;
+    flex-wrap: wrap;
   }
 
   .view-section {
     padding: 16px;
+  }
+}
+
+/* Las tablas viejas de los paneles (`.data-table`, definidas en el <style> de
+   cada uno) no tienen el modo tarjeta del componente nuevo: con seis o siete
+   columnas no entran en un teléfono y arrastraban la página entera a lo ancho.
+   Se las convierte en su propio contenedor con desplazamiento, que es el
+   mínimo para que el boletín siga siendo legible sin rehacer el marcado. */
+@media (max-width: 700px) {
+  body.panel-app .data-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

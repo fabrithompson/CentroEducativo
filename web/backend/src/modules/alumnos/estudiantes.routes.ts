@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { requireAuth, requireRole } from '../middleware/auth';
+import { prisma } from '../../db/prisma';
+import { requireAuth, requireRole } from '../../middleware/auth';
 
 const router = Router();
 
@@ -19,4 +19,4 @@ router.get('/', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN), async (_req,
   }
 });
 
-export { router as studentsRouter };
+export { router as estudiantesRouter };

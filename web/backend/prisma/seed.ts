@@ -44,12 +44,6 @@ const SEED_USERS: UserSeed[] = [
   { usuario: 'mgomezp',    email: 'm.gomez.padre@et.edu.ar', dni: '30000003', nombre: 'Mariana Gómez',    role: Role.PADRE, curso: null },
 ];
 
-const LINKS = [
-  { padre: 'pmedina', hijos: ['mmedina'] },
-  { padre: 'rperez',     hijos: ['jperez'] },
-  { padre: 'mgomezp',    hijos: ['mgomez', 'iflores'] },
-];
-
 type GradeSeed = {
   estudiante: string;
   docente: string;
@@ -131,16 +125,6 @@ async function main() {
   }
   const uid = (u: string) => byUsername.get(u)!;
 
-  for (const link of LINKS) {
-    for (const hijo of link.hijos) {
-      await prisma.parentStudentLink.upsert({
-        where: { padreId_estudianteId: { padreId: uid(link.padre), estudianteId: uid(hijo) } },
-        update: {},
-        create: { padreId: uid(link.padre), estudianteId: uid(hijo) },
-      });
-    }
-  }
-
   const today = new Date();
   const dayIso = (offset: number) => {
     const d = new Date(today);
@@ -192,9 +176,21 @@ async function main() {
     { c: 'Cuota Mensual — Mayo',    venc: dayIso(35),  pagado: dayIso(33),  st: PaymentStatus.PAGADO,    monto: 45000 },
     { c: 'Cuota Mensual — Junio',   venc: dayIso(-5),  pagado: null,        st: PaymentStatus.PENDIENTE, monto: 45000 },
   ];
-  // Asociamos cada estudiante con su padre, si existe
+  // `Payment` es el modelo de cuotas del primer sprint y guarda el padre en su
+  // propia columna. Corre antes de que existan los vínculos `TutorAlumno` —que
+  // se crean en `seedDominio`, cuando ya hay fichas de alumno—, así que la
+  // correspondencia se declara acá. Es la misma que VINCULOS, expresada por
+  // nombre de usuario en vez de por legajo.
+  const HIJOS_POR_TUTOR: Record<string, string[]> = {
+    pmedina: ['mmedina'],
+    rperez: ['jperez'],
+    mgomezp: ['mgomez', 'iflores'],
+  };
+
   const padreDe = new Map<number, number>();
-  for (const link of LINKS) for (const hijo of link.hijos) padreDe.set(uid(hijo), uid(link.padre));
+  for (const [tutor, hijos] of Object.entries(HIJOS_POR_TUTOR)) {
+    for (const hijo of hijos) padreDe.set(uid(hijo), uid(tutor));
+  }
 
   for (const est of estudiantes) {
     const estId = uid(est.usuario);
@@ -322,10 +318,13 @@ async function main() {
   // que se confunde con una falla. Van después del dominio porque necesitan
   // los alumnos ya creados.
   // El tutor debe tener rol PADRE: lo exige `trg_tutor_alumno_valida_rol`.
+  // Mariana Gómez tiene dos hijos: es el caso que ejercita el selector de hijo
+  // del panel y de la aplicación móvil, que con un solo hijo no se prueba.
   const VINCULOS = [
-    { tutor: 'pmedina', legajo: 'A-0001', parentesco: 'Madre' },
-    { tutor: 'rperez', legajo: 'A-0002', parentesco: 'Padre' },
-    { tutor: 'mgomezp', legajo: 'A-0006', parentesco: 'Madre' },
+    { tutor: 'pmedina', legajo: 'A-0001', parentesco: 'Madre', factura: true },
+    { tutor: 'rperez', legajo: 'A-0002', parentesco: 'Padre', factura: true },
+    { tutor: 'mgomezp', legajo: 'A-0006', parentesco: 'Madre', factura: true },
+    { tutor: 'mgomezp', legajo: 'A-0007', parentesco: 'Madre', factura: true },
   ];
 
   const adminVinculos = await prisma.user.findUnique({
@@ -345,17 +344,17 @@ async function main() {
     });
     if (!tutor || !alumno) continue;
 
-    // `esResponsableFacturacion` en true: hay un índice único parcial que
-    // admite un solo responsable por alumno, y acá cada vínculo es de un
-    // alumno distinto.
+    // El índice único parcial admite un solo responsable de facturación por
+    // alumno. Acá no hay conflicto: cada vínculo es de un alumno distinto,
+    // incluso los dos de Mariana Gómez.
     await prisma.tutorAlumno.upsert({
       where: { tutorId_alumnoId: { tutorId: tutor.id, alumnoId: alumno.id } },
-      update: { parentesco: v.parentesco, esResponsableFacturacion: true },
+      update: { parentesco: v.parentesco, esResponsableFacturacion: v.factura },
       create: {
         tutorId: tutor.id,
         alumnoId: alumno.id,
         parentesco: v.parentesco,
-        esResponsableFacturacion: true,
+        esResponsableFacturacion: v.factura,
         creadoPorId: adminVinculos?.id ?? null,
       },
     });

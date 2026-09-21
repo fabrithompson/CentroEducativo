@@ -33,8 +33,8 @@
         <div class="header-top">
             <div class="container">
                 <div class="contact-info">
-                    <span><i class="fas fa-phone"></i> (011) 1234-5678</span>
-                    <span><i class="fas fa-envelope"></i> info@centromixto.edu</span>
+                    <span><i class="fas fa-phone"></i> (362) 442-5100</span>
+                    <span><i class="fas fa-envelope"></i> info@et.edu.ar</span>
                 </div>
                 <div class="social-links">
                     <a href="#" aria-label="Facebook del centro educativo"><i class="fab fa-facebook"></i></a>
@@ -344,7 +344,7 @@
                            maxlength="20"
                            pattern="[0-9+\-\s()]{6,20}"
                            title="Solo se permiten números, espacios y los símbolos + - ( )."
-                           placeholder="Ej: (011) 1234-5678"
+                           placeholder="Ej: (362) 442-5100"
                            oninput="this.value = this.value.replace(/[^0-9+\-\s()]/g, '')">
                 </div>
                 <div class="form-group">
@@ -374,6 +374,12 @@
                     <label for="mensaje">Mensaje adicional</label>
                     <textarea id="mensaje" name="mensaje" rows="4"></textarea>
                 </div>
+                <p class="aviso-datos">
+                    <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                    Los datos de esta solicitud se usan únicamente para gestionar la inscripción y los ve el personal de administración. Podés pedir acceso, corrección o baja de tus datos
+                    escribiendo a <a href="mailto:info@et.edu.ar">info@et.edu.ar</a>
+                    (Ley 25.326).
+                </p>
                 <button type="submit" class="btn-primary">Enviar Solicitud</button>
             </form>
         </div>
@@ -413,6 +419,12 @@
                             </label>
                         </div>
                     </div>
+                    <p class="aviso-datos">
+                        <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                        Tu CV y tus datos de contacto se usan únicamente para evaluar tu postulación y los ve el personal de administración. Podés pedir acceso, corrección o baja de tus datos
+                        escribiendo a <a href="mailto:info@et.edu.ar">info@et.edu.ar</a>
+                        (Ley 25.326).
+                    </p>
                     <button type="submit" class="btn-primary">Enviar CV</button>
                 </form>
             </div>
@@ -451,6 +463,12 @@
                         <i class="far fa-star" data-value="5"></i>
                     </div>
                 </div>
+                <p class="aviso-datos">
+                    <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                    Tu opinión se publica en el sitio junto con el nombre que dejes, después de que administración la revise. Podés no poner nombre. Podés pedir acceso, corrección o baja de tus datos
+                    escribiendo a <a href="mailto:info@et.edu.ar">info@et.edu.ar</a>
+                    (Ley 25.326).
+                </p>
                 <button type="submit" class="btn-primary">Enviar Opinión</button>
             </form>
             <div class="opiniones-display">
@@ -513,9 +531,9 @@
                 <div class="dashboard-section">
                     <h3><i class="fas fa-phone-alt"></i> Contacto Rápido</h3>
                     <div class="contact-quick">
-                        <p><i class="fas fa-phone"></i> (011) 1234-5678</p>
-                        <p><i class="fas fa-envelope"></i> info@centromixto.edu</p>
-                        <p><i class="fab fa-whatsapp"></i> +54 11 1234-5678</p>
+                        <p><i class="fas fa-phone"></i> (362) 442-5100</p>
+                        <p><i class="fas fa-envelope"></i> info@et.edu.ar</p>
+                        <p><i class="fab fa-whatsapp"></i> +54 362 442-5100</p>
                     </div>
                     <a href="#contacto" class="btn-primary btn-small">Enviar Mensaje</a>
                 </div>
@@ -530,23 +548,23 @@
                 <div class="contact-info-card">
                     <i class="fas fa-map-marker-alt"></i>
                     <h3>Dirección</h3>
-                    <p>Av. Educación 1234<br>CABA, Argentina</p>
+                    <p>Av. 9 de Julio 1234<br>Resistencia, Chaco</p>
                 </div>
                 <div class="contact-info-card">
                     <i class="fas fa-phone"></i>
                     <h3>Teléfono</h3>
-                    <p>(011) 1234-5678<br>(011) 9876-5432</p>
+                    <p>(362) 442-5100<br>(362) 442-5101</p>
                 </div>
                 <div class="contact-info-card">
                     <i class="fas fa-envelope"></i>
                     <h3>Email</h3>
-                    <p>info@centromixto.edu<br>admisiones@centromixto.edu</p>
+                    <p>info@et.edu.ar<br>admisiones@et.edu.ar</p>
                 </div>
                 <div class="contact-info-card">
                     <i class="fab fa-whatsapp"></i>
                     <h3>WhatsApp</h3>
-                    <p>+54 11 1234-5678</p>
-                    <a href="https://wa.me/541112345678" class="btn-whatsapp" target="_blank">Enviar mensaje</a>
+                    <p>+54 362 442-5100</p>
+                    <a href="https://wa.me/543624425100" class="btn-whatsapp" target="_blank">Enviar mensaje</a>
                 </div>
             </div>
             <form class="form-contact" id="contactForm">
@@ -563,6 +581,12 @@
                     <label for="contact-mensaje">Mensaje</label>
                     <textarea id="contact-mensaje" name="contact-mensaje" rows="4"></textarea>
                 </div>
+                <p class="aviso-datos">
+                    <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                    Tus datos de contacto se usan únicamente para responderte esta consulta. Podés pedir acceso, corrección o baja de tus datos
+                    escribiendo a <a href="mailto:info@et.edu.ar">info@et.edu.ar</a>
+                    (Ley 25.326).
+                </p>
                 <button type="submit" class="btn-primary">Enviar</button>
             </form>
         </div>
@@ -660,12 +684,13 @@
 
                         <div class="form-group">
                             <label for="reg-usuario"><i class="fas fa-at" style="color:var(--secondary); margin-right:6px;"></i> Usuario *</label>
-                            <input type="text" id="reg-usuario" name="usuario" maxlength="50" placeholder="nombredeusuario" required>
+                            <input type="text" id="reg-usuario" name="usuario" minlength="3" maxlength="40" placeholder="nombredeusuario" required>
                         </div>
 
                         <div class="form-group">
                             <label for="reg-password"><i class="fas fa-lock" style="color:var(--secondary); margin-right:6px;"></i> Contraseña *</label>
-                            <input type="password" id="reg-password" name="password" required minlength="6" maxlength="50" placeholder="Mínimo 6 caracteres">
+                            <input type="password" id="reg-password" name="password" required minlength="8" maxlength="72" placeholder="Mínimo 8, con letras y números" aria-describedby="reg-password-ayuda">
+                            <small class="form-ayuda" id="reg-password-ayuda">Al menos 8 caracteres, combinando letras y números.</small>
                             <small class="form-ayuda">Al menos 6 caracteres</small>
                         </div>
                     </div>
@@ -698,8 +723,8 @@
                 </div>
                 <div class="footer-section">
                     <h3>Contacto</h3>
-                    <p><i class="fas fa-phone"></i> (011) 1234-5678</p>
-                    <p><i class="fas fa-envelope"></i> info@centromixto.edu</p>
+                    <p><i class="fas fa-phone"></i> (362) 442-5100</p>
+                    <p><i class="fas fa-envelope"></i> info@et.edu.ar</p>
                     <div class="social-links">
                         <a href="#" aria-label="Facebook del centro educativo"><i class="fab fa-facebook"></i></a>
                         <a href="#" aria-label="Instagram del centro educativo"><i class="fab fa-instagram"></i></a>

@@ -36,8 +36,8 @@
         <div class="header-top">
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div class="contact-info">
-                    <span><i class="fas fa-phone"></i> (011) 1234-5678</span>
-                    <span><i class="fas fa-envelope"></i> info@centromixto.edu</span>
+                    <span><i class="fas fa-phone"></i> (362) 442-5100</span>
+                    <span><i class="fas fa-envelope"></i> info@et.edu.ar</span>
                 </div>
             </div>
         </div>
@@ -83,10 +83,7 @@
                 <select id="selectHijo" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; min-width: 200px;" onchange="onHijoChange()">
                     <option value="">— Sin hijos vinculados —</option>
                 </select>
-                <form onsubmit="vincularHijo(event)" style="display: flex; gap: 8px;">
-                    <input type="text" id="dniHijo" placeholder="DNI de otro hijo" required style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; width: 160px;">
-                    <button type="submit" style="background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;"><i class="fas fa-link"></i> Vincular</button>
-                </form>
+                <small style="color:#5f7072;"><i class="fas fa-info-circle"></i> Los vínculos los registra la escuela. Si falta un hijo, avisá en secretaría.</small>
             </div>
 
             <section id="boletin" class="view-section active">
@@ -219,11 +216,15 @@
 
         function cargarHijos() {
             const select = document.getElementById('selectHijo');
-            fetch('/api/parent/hijos', { headers: authHeaders() })
+            // El boletín y las asistencias de este panel se piden por id de
+            // usuario, mientras que /mis-hijos devuelve el alumno del dominio:
+            // de ahí sale `alumno.user.id`. Un alumno sin cuenta todavía no
+            // tiene boletín consultable, así que queda deshabilitado.
+            fetch('/api/padres/mis-hijos', { headers: authHeaders() })
                 .then(res => res.json())
                 .then(data => {
                     if (!data.exito) {
-                        select.innerHTML = `<option value="">${data.mensaje || 'No se pudieron cargar tus hijos.'}</option>`;
+                        select.innerHTML = `<option value="">${data.mensaje || data.message || 'No se pudieron cargar tus hijos.'}</option>`;
                         return;
                     }
                     if (!data.hijos || data.hijos.length === 0) {
@@ -232,9 +233,13 @@
                         return;
                     }
                     select.innerHTML = '';
-                    data.hijos.forEach(h => {
-                        const label = h.curso ? `${h.nombre} (${h.curso})` : h.nombre;
-                        select.innerHTML += `<option value="${h.id}">${label}</option>`;
+                    data.hijos.forEach(v => {
+                        const a = v.alumno;
+                        const curso = a.curso ? `${a.curso.nombre} "${a.curso.division}"` : null;
+                        const nombre = `${a.apellido}, ${a.nombres}`;
+                        const label = curso ? `${nombre} (${curso})` : nombre;
+                        const uid = a.user ? a.user.id : '';
+                        select.innerHTML += `<option value="${uid}"${uid ? '' : ' disabled'}>${label}${uid ? '' : ' — sin cuenta'}</option>`;
                     });
                     onHijoChange();
                 })
@@ -242,31 +247,6 @@
                     console.error(err);
                     select.innerHTML = '<option value="">Error al cargar hijos.</option>';
                 });
-        }
-
-        function vincularHijo(e) {
-            e.preventDefault();
-            const dni = document.getElementById('dniHijo').value.trim();
-            if (!dni) return;
-            fetch('/api/parent/vincular', {
-                method: 'POST',
-                headers: authHeaders(),
-                body: JSON.stringify({ dni })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.exito) {
-                    toastSuccess('Hijo vinculado correctamente: ' + data.hijo.nombre);
-                    document.getElementById('dniHijo').value = '';
-                    cargarHijos();
-                } else {
-                    toastError(data.mensaje || 'No se pudo vincular.');
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                toastError('Error al conectar con el servidor.');
-            });
         }
 
         function onHijoChange() {

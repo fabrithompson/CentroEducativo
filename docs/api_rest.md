@@ -25,8 +25,10 @@ queries: eso vive en los servicios. Los servicios no conocen Express: reciben
 `PrismaClient` como parámetro, que es lo que permite testearlos con un doble de
 prueba y sin base de datos.
 
-Los routers preexistentes (`src/routes/`) quedaron intactos. Los módulos nuevos
-conviven con ellos bajo el mismo `apiRouter`.
+Todo router vive dentro de su módulo. `src/routes/` quedó sólo con el `index.ts`
+que compone la API: importa cada router y lo cuelga de su prefijo, agrupados por
+el recorte de la consigna (Alumnos, Profesores, Administrador), más Padres y las
+dos agrupaciones transversales.
 
 | Módulo | Servicio | Controlador |
 |---|---|---|
@@ -37,6 +39,11 @@ conviven con ellos bajo el mismo `apiRouter`.
 | Transporte y comedor | `modules/servicios/servicios.service.ts` | `servicios.routes.ts` |
 | Portal de tutores | — | `modules/padres/padres.routes.ts` |
 | Reportes | `modules/reportes/reportes.service.ts` | `reportes.routes.ts` |
+| Académico (niveles, cursos, materias) | `modules/administrador/academico.service.ts` | `academico.routes.ts` |
+| Alumnos (heredado) | — | `modules/alumnos/`: `estudiantes`, `calificaciones`, `asistencia` |
+| Profesores (heredado) | — | `modules/profesores/`: `planes`, `actividades` |
+| Administrador | — | `modules/administrador/`: `administrador`, `moderacion`, `comunicados`, `pagos` |
+| Comunicación | — | `modules/comunicacion/`: `foro`, `mensajes`, `notificaciones` |
 
 ---
 
@@ -82,9 +89,21 @@ Decisiones que conviene entender antes de tocar este código:
 
 ### 2.3 Política de contraseñas
 
-Mínimo 8 caracteres combinando letras y números, para los endpoints nuevos.
-El `register` existente sigue pidiendo 6; unificarlo implica migrar las cuentas
-actuales y quedó para Sprint 3.
+Mínimo 8 caracteres combinando letras y números. Una sola definición, en
+`modules/auth/politicaPassword.ts`, que usan el registro público, el alta desde
+el backoffice, el cambio con sesión iniciada y el restablecimiento por correo.
+
+Estaba escrita dos veces y con reglas distintas: el registro pedía 6 caracteres
+y nada más, así que alguien podía crearse una cuenta con una contraseña que el
+propio sistema le iba a rechazar después si intentaba volver a ponerla.
+
+El **ingreso no valida el largo** —sólo que no venga vacío—, de modo que las
+cuentas anteriores a la política siguen entrando con lo que tengan. Endurecer
+el alta no puede dejar afuera a quien ya estaba.
+
+El tope de 72 no es arbitrario: bcrypt ignora en silencio lo que pase de 72
+bytes, y sin ese tope dos contraseñas largas que difieran después del carácter
+72 serían la misma para el sistema.
 
 ### 2.4 Límite de intentos
 
@@ -113,10 +132,22 @@ ADMIN puede crearlo**, quedando registrado quién lo hizo. En la base:
 - Un trigger verifica que el tutor tenga rol `PADRE`.
 - Un índice único parcial garantiza un solo responsable de facturación por alumno.
 
-`ParentStudentLink` y `POST /api/parent/vincular` siguen existiendo porque el panel
-de padres actual los usa. **El endpoint viejo sigue siendo vulnerable**: se retira
-en Sprint 3, cuando el frontend migre. Mientras tanto, todo lo nuevo pasa por
-`TutorAlumno`.
+`POST /api/parent/vincular` **ya se retiró**, junto con todo el router `/api/parent`:
+el panel de padres pasó a `GET /api/padres/mis-hijos` y el alta de vínculos quedó
+donde corresponde, en el panel de administración.
+
+La tabla `ParentStudentLink` **se eliminó** (migración
+`20260921060000_retirar_parent_student_link`). `/api/grades`, `/api/attendance` y
+`/api/payments` resuelven ahora el vínculo contra `TutorAlumno` mediante
+`esHijoDelTutor` y `usuariosDeLosHijos`, en `shared/authz.ts`, y `/api/admin/links`
+delega en el mismo servicio que `POST /api/alumnos/:id/tutores`.
+
+La duplicación no era inocua: las notas, la asistencia y las cuotas consultaban una
+tabla mientras el portal del tutor, la app móvil y la facturación consultaban la
+otra, de modo que un vínculo cargado desde el backoffice servía para una mitad del
+sistema y no para la otra. La migración traslada los vínculos que existieran, y
+avisa por `RAISE WARNING` de los que no se puedan trasladar porque el estudiante no
+tenga ficha de alumno.
 
 ### 3.2 La matriz de acceso
 
@@ -198,7 +229,48 @@ La baja **se niega si el profesor es responsable de algún deporte activo**. La
 regla de negocio exige que cada deporte tenga responsable; primero hay que
 reasignarlo.
 
-### 4.3 Deportes
+### 4.3 Estructura académica
+
+| Método | Ruta | Roles |
+|---|---|---|
+| GET | `/api/academico/niveles` | autenticado |
+| POST | `/api/academico/niveles` | ADMIN |
+| PATCH | `/api/academico/niveles/:id` | ADMIN |
+| DELETE | `/api/academico/niveles/:id` | ADMIN — baja lógica |
+| GET | `/api/academico/cursos` | autenticado |
+| POST | `/api/academico/cursos` | ADMIN |
+| PATCH | `/api/academico/cursos/:id` | ADMIN |
+| DELETE | `/api/academico/cursos/:id` | ADMIN — baja lógica |
+| GET | `/api/academico/materias` | autenticado |
+| POST | `/api/academico/materias` | ADMIN |
+| PATCH | `/api/academico/materias/:id` | ADMIN |
+| DELETE | `/api/academico/materias/:id` | ADMIN — baja lógica |
+
+Filtros: `activo` en los tres; `nivelId`, `anioLectivo` y `turno` en cursos;
+`cursoId`, `nivelId`, `profesorId` y `sinProfesor` en materias.
+
+La lectura queda abierta a cualquier sesión a propósito: es el catálogo con el
+que los paneles arman sus desplegables —a qué curso inscribir un alumno, qué
+materia asignarle a un profesor— y no contiene ningún dato personal. La
+escritura es exclusiva de ADMIN.
+
+Notas:
+
+- **Sin este módulo la API no se podía usar.** `POST /api/alumnos` exige un
+  `cursoId` y `POST /api/profesores/:id/materias` un `materiaId`, y no había
+  ningún endpoint que los listara: los ids existían en la base y eran
+  inalcanzables desde afuera.
+- Las bajas son **lógicas** y además **se niegan cuando todavía cuelga algo**:
+  un nivel con cursos activos, o un curso con alumnos activos. El mensaje dice
+  cuántos son, que es lo que hace falta para saber qué ordenar primero.
+- `PATCH /cursos/:id` **rechaza bajar el cupo por debajo de la matrícula ya
+  inscripta**: dejaría al curso en un estado que el propio alta de alumnos
+  considera inválido.
+- El catálogo se devuelve **sin paginar**. Son decenas de filas y los
+  desplegables las necesitan completas; el corte natural, si algún día dejara
+  de serlo, es `anioLectivo`, que ya es filtro de `GET /cursos`.
+
+### 4.4 Deportes
 
 | Método | Ruta | Roles |
 |---|---|---|
@@ -221,7 +293,7 @@ La inscripción corre en transacción `Serializable` y valida, en orden: alumno
 activo, deporte activo, no estar ya inscripto, **tope de 2**, **sin choques de
 horario**, y cupo. Las dos reglas críticas se revalidan en la base.
 
-### 4.4 Transporte y comedor
+### 4.5 Transporte y comedor
 
 | Método | Ruta | Roles |
 |---|---|---|
@@ -244,7 +316,7 @@ recorrido actualiza la inscripción existente, no crea otra (lo garantiza
 `GET /api/servicios/alumno/:id` devuelve la vista consolidada del período con el
 costo mensual estimado desglosado.
 
-### 4.5 Portal de tutores
+### 4.6 Portal de tutores
 
 | Método | Ruta |
 |---|---|
@@ -270,7 +342,7 @@ Las calificaciones y la asistencia siguen colgando de `User` (modelo del bloque 
 Si el alumno no tiene cuenta de campus —caso típico de Inicial— esos endpoints
 devuelven lista vacía con una nota, no un error.
 
-### 4.6 Reportes administrativos
+### 4.7 Reportes administrativos
 
 Todos exclusivos de ADMIN. Forma de respuesta común: `{ filtros, totales, ... }`.
 
@@ -330,10 +402,4 @@ está disponible en la máquina de desarrollo.
 
 | Pendiente | Sprint |
 |---|---|
-| Rate limiting en `POST /api/auth/login` | 2 |
-| Retirar `POST /api/parent/vincular` (el endpoint vulnerable) y `ParentStudentLink` | 3 |
-| Unificar la política de contraseñas con `register` | 3 |
-| Revocación real de refresh tokens (el campo `v` no se contrasta contra nada) | 3 |
 | Migrar el limitador de intentos a Redis | fuera de alcance del TP |
-| Página `restablecer.html` en el frontend | 2 |
-| Tests de integración contra una base real | tras levantar PostgreSQL |

@@ -2,10 +2,10 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ActivityType, Role, SubmissionStatus } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { HttpError } from '../utils/httpError';
-import { requireAuth, requireRole } from '../middleware/auth';
-import { upload, publicUrlFor } from '../middleware/upload';
+import { prisma } from '../../db/prisma';
+import { HttpError } from '../../utils/httpError';
+import { requireAuth, requireRole } from '../../middleware/auth';
+import { upload, publicUrlFor } from '../../middleware/upload';
 
 const router = Router();
 
@@ -221,4 +221,4 @@ router.post('/submissions/:id/grade', requireAuth, requireRole(Role.DOCENTE, Rol
   }
 });
 
-export { router as activitiesRouter };
+export { router as actividadesRouter };
