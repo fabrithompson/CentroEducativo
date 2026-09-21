@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireAuth } from '../middleware/auth';
-import { prisma } from '../db/prisma';
+import { requireAuth } from '../../middleware/auth';
+import { prisma } from '../../db/prisma';
 
 const router = Router();
 
@@ -77,4 +77,4 @@ export async function notify(input: z.infer<typeof createSchema>) {
   });
 }
 
-export { router as notificationsRouter };
+export { router as notificacionesRouter };

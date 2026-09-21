@@ -2,10 +2,10 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ModerationStatus, Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { HttpError } from '../utils/httpError';
-import { requireAuth, requireRole } from '../middleware/auth';
-import { upload, publicUrlFor } from '../middleware/upload';
+import { prisma } from '../../db/prisma';
+import { HttpError } from '../../utils/httpError';
+import { requireAuth, requireRole } from '../../middleware/auth';
+import { upload, publicUrlFor } from '../../middleware/upload';
 
 const publicRouter = Router();
 const adminRouter = Router();
@@ -253,7 +253,7 @@ adminRouter.get('/moderation/counts', async (_req, res, next) => {
 // Admin endpoints requieren ADMIN
 adminRouter.use((_req, _res, next) => next()); // placeholder; auth se aplica al montarlo
 
-export { publicRouter as moderationPublicRouter, adminRouter as moderationAdminRouter };
+export { publicRouter as moderacionPublicaRouter, adminRouter as moderacionAdminRouter };
 
 // Helper opcional: middleware para uso desde routes/index.ts
 export function requireAdmin() {

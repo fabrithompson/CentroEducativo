@@ -3,9 +3,9 @@ import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { HttpError } from '../utils/httpError';
-import { requireAuth, requireRole } from '../middleware/auth';
+import { prisma } from '../../db/prisma';
+import { HttpError } from '../../utils/httpError';
+import { requireAuth, requireRole } from '../../middleware/auth';
 
 const router = Router();
 
@@ -298,4 +298,4 @@ router.delete('/teachers/:id/reject', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-export { router as adminRouter };
+export { router as administradorRouter };

@@ -2,8 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { AnnouncementTarget, Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { requireAuth, requireRole } from '../middleware/auth';
+import { prisma } from '../../db/prisma';
+import { requireAuth, requireRole } from '../../middleware/auth';
 
 const router = Router();
 
@@ -104,4 +104,4 @@ router.delete('/:id', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN), async 
   }
 });
 
-export { router as announcementsRouter };
+export { router as comunicadosRouter };

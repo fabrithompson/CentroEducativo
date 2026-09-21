@@ -2,9 +2,9 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { AttendanceStatus, Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { HttpError } from '../utils/httpError';
-import { requireAuth, requireRole } from '../middleware/auth';
+import { prisma } from '../../db/prisma';
+import { HttpError } from '../../utils/httpError';
+import { requireAuth, requireRole } from '../../middleware/auth';
 
 const router = Router();
 
@@ -165,4 +165,4 @@ router.get('/by-date', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN), async
   }
 });
 
-export { router as attendanceRouter };
+export { router as asistenciaRouter };

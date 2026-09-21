@@ -2,9 +2,9 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { requireAuth, requireRole } from '../middleware/auth';
-import { upload, publicUrlFor } from '../middleware/upload';
+import { prisma } from '../../db/prisma';
+import { requireAuth, requireRole } from '../../middleware/auth';
+import { upload, publicUrlFor } from '../../middleware/upload';
 
 const router = Router();
 
@@ -60,4 +60,4 @@ router.post('/', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN), upload.sing
   }
 });
 
-export { router as studyPlansRouter };
+export { router as planesRouter };

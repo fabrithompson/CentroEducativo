@@ -2,9 +2,9 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { HttpError } from '../utils/httpError';
-import { requireAuth, requireRole } from '../middleware/auth';
+import { prisma } from '../../db/prisma';
+import { HttpError } from '../../utils/httpError';
+import { requireAuth, requireRole } from '../../middleware/auth';
 
 const router = Router();
 
@@ -108,4 +108,4 @@ router.get('/', requireAuth, async (req, res, next) => {
   }
 });
 
-export { router as gradesRouter };
+export { router as calificacionesRouter };

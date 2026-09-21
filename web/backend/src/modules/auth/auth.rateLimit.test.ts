@@ -25,8 +25,8 @@ let base: string;
 let resetRateLimit: () => void;
 
 before(async () => {
-  const { createApp } = await import('../app.ts');
-  ({ resetRateLimit } = await import('../modules/shared/rateLimit.ts'));
+  const { createApp } = await import('../../app.ts');
+  ({ resetRateLimit } = await import('../shared/rateLimit.ts'));
 
   app = createApp();
   server = app.listen(0);

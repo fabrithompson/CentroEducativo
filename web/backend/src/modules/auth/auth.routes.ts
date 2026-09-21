@@ -3,11 +3,11 @@ import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import { Role } from '@prisma/client';
 
-import { prisma } from '../db/prisma';
-import { HttpError } from '../utils/httpError';
-import { requireAuth, signAccessToken, signRefreshToken, verifyRefreshToken } from '../middleware/auth';
-import { rateLimit } from '../modules/shared/rateLimit';
-import { env } from '../config/env';
+import { prisma } from '../../db/prisma';
+import { HttpError } from '../../utils/httpError';
+import { requireAuth, signAccessToken, signRefreshToken, verifyRefreshToken } from '../../middleware/auth';
+import { rateLimit } from '../shared/rateLimit';
+import { env } from '../../config/env';
 
 const REFRESH_COOKIE = 'et_refresh';
 const refreshCookieOpts = {
@@ -34,13 +34,28 @@ const roleToTipo: Record<Role, string> = {
   ADMIN: 'admin',
 };
 
+/**
+ * Los mensajes van explícitos y en castellano porque el errorHandler responde
+ * siempre "Datos inválidos" y manda el motivo campo por campo en `details`.
+ * Con los textos por defecto de Zod ese detalle llegaba en inglés ("String
+ * must contain at least 3 character(s)") y el formulario no tenía nada legible
+ * que mostrarle a la persona.
+ */
 const registerSchema = z.object({
-  tipo: z.enum(['estudiante', 'docente', 'padre']),
-  nombre: z.string().min(2),
-  email: z.string().email(),
-  usuario: z.string().min(3).max(40),
-  password: z.string().min(6),
-  dni: z.string().min(6).max(15),
+  tipo: z.enum(['estudiante', 'docente', 'padre'], {
+    errorMap: () => ({ message: 'Elegí un tipo de usuario de la lista.' }),
+  }),
+  nombre: z.string().min(2, 'El nombre debe tener al menos 2 caracteres.'),
+  email: z.string().email('El correo no tiene un formato válido.'),
+  usuario: z
+    .string()
+    .min(3, 'El usuario debe tener al menos 3 caracteres.')
+    .max(40, 'El usuario no puede superar los 40 caracteres.'),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres.'),
+  dni: z
+    .string()
+    .min(6, 'El DNI debe tener al menos 6 dígitos.')
+    .max(15, 'El DNI no puede superar los 15 dígitos.'),
   curso: z.string().optional().nullable(),
 });
 
@@ -131,8 +146,8 @@ router.post(
 );
 
 const loginSchema = z.object({
-  usuario: z.string().min(1),
-  password: z.string().min(1),
+  usuario: z.string().min(1, 'Ingresá tu usuario.'),
+  password: z.string().min(1, 'Ingresá tu contraseña.'),
 });
 
 /**
