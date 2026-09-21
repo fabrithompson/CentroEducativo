@@ -8,6 +8,7 @@ import { HttpError } from '../../utils/httpError';
 import { requireAuth, signAccessToken, signRefreshToken, verifyRefreshToken } from '../../middleware/auth';
 import { rateLimit } from '../shared/rateLimit';
 import { env } from '../../config/env';
+import { passwordSchema } from './politicaPassword';
 
 const REFRESH_COOKIE = 'et_refresh';
 const refreshCookieOpts = {
@@ -51,7 +52,7 @@ const registerSchema = z.object({
     .string()
     .min(3, 'El usuario debe tener al menos 3 caracteres.')
     .max(40, 'El usuario no puede superar los 40 caracteres.'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres.'),
+  password: passwordSchema,
   dni: z
     .string()
     .min(6, 'El DNI debe tener al menos 6 dígitos.')

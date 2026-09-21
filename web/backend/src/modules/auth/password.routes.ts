@@ -10,6 +10,7 @@ import { prisma } from '../../db/prisma';
 import { requireAuth } from '../../middleware/auth';
 import { rateLimit } from '../shared/rateLimit';
 import { cambiarPassword, confirmarReset, solicitarReset, RESET_TTL_MINUTOS } from './password.service';
+import { passwordSchema } from './politicaPassword';
 
 const router = Router();
 
@@ -18,14 +19,6 @@ const router = Router();
  * exigente que los 6 sueltos que pide hoy el registro, sin volverse impracticable
  * para los tutores.
  */
-const passwordSchema = z
-  .string()
-  .min(8, 'La contraseña debe tener al menos 8 caracteres.')
-  .max(72, 'La contraseña no puede superar los 72 caracteres.')
-  .refine((v) => /[a-zA-Z]/.test(v) && /\d/.test(v), {
-    message: 'La contraseña debe combinar letras y números.',
-  });
-
 // ------------------------------------------------------------------
 // POST /api/auth/forgot-password
 // ------------------------------------------------------------------

@@ -29,7 +29,7 @@ Según quién seas, el sistema te lleva solo al panel que te corresponde:
 Botón **Crear cuenta**, en la misma ventana. Pedí siempre el DNI sin puntos ni
 espacios. Tres cosas a tener en cuenta:
 
-- El **usuario tiene que tener al menos 3 caracteres** y la contraseña, 6.
+- El **usuario tiene que tener al menos 3 caracteres**. La contraseña, al menos 8, y tiene que combinar letras y números.
 - **DNI, correo y usuario no se pueden repetir.** Si ya están tomados, el
   sistema te dice cuál de los tres es, para que no tengas que adivinar.
 - Si elegís **Docente / Autoridad / Personal**, la cuenta queda **esperando que
@@ -223,6 +223,7 @@ Estudio**, **Anuncios**, **Mensajes** y **Foros**.
 | No puedo entrar y dice que la cuenta está pendiente | Te registraste como docente. Administración tiene que aprobarla |
 | Dice "Ya existe una cuenta con ese DNI" | Esa persona ya está cargada. Buscala antes de crearla de nuevo |
 | Me pide esperar para volver a intentar | Demasiados intentos fallidos seguidos. Esperá unos minutos |
+| Cambié la contraseña y se me cerró la sesión | Es a propósito: cambiarla cierra las sesiones abiertas, también en el teléfono. Entrá de nuevo con la nueva |
 | Soy tutor y no veo a mis hijos | Falta el vínculo, que carga administración |
 | Soy docente y no veo materias | Administración todavía no te asignó ninguna |
 | No puedo inscribir un alumno: el curso está lleno | Se llegó al cupo. Ampliá el cupo del curso o usá otra división |

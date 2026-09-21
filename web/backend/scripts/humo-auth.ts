@@ -160,6 +160,51 @@ async function main() {
       password: 'loquesea',
     });
     afirmar(inexistente.status === 401, 'un usuario inexistente se rechaza con 401');
+
+    // Las cuentas del seed tienen una contraseña de 6 caracteres, anterior a
+    // la política actual. El ingreso no valida largo —sólo que no venga
+    // vacío—, así que tienen que seguir entrando: endurecer el registro no
+    // puede dejar afuera a quien ya estaba.
+    const seedVieja = await pedir('POST', '/api/auth/login', {
+      usuario: 'mlopez',
+      password: '123456',
+    });
+    afirmar(seedVieja.status === 200, 'una cuenta anterior a la política sigue pudiendo entrar');
+
+    // ------------------------------------------------------------------
+    console.log('\n=== La política de contraseñas es una sola ===');
+    const sufijo = String(Date.now()).slice(-6);
+    const base_ = {
+      tipo: 'estudiante',
+      nombre: 'Prueba De Humo',
+      email: `humo.${sufijo}@et.edu.ar`,
+      usuario: `humo${sufijo}`,
+      dni: `6${sufijo}0`,
+    };
+
+    const debil = await pedir('POST', '/api/auth/register', { ...base_, password: 'corta1' });
+    const cuerpoDebil = (await debil.json()) as Record<string, any>;
+    afirmar(
+      debil.status === 400,
+      'REGLA: el registro rechaza una contraseña de menos de 8 caracteres',
+      cuerpoDebil,
+    );
+
+    const sinNumeros = await pedir('POST', '/api/auth/register', {
+      ...base_,
+      password: 'solamenteletras',
+    });
+    afirmar(sinNumeros.status === 400, 'REGLA: y también una sin números');
+
+    const buena = await pedir('POST', '/api/auth/register', { ...base_, password: 'claveBuena1' });
+    const cuerpoBuena = (await buena.json()) as Record<string, any>;
+    afirmar(buena.status === 200, 'una contraseña que cumple deja registrarse', cuerpoBuena);
+
+    const ingresoNuevo = await pedir('POST', '/api/auth/login', {
+      usuario: base_.usuario,
+      password: 'claveBuena1',
+    });
+    afirmar(ingresoNuevo.status === 200, 'y la cuenta recién creada puede entrar');
   } finally {
     server?.close();
     await pg.stop();

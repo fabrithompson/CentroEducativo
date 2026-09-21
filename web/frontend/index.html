@@ -689,7 +689,8 @@
 
                         <div class="form-group">
                             <label for="reg-password"><i class="fas fa-lock" style="color:var(--secondary); margin-right:6px;"></i> Contraseña *</label>
-                            <input type="password" id="reg-password" name="password" required minlength="6" maxlength="50" placeholder="Mínimo 6 caracteres">
+                            <input type="password" id="reg-password" name="password" required minlength="8" maxlength="72" placeholder="Mínimo 8, con letras y números" aria-describedby="reg-password-ayuda">
+                            <small class="form-ayuda" id="reg-password-ayuda">Al menos 8 caracteres, combinando letras y números.</small>
                             <small class="form-ayuda">Al menos 6 caracteres</small>
                         </div>
                     </div>

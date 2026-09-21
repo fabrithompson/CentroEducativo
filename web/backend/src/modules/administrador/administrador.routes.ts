@@ -7,6 +7,7 @@ import { prisma } from '../../db/prisma';
 import { HttpError } from '../../utils/httpError';
 import { requireAuth, requireRole } from '../../middleware/auth';
 import { vincularTutor, desvincularTutor } from '../alumnos/alumnos.service';
+import { passwordSchema } from '../auth/politicaPassword';
 
 const router = Router();
 
@@ -83,7 +84,7 @@ const createUserSchema = z.object({
   nombre: z.string().min(2),
   role: z.enum(['ESTUDIANTE', 'DOCENTE', 'PADRE', 'ADMIN']),
   curso: z.string().optional().nullable(),
-  password: z.string().min(6),
+  password: passwordSchema,
 });
 
 router.post('/users', async (req, res, next) => {
@@ -119,7 +120,7 @@ const updateUserSchema = z.object({
   role: z.enum(['ESTUDIANTE', 'DOCENTE', 'PADRE', 'ADMIN']).optional(),
   curso: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
-  password: z.string().min(6).optional(),
+  password: passwordSchema.optional(),
 });
 
 router.patch('/users/:id', async (req, res, next) => {

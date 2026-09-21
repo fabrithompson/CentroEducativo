@@ -89,9 +89,21 @@ Decisiones que conviene entender antes de tocar este código:
 
 ### 2.3 Política de contraseñas
 
-Mínimo 8 caracteres combinando letras y números, para los endpoints nuevos.
-El `register` existente sigue pidiendo 6; unificarlo implica migrar las cuentas
-actuales y quedó para Sprint 3.
+Mínimo 8 caracteres combinando letras y números. Una sola definición, en
+`modules/auth/politicaPassword.ts`, que usan el registro público, el alta desde
+el backoffice, el cambio con sesión iniciada y el restablecimiento por correo.
+
+Estaba escrita dos veces y con reglas distintas: el registro pedía 6 caracteres
+y nada más, así que alguien podía crearse una cuenta con una contraseña que el
+propio sistema le iba a rechazar después si intentaba volver a ponerla.
+
+El **ingreso no valida el largo** —sólo que no venga vacío—, de modo que las
+cuentas anteriores a la política siguen entrando con lo que tengan. Endurecer
+el alta no puede dejar afuera a quien ya estaba.
+
+El tope de 72 no es arbitrario: bcrypt ignora en silencio lo que pase de 72
+bytes, y sin ese tope dos contraseñas largas que difieran después del carácter
+72 serían la misma para el sistema.
 
 ### 2.4 Límite de intentos
 
@@ -390,5 +402,4 @@ está disponible en la máquina de desarrollo.
 
 | Pendiente | Sprint |
 |---|---|
-| Unificar la política de contraseñas con `register` | 3 |
 | Migrar el limitador de intentos a Redis | fuera de alcance del TP |
