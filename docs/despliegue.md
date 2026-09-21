@@ -230,24 +230,36 @@ Queda afuera a propósito lo que no entra en la imagen del backend: `mobile/`,
 
 ## 2. Backups de la base (RNF-06)
 
-**Pendiente, y no se puede resolver desde el repositorio.** Railway ofrece
-backups administrados, pero se habilitan desde el panel y no hay forma de
-declararlos en `railway.json`.
+**Resuelto** en [`.github/workflows/respaldo.yml`](../.github/workflows/respaldo.yml),
+que corre todos los días a las 03:15 UTC —00:15 en Argentina, fuera del horario
+escolar y después de los schedulers de facturación— y también a mano desde la
+pestaña Actions.
 
-Pasos, en el panel de Railway:
+Qué hace, en orden:
 
-1. Servicio **Postgres** → pestaña **Backups**.
-2. Habilitar los backups programados y elegir la frecuencia. Diaria alcanza para
-   el volumen de este sistema: la facturación se genera una vez por mes y el
-   resto del movimiento diario son inscripciones y accesos.
-3. Anotar la retención que ofrece el plan contratado. El RNF-06 pide que exista
-   un backup recuperable; sin conocer la ventana de retención no se puede
-   afirmar que se cumple.
-4. **Probar una restauración.** Un backup que nunca se restauró no es un backup
-   verificado, es un archivo. Conviene restaurar sobre un servicio nuevo y
-   descartable, no sobre producción.
+1. **Pregunta la versión del servidor** antes de nada. `pg_dump` se niega a
+   volcar una base más nueva que él, así que la imagen de `postgres` se elige
+   según lo que responda `SHOW server_version_num`. El día que Railway
+   actualice el motor, esto sigue funcionando solo.
+2. **Vuelca y verifica el archivo.** `pg_dump` cierra el volcado con una línea
+   conocida; si falta, la conexión se cortó a mitad de camino y el trabajo
+   falla ahí, no el día que haya que restaurar.
+3. **Cifra con AES256.** El volcado tiene domicilios y teléfonos de menores y
+   de sus tutores, más los hashes de contraseña. No queda en claro ni siquiera
+   dentro de los artifacts privados del repositorio. Retención: 90 días.
+4. **Lo restaura sobre una base limpia y cuenta.** Es un trabajo aparte que
+   corre todos los días: descifra, restaura con `ON_ERROR_STOP` —si no, `psql`
+   sigue de largo tras un error y declararía exitosa una restauración parcial—
+   y exige al menos 30 tablas. Esto es lo que convierte "hicimos backup" en un
+   hecho verificado.
 
-Hasta que eso esté hecho y probado, el RNF-06 va declarado como pendiente.
+Hacen falta dos secretos en el repositorio: `DATABASE_URL_RESPALDO` y
+`RESPALDO_PASSPHRASE`.
+
+Los backups administrados de Railway —PITR y snapshots del volumen— siguen
+siendo recomendables y se habilitan desde el panel, pero los dos viven dentro
+de la cuenta: si se pierde la cuenta o alguien borra el proyecto, se van con
+él. El volcado de acá es la copia que queda afuera.
 
 ---
 
@@ -289,9 +301,7 @@ de la máquina de desarrollo.
 
 | Qué | Por qué no se hizo | Qué hace falta |
 |---|---|---|
-| RNF-05 — Firefox, Edge y Android físico | No hay forma de abrir un navegador ni un teléfono desde el entorno de desarrollo usado | Abrir el portal en Firefox y Edge, y la app desde Expo Go en un Android real, y anotar lo que rompa |
-| RNF-06 — backups | Se habilitan desde el panel de Railway | Sección 2 de este documento |
-| Contraste efectivo con Lighthouse | Requiere un navegador | La paleta ya está medida y verificada en `frontend.contraste.test.ts`; falta el contraste real de cada elemento pintado |
+| RNF-05 — Android físico | Los tres motores de navegador ya se verificaron con Playwright, y los cuatro paneles a 375 px; falta el teléfono real | Abrir la app desde Expo Go en un Android real y anotar lo que rompa |
 
 ---
 

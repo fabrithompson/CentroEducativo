@@ -100,13 +100,19 @@ Se consigna por honestidad metodológica:
   se verificaron; lo que falta es un Android real, con su cámara y su teclado.
 - Envío real de SMS y de correo contra un proveedor comercial.
 - Lectura del QR con cámara sobre hardware real.
-- Backups automáticos de la base (RNF-06): se habilitan desde el panel de
-  Railway. Ver `docs/despliegue.md` §2.
 - Que el `preDeployCommand` de Railway efectivamente corra. Está declarado en
   `railway.json`, pero se comprobó que no se ejecutó en el despliegue que lo
   introdujo. Ver `docs/despliegue.md` §1.
 
 Ya no están en esta lista:
+
+- **Backups de la base (RNF-06).** Resueltos en
+  [`.github/workflows/respaldo.yml`](.github/workflows/respaldo.yml), que corre
+  todos los días a las 00:15 de Argentina. Vuelca con `pg_dump`, comprueba que
+  el archivo no haya quedado cortado, lo cifra con AES256 —tiene domicilios y
+  teléfonos de menores, y hashes de contraseña— y lo guarda 90 días. Un segundo
+  trabajo lo **restaura sobre una base limpia todos los días** y exige al menos
+  30 tablas: un respaldo que nunca se restauró no es un respaldo, es un archivo.
 
 - **Contraste de color y accesibilidad del portal.** Medido con Lighthouse sobre
   el sitio desplegado, no sólo sobre la paleta declarada. La primera corrida dio
