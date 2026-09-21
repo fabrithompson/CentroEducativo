@@ -25,7 +25,8 @@
     "db:test:up": "tsx scripts/db-test.ts up",
     "db:test:down": "tsx scripts/db-test.ts down",
     "test:integracion": "tsx scripts/test-integracion.ts",
-    "test:humo": "tsx scripts/humo-academico.ts"
+    "test:humo": "tsx scripts/humo-academico.ts",
+    "qa": "tsx scripts/servidor-qa.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",
