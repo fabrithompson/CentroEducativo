@@ -85,6 +85,46 @@ export async function assertPuedeVerAlumno(
  * `{ id: { in: [...] } }` con sus hijos; si no tiene ninguno, `{ id: { in: [] } }`,
  * que no devuelve filas — nunca un filtro vacío que las devolvería todas.
  */
+/**
+ * Ids de **usuario** de los hijos de un tutor.
+ *
+ * Los endpoints del primer sprint —notas, asistencia y cuotas— identifican al
+ * alumno por su cuenta de usuario y no por el `Alumno` del dominio. El salto se
+ * hace por `Alumno.userId`. Un alumno sin cuenta no aparece: no tiene nada que
+ * pueda consultarse por esa vía.
+ *
+ * Existe para que esos endpoints resuelvan el vínculo contra `TutorAlumno`, que
+ * es la única fuente de verdad, en lugar de la tabla heredada que vinculaba
+ * usuario con usuario.
+ */
+export async function usuariosDeLosHijos(
+  prisma: PrismaClient,
+  tutorId: number,
+): Promise<number[]> {
+  const vinculos = await prisma.tutorAlumno.findMany({
+    where: { tutorId, alumno: { userId: { not: null } } },
+    select: { alumno: { select: { userId: true } } },
+  });
+
+  return vinculos
+    .map((v) => v.alumno.userId)
+    .filter((id): id is number => id !== null);
+}
+
+/** ¿La cuenta `estudianteUserId` pertenece a un hijo de `tutorId`? */
+export async function esHijoDelTutor(
+  prisma: PrismaClient,
+  tutorId: number,
+  estudianteUserId: number,
+): Promise<boolean> {
+  const vinculo = await prisma.tutorAlumno.findFirst({
+    where: { tutorId, alumno: { userId: estudianteUserId } },
+    select: { id: true },
+  });
+
+  return vinculo !== null;
+}
+
 export async function filtroAlumnosVisibles(
   prisma: PrismaClient,
   user: AuthUser,

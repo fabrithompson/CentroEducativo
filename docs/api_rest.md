@@ -124,10 +124,18 @@ ADMIN puede crearlo**, quedando registrado quién lo hizo. En la base:
 el panel de padres pasó a `GET /api/padres/mis-hijos` y el alta de vínculos quedó
 donde corresponde, en el panel de administración.
 
-La tabla `ParentStudentLink` todavía existe porque tres endpoints heredados la usan
-para autorizar al tutor —`/api/grades`, `/api/attendance` y `/api/payments`—. Ya no
-se puede escribir en ella salvo desde `/api/admin/links`, así que la vía de abuso
-está cerrada; lo que queda es unificarlos contra `TutorAlumno`.
+La tabla `ParentStudentLink` **se eliminó** (migración
+`20260921060000_retirar_parent_student_link`). `/api/grades`, `/api/attendance` y
+`/api/payments` resuelven ahora el vínculo contra `TutorAlumno` mediante
+`esHijoDelTutor` y `usuariosDeLosHijos`, en `shared/authz.ts`, y `/api/admin/links`
+delega en el mismo servicio que `POST /api/alumnos/:id/tutores`.
+
+La duplicación no era inocua: las notas, la asistencia y las cuotas consultaban una
+tabla mientras el portal del tutor, la app móvil y la facturación consultaban la
+otra, de modo que un vínculo cargado desde el backoffice servía para una mitad del
+sistema y no para la otra. La migración traslada los vínculos que existieran, y
+avisa por `RAISE WARNING` de los que no se puedan trasladar porque el estudiante no
+tenga ficha de alumno.
 
 ### 3.2 La matriz de acceso
 
@@ -382,7 +390,6 @@ está disponible en la máquina de desarrollo.
 
 | Pendiente | Sprint |
 |---|---|
-| Migrar `/api/grades`, `/api/attendance` y `/api/payments` de `ParentStudentLink` a `TutorAlumno` | 3 |
 | Unificar la política de contraseñas con `register` | 3 |
 | Revocación real de refresh tokens (el campo `v` no se contrasta contra nada) | 3 |
 | Migrar el limitador de intentos a Redis | fuera de alcance del TP |

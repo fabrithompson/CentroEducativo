@@ -5,6 +5,7 @@ import { Role } from '@prisma/client';
 import { prisma } from '../../db/prisma';
 import { HttpError } from '../../utils/httpError';
 import { requireAuth, requireRole } from '../../middleware/auth';
+import { esHijoDelTutor } from '../shared/authz';
 
 const router = Router();
 
@@ -78,13 +79,8 @@ router.get('/', requireAuth, async (req, res, next) => {
       throw HttpError.forbidden('Solo podés ver tus propias calificaciones.');
     }
 
-    if (me.role === Role.PADRE) {
-      const link = await prisma.parentStudentLink.findUnique({
-        where: { padreId_estudianteId: { padreId: me.id, estudianteId: estudiante_id } },
-      });
-      if (!link) {
-        throw HttpError.forbidden('No tenés a ese alumno vinculado a tu cuenta.');
-      }
+    if (me.role === Role.PADRE && !(await esHijoDelTutor(prisma, me.id, estudiante_id))) {
+      throw HttpError.forbidden('No tenés a ese alumno vinculado a tu cuenta.');
     }
 
     const notas = await prisma.grade.findMany({

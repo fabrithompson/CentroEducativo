@@ -362,9 +362,9 @@ produjo código que hubo que corregir o reemplazar.
 | Métrica | Valor |
 |---|---|
 | Requerimientos funcionales cubiertos | **8 de 8** |
-| Modelos de datos | 40 |
+| Modelos de datos | 39 |
 | Enumeraciones | 25 |
-| Migraciones aplicadas | 9 |
+| Migraciones aplicadas | 10 |
 | Endpoints REST | 141 |
 | Módulos de dominio | 15 |
 | Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 17 734 |

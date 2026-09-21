@@ -34,8 +34,20 @@ async function main() {
   correr('MIGRACIONES', ['exec', 'prisma', 'migrate', 'deploy']);
   correr('SEED', ['exec', 'tsx', 'prisma/seed.ts']);
 
-  const { createApp } = await import('../src/app.ts');
-  const server = createApp().listen(PUERTO);
+  // Se replica el arranque real de `src/index.ts`, incluido Socket.IO. Sin
+  // eso `/socket.io/socket.io.js` devuelve 404 y los paneles registran un
+  // error de consola que no existe en producción: un arnés que inventa
+  // defectos es peor que no tener arnés.
+  const [{ createApp }, http, { Server: SocketIOServer }, { attachSockets }] = await Promise.all([
+    import('../src/app.ts'),
+    import('node:http'),
+    import('socket.io'),
+    import('../src/sockets/io.ts'),
+  ]);
+
+  const server = http.createServer(createApp());
+  attachSockets(new SocketIOServer(server, { cors: { origin: true, credentials: true } }));
+  server.listen(PUERTO);
 
   console.log(`\nListo: http://127.0.0.1:${PUERTO}`);
   console.log('Usuario administrador: fabriynahuel / 123456\n');

@@ -181,7 +181,7 @@
                 <p style="color:#64748b; margin-bottom:14px;">Estos usuarios se registraron como docentes y necesitan tu autorización para poder iniciar sesión.</p>
                 <table class="data-table" id="tablaDocentesPend">
                     <thead><tr><th>ID</th><th>Nombre</th><th>Usuario</th><th>DNI</th><th>Email</th><th>Solicitado</th><th>Acciones</th></tr></thead>
-                    <tbody><tr><td colspan="7" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
+                    <tbody><tr><td colspan="8" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
                 </table>
             </section>
 
@@ -238,21 +238,32 @@
 
                 <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
                     <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#8b5cf6;"></i> Crear vínculo</summary>
-                    <form onsubmit="crearVinculo(event)" style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;">
+                    <form onsubmit="crearVinculo(event)" style="margin-top: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end;">
                         <div>
-                            <label style="font-size:0.85rem; font-weight:600;" for="vincPadre">Padre</label>
+                            <label style="font-size:0.85rem; font-weight:600;" for="vincPadre">Tutor</label>
                             <select id="vincPadre" required class="form-select"></select>
                         </div>
                         <div>
-                            <label style="font-size:0.85rem; font-weight:600;" for="vincEstudiante">Estudiante</label>
+                            <label style="font-size:0.85rem; font-weight:600;" for="vincEstudiante">Alumno</label>
                             <select id="vincEstudiante" required class="form-select"></select>
+                        </div>
+                        <div>
+                            <label style="font-size:0.85rem; font-weight:600;" for="vincParentesco">Parentesco</label>
+                            <input type="text" id="vincParentesco" class="form-input" maxlength="40" placeholder="Madre, padre, tutor…">
+                        </div>
+                        <div>
+                            <label style="font-size:0.85rem; font-weight:600;" for="vincFacturacion">Responsable de facturación</label>
+                            <select id="vincFacturacion" class="form-select">
+                                <option value="false">No</option>
+                                <option value="true">Sí</option>
+                            </select>
                         </div>
                         <button type="submit" class="btn-action">Vincular</button>
                     </form>
                 </details>
 
                 <table class="data-table" id="tablaVinculos">
-                    <thead><tr><th>ID</th><th>Padre</th><th>DNI</th><th>Estudiante</th><th>DNI</th><th>Curso</th><th>Acciones</th></tr></thead>
+                    <thead><tr><th>Tutor</th><th>DNI</th><th>Parentesco</th><th>Alumno</th><th>Legajo</th><th>Curso</th><th>Factura</th><th>Acciones</th></tr></thead>
                     <tbody><tr><td colspan="7" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
                 </table>
             </section>
@@ -485,11 +496,31 @@
             const padres = _usuariosCache.filter(u => u.role === 'PADRE' && u.isActive);
             const estudiantes = _usuariosCache.filter(u => u.role === 'ESTUDIANTE' && u.isActive);
             const sp = document.getElementById('vincPadre');
-            const se = document.getElementById('vincEstudiante');
             const sec = document.getElementById('cuotaEst');
             if (sp) sp.innerHTML = padres.map(p => `<option value="${p.id}">${p.nombre} (DNI ${p.dni})</option>`).join('');
-            if (se) se.innerHTML = estudiantes.map(e => `<option value="${e.id}">${e.nombre} — ${e.curso || ''}</option>`).join('');
+            // La cuota manual sigue yendo por id de usuario: es lo que espera
+            // POST /api/admin/payments.
             if (sec) sec.innerHTML = estudiantes.map(e => `<option value="${e.id}">${e.nombre} — ${e.curso || ''}</option>`).join('');
+        }
+
+        // El vínculo se carga contra el alumno del padrón, no contra su cuenta
+        // de usuario: hay alumnos sin cuenta y también necesitan tutor.
+        async function llenarSelectAlumnos() {
+            const se = document.getElementById('vincEstudiante');
+            if (!se) return;
+            try {
+                const data = await window.apiGet('/api/alumnos?estado=ACTIVO&pageSize=100');
+                const alumnos = data.items || [];
+                se.innerHTML = alumnos.length === 0
+                    ? '<option value="">No hay alumnos activos cargados</option>'
+                    : alumnos.map(a => {
+                        const curso = a.curso ? `${a.curso.nombre} "${a.curso.division}"` : 'sin curso';
+                        return `<option value="${a.id}">${window.escapeHtml(a.apellido)}, ${window.escapeHtml(a.nombres)} — ${window.escapeHtml(curso)} (${a.legajo})</option>`;
+                    }).join('');
+            } catch (err) {
+                console.error(err);
+                se.innerHTML = '<option value="">No se pudieron cargar los alumnos</option>';
+            }
         }
 
         async function crearUsuario(e) {
@@ -865,19 +896,21 @@
            ============================================================ */
         async function cargarLinks() {
             await cargarUsuarios();
+            await llenarSelectAlumnos();
             const data = await window.apiGet('/api/admin/links');
             const tbody = document.querySelector('#tablaVinculos tbody');
             if (!data.exito) return;
             tbody.innerHTML = data.links.length === 0
-                ? '<tr><td colspan="7" style="text-align:center; color:#64748b;">Sin vínculos cargados.</td></tr>'
+                ? '<tr><td colspan="8" style="text-align:center; color:#64748b;">Sin vínculos cargados.</td></tr>'
                 : data.links.map(l => `
                     <tr>
-                        <td>${l.id}</td>
-                        <td><b>${window.escapeHtml(l.padre.nombre)}</b></td>
-                        <td>${l.padre.dni}</td>
-                        <td><b>${window.escapeHtml(l.estudiante.nombre)}</b></td>
-                        <td>${l.estudiante.dni}</td>
-                        <td>${window.escapeHtml(l.estudiante.curso || '—')}</td>
+                        <td><b>${window.escapeHtml(l.tutor.nombre)}</b></td>
+                        <td>${window.escapeHtml(l.tutor.dni || '—')}</td>
+                        <td>${window.escapeHtml(l.parentesco || '—')}</td>
+                        <td><b>${window.escapeHtml(l.alumno.nombre)}</b></td>
+                        <td>${window.escapeHtml(l.alumno.legajo)}</td>
+                        <td>${window.escapeHtml(l.alumno.curso || '—')}</td>
+                        <td style="text-align:center;">${l.esResponsableFacturacion ? '<span class="badge badge--ok">sí</span>' : '—'}</td>
                         <td><button class="btn-danger" onclick="borrarVinculo(${l.id})">Eliminar</button></td>
                     </tr>
                 `).join('');
@@ -885,12 +918,24 @@
 
         async function crearVinculo(e) {
             e.preventDefault();
+            const alumnoId = document.getElementById('vincEstudiante').value;
+            if (!alumnoId) { toastError('Elegí un alumno.'); return; }
+
             const r = await window.apiPost('/api/admin/links', {
-                padreId: document.getElementById('vincPadre').value,
-                estudianteId: document.getElementById('vincEstudiante').value,
+                tutorId: document.getElementById('vincPadre').value,
+                alumnoId: alumnoId,
+                parentesco: document.getElementById('vincParentesco').value.trim() || null,
+                esResponsableFacturacion: document.getElementById('vincFacturacion').value === 'true',
             });
-            if (r.exito) { toastSuccess('Vínculo creado.'); cargarLinks(); }
-            else toastError(r.mensaje || 'Error.');
+            if (r.exito) {
+                toastSuccess(r.mensaje || 'Vínculo creado.');
+                document.getElementById('vincParentesco').value = '';
+                cargarLinks();
+            } else {
+                // El backend responde `message` cuando falla, y ahí viene el
+                // motivo real: tutor sin rol PADRE, vínculo ya existente, etc.
+                toastError(r.mensaje || r.message || 'No se pudo crear el vínculo.');
+            }
         }
 
         async function borrarVinculo(id) {
