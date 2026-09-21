@@ -55,6 +55,7 @@ desprenden cuatro problemas concretos que el sistema resuelve:
 | **Backoffice** — módulo Profesores | ✅ | [`modules/profesores/`](web/backend/src/modules/profesores/) |
 | **Backoffice** — módulo Administrador (ABM, roles, reportes) | ✅ | [`modules/administrador/`](web/backend/src/modules/administrador/) · [`modules/reportes/`](web/backend/src/modules/reportes/) |
 | **Manual de usuario** — por rol, con el alta de alumno paso a paso | ✅ | [`docs/manual_de_usuario.md`](docs/manual_de_usuario.md) |
+| **Política de datos personales** (RNF-09, Ley 25.326) | ✅ | [`docs/politica_de_datos.md`](docs/politica_de_datos.md) |
 | **App móvil** — autenticación segura y RBAC | ✅ | [`mobile/src/auth/`](mobile/src/auth/) |
 | **App móvil** — cuotas, vencimientos e historial | ✅ | [`mobile/src/pantallas/Finanzas.tsx`](mobile/src/pantallas/Finanzas.tsx) |
 | **App móvil** — pago por transferencia, 1 o más comprobantes | ✅ | [`PagoTransferencia.tsx`](mobile/src/pantallas/PagoTransferencia.tsx) |
@@ -101,6 +102,11 @@ Se consigna por honestidad metodológica:
   se verificaron; lo que falta es un Android real, con su cámara y su teclado.
 - Envío real de SMS y de correo contra un proveedor comercial.
 - Lectura del QR con cámara sobre hardware real.
+- **Lo institucional del RNF-09**: inscripción de la base ante la AAIP,
+  designación del responsable y una política de retención con purga automática.
+  El relevamiento y la lista completa están en
+  [`docs/politica_de_datos.md`](docs/politica_de_datos.md); nada de eso se
+  resuelve programando.
 - Que el `preDeployCommand` de Railway efectivamente corra. Está declarado en
   `railway.json`, pero se comprobó que no se ejecutó en el despliegue que lo
   introdujo. Ver `docs/despliegue.md` §1.

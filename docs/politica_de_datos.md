@@ -1,0 +1,192 @@
+# Política de tratamiento de datos personales
+
+**RNF-09 — Ley Nacional N° 25.326 de Protección de Datos Personales**
+
+Este documento describe **qué datos personales trata el sistema hoy, dónde
+viven, quién puede verlos y qué falta para cumplir formalmente con la ley**. Lo
+primero es un relevamiento verificado contra el código y el esquema de la base;
+lo último es una lista de obligaciones que la institución tiene que resolver y
+que no se resuelven programando.
+
+> **Alcance.** Esto describe el comportamiento del sistema y las obligaciones
+> que la ley impone. **No es asesoramiento legal.** Antes de publicarlo como
+> política institucional tiene que revisarlo un profesional: hay datos de
+> menores de edad de por medio, que la ley trata con especial cuidado.
+
+---
+
+## 1. Qué datos trata el sistema
+
+### 1.1 De los alumnos — la categoría más sensible, porque son menores
+
+| Dato | Dónde | Para qué |
+|---|---|---|
+| DNI, apellido, nombres, fecha de nacimiento | `Alumno` | Identificación e inscripción (RF-01) |
+| Domicilio, localidad, provincia, teléfono, correo | `Alumno` | Contacto y asignación de recorrido de transporte |
+| Observaciones | `Alumno` | Campo libre de la ficha |
+| Calificaciones | `Grade` | Seguimiento académico |
+| Asistencia diaria | `Attendance` | Control de presentismo |
+| Secreto criptográfico del carnet | `CredencialDigital` | Generar el código QR de acceso |
+| Ingresos y egresos con fecha, hora y punto de control | `RegistroAcceso` | Control de acceso al establecimiento, al comedor y al transporte |
+
+`RegistroAcceso` merece atención aparte: es un **historial de movimientos de un
+menor** —a qué hora entró, a qué hora subió al micro, si comió en el comedor—.
+Es el dato más delicado del sistema.
+
+### 1.2 De las familias
+
+| Dato | Dónde |
+|---|---|
+| Nombre, usuario, DNI, correo, teléfono | `User` |
+| Contraseña | `User.password`, **cifrada con bcrypt**; nunca se guarda en claro ni se puede revertir |
+| Vínculo con cada hijo y quién es responsable de facturación | `TutorAlumno` |
+| Comprobantes bancarios: importe, banco, número de operación y **el archivo subido** | `ComprobantePago` |
+| Correos enviados: destinatario, asunto y estado | `EmailLog` |
+| Teléfonos a los que se mandó un aviso | `MensajeEnviado` |
+
+### 1.3 Del personal
+
+`Profesor` guarda DNI, apellido, nombres, especialidad, correo, teléfono y
+domicilio. Por eso **el listado de profesores no es accesible para tutores ni
+estudiantes**: no hay motivo para que vean el domicilio del personal.
+
+### 1.4 De personas que no son usuarias del sistema
+
+Esto es lo que más se pasa por alto. Los formularios públicos del portal
+guardan datos de gente que nunca creó una cuenta:
+
+| Formulario | Qué guarda | Modelo |
+|---|---|---|
+| Solicitud de inscripción | Nombre, correo y teléfono del tutor, y nombre del estudiante | `Inscription` |
+| Postulación de empleo | Nombre, correo, puesto y **el CV subido** | `EmploymentApplication` |
+| Muro de opiniones | Nombre (opcional) y el texto de la opinión | `OpinionPublica` |
+
+### 1.5 Geolocalización
+
+`PosicionTransporte` guarda latitud, longitud, velocidad y precisión de cada
+micro, con su fecha y hora. No identifica personas por sí solo, pero **cruzado
+con `InscripcionTransporte` y `RegistroAcceso` permite reconstruir por dónde
+anduvo un alumno**. Conviene tratarlo como dato personal.
+
+---
+
+## 2. Dónde viven los datos
+
+| Qué | Dónde | Protección |
+|---|---|---|
+| Base de datos | PostgreSQL 15 gestionado en Railway | Credenciales por variable de entorno, nunca en el repositorio |
+| Archivos subidos (comprobantes bancarios, CV) | Disco del contenedor, en la ruta de `UPLOAD_DIR` | Servidos bajo `/uploads` |
+| Respaldos | Artifact privado del repositorio, 90 días | **Cifrados con AES256**, porque el volcado contiene domicilios y teléfonos de menores y los hashes de contraseña |
+| Sesiones | Token de acceso de 15 minutos y token de refresco en cookie `httpOnly` | La cookie no es legible desde JavaScript |
+
+**Los clientes no almacenan datos personales.** Ni el navegador ni la
+aplicación móvil guardan datos del alumno más allá de la sesión. La única
+excepción es el secreto del carnet en la app móvil, que vive en el almacén
+seguro del teléfono (`expo-secure-store`), no en almacenamiento común.
+
+---
+
+## 3. Quién puede ver qué
+
+El control no está repartido en condicionales sueltos por cada ruta: está
+centralizado en `shared/authz.ts`, con **criterio de lista blanca** —se parte de
+"no puede" y sólo se habilita lo explícitamente permitido—.
+
+| Rol | Alcance |
+|---|---|
+| Administración | Todos los alumnos |
+| Docente | Todos los alumnos (los tiene en clase) |
+| Madre, padre o tutor | **Únicamente los alumnos vinculados en `TutorAlumno`** |
+| Estudiante | Únicamente sus propios datos |
+
+Dos decisiones que sostienen esto:
+
+- **El vínculo lo crea sólo un administrador**, y queda registrado quién lo
+  hizo. Un tutor no puede agregarse hijos por su cuenta. Un disparador en la
+  base verifica además que quien figura como tutor tenga efectivamente ese rol.
+- Cuando un tutor pide un alumno ajeno, la respuesta es **404 y no 403**. Un 403
+  confirmaría que ese alumno existe, y eso ya es información que no le
+  corresponde.
+
+---
+
+## 4. Cuánto tiempo se conservan
+
+**Acá está la brecha más concreta del sistema: no hay política de retención
+implementada.** Lo único que se purga automáticamente son los tokens vencidos de
+recuperación de contraseña.
+
+Todo lo demás se conserva indefinidamente, incluido:
+
+- Las **postulaciones de empleo con su CV**, de personas que quizá nunca
+  entraron a la institución.
+- Las **solicitudes de inscripción** que fueron rechazadas.
+- El **historial de accesos** de cada alumno, sin tope de antigüedad.
+- Las **posiciones del transporte**, que se acumulan por cada recorrido y día.
+
+La ley pide que los datos se conserven mientras sean necesarios para la
+finalidad que justificó su recolección. Un CV rechazado hace tres años no
+cumple esa condición.
+
+Las bajas del sistema son **lógicas**: un alumno dado de baja deja de estar
+activo pero sus datos siguen en la base, porque tiene calificaciones,
+asistencias y facturas asociadas. Eso es razonable mientras dure la obligación
+de conservar documentación académica y contable, pero **no es lo mismo que una
+supresión**, y hay que poder distinguirlas cuando alguien la solicite.
+
+---
+
+## 5. Los derechos de la ley, en la práctica
+
+| Derecho | Cómo se ejerce hoy | Qué falta |
+|---|---|---|
+| **Acceso** — saber qué datos hay sobre uno | El tutor ve la ficha completa de sus hijos desde el panel o la app; el estudiante ve la suya | Un mecanismo para pedir el legajo completo en un archivo, y para quien no sea usuario del sistema |
+| **Rectificación** — corregir un dato erróneo | Administración edita la ficha desde el panel | Un canal formal para pedirlo y un plazo de respuesta |
+| **Supresión** — que se borren | No existe. La baja es lógica | Definir qué se puede borrar de verdad y qué hay que conservar por obligación legal, y por cuánto |
+| **Consentimiento informado** | **No existe.** Ningún formulario público avisa qué se hace con los datos | Un aviso en los tres formularios públicos, antes de enviar |
+
+---
+
+## 6. Lo que falta para cumplir formalmente
+
+Ordenado por urgencia. Los dos primeros son de software y se pueden resolver en
+el repositorio; el resto son obligaciones institucionales.
+
+1. **Aviso de tratamiento en los formularios públicos.** Hoy inscripción,
+   empleo y opiniones no dicen nada. Es lo más barato de agregar y lo más
+   visible.
+2. **Política de retención con purga automática.** Definir plazos por tipo de
+   dato —postulaciones, solicitudes rechazadas, accesos, posiciones del
+   transporte— e implementarlos como una tarea programada, igual que ya se hace
+   con los tokens vencidos.
+3. **Inscripción de la base ante la AAIP.** La Agencia de Acceso a la
+   Información Pública lleva el registro de bases de datos personales. Es un
+   trámite de la institución.
+4. **Designar responsable de la base.** Una persona identificable a la que
+   dirigir los reclamos de acceso, rectificación y supresión.
+5. **Consentimiento de los responsables legales para los datos de menores**, y
+   en particular para el historial de accesos y la geolocalización del
+   transporte, que son los dos tratamientos menos evidentes para una familia.
+6. **Contrato con los proveedores.** Railway aloja la base y el proveedor de
+   correo recibe direcciones de las familias. La ley trata esto como cesión de
+   datos a un tercero.
+
+---
+
+## 7. Qué ya está bien resuelto
+
+Para no dejar sólo la lista de deudas:
+
+- **Contraseñas con bcrypt.** No se guardan en claro y no hay forma de
+  revertirlas. Ni siquiera administración puede leer la contraseña de alguien.
+- **Minimización en los clientes.** El navegador y la app no guardan datos
+  personales; los piden cuando los muestran.
+- **Aislamiento entre familias verificado por pruebas**, no sólo por revisión:
+  la matriz de acceso tiene pruebas automatizadas propias.
+- **Respaldos cifrados.** El volcado diario no queda en claro en ningún lado.
+- **Las reglas las hace cumplir el motor de base de datos**, con disparadores y
+  restricciones. Un error de programación en una ruta nueva no alcanza para
+  saltear el aislamiento entre familias.
+- **Se retiró un endpoint que permitía a cualquier tutor vincularse a cualquier
+  alumno** conociendo sólo su DNI. Era la vía por la que se podía acceder a los
+  datos de un menor ajeno, y ya no existe.

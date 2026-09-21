@@ -233,3 +233,21 @@ test('el texto de las opiniones cumple AA sobre el fondo de su sección', () => 
     AA_TEXTO,
   );
 });
+
+test('el aviso de tratamiento de datos cumple AA sobre su propio fondo', () => {
+  // El aviso de los formularios públicos va sobre `--light`, no sobre blanco.
+  // El gris del cuerpo ya está cubierto por la prueba de arriba; lo que se
+  // verifica acá es el enlace al correo, que es el que se escapó: se había
+  // puesto en `--secondary`, que cumple sobre blanco (4.62:1) pero cae a
+  // 3.94:1 sobre `--light`. Medido en el navegador, el tono actual da 5.95:1.
+  //
+  // Vale la pena el detalle: un color puede estar verificado y aun así fallar
+  // en un lugar nuevo, porque lo que cumple o no es el par color/fondo, no el
+  // color solo.
+  verificar(
+    'aviso-datos/enlace',
+    propiedadDeRegla('.aviso-datos i', 'color'),
+    portal['--light'],
+    AA_TEXTO,
+  );
+});

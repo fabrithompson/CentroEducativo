@@ -97,7 +97,7 @@ camino alternativo; una restricción del motor no.
 | **RNF-06** Integridad y respaldo | Copias de seguridad diarias e integridad referencial | Integridad garantizada por claves foráneas, restricciones CHECK y disparadores; respaldo diario con `pg_dump` desde GitHub Actions, cifrado y con restauración verificada | ✅ **Cubierto.** Integridad por el motor. El respaldo corre a las 00:15 de Argentina, cifra el volcado con AES256 —contiene datos de menores— y lo guarda 90 días. Un segundo trabajo lo restaura todos los días sobre una base limpia y cuenta las tablas: un respaldo que nunca se restauró no es un respaldo |
 | **RNF-07** Escalabilidad | Crecimiento de la matrícula e incorporación de módulos sin rediseño | Módulos de dominio independientes bajo `src/modules/`; agregar uno no obliga a tocar los demás | ✅ Cubierto |
 | **RNF-08** Mantenibilidad | Código modular y documentado, versionado en Git | 15 módulos de dominio, documentación técnica en `docs/` y repositorio Git con *pull requests* revisados | ✅ Cubierto |
-| **RNF-09** Legal | Ley Nacional N° 25.326 de Protección de Datos Personales | Minimización: los clientes no almacenan datos personales ni financieros de menores. La única excepción es el secreto criptográfico del carnet, que vive en el almacén seguro del teléfono | Construido · **política formal de tratamiento pendiente** |
+| **RNF-09** Legal | Ley Nacional N° 25.326 de Protección de Datos Personales | Minimización: los clientes no almacenan datos personales ni financieros de menores. La única excepción es el secreto criptográfico del carnet, que vive en el almacén seguro del teléfono. El relevamiento completo está en `docs/politica_de_datos.md` | Construido · política **documentada** y aviso de tratamiento agregado a los cuatro formularios públicos · **pendiente lo institucional**: inscripción de la base ante la AAIP, responsable designado y política de retención con purga automática |
 
 ---
 
@@ -352,6 +352,7 @@ produjo código que hubo que corregir o reemplazar.
 | Bitácora de IA | 17/11/2026 | `docs/bitacora_ia.md` |
 | Documentación técnica | 22/11/2026 | `docs/modelo_de_datos.md`, `docs/api_rest.md`, `docs/frontend.md`, `docs/aplicacion_movil.md`, `docs/facturacion_y_schedulers.md`, `docs/carnet_digital_qr.md` |
 | Manual de usuario | 21/11/2026 | `docs/manual_de_usuario.md` ✅ |
+| Política de tratamiento de datos (RNF-09) | 21/11/2026 | `docs/politica_de_datos.md` ✅ |
 | Sistema desplegado y capacitación | 21/11/2026 | Entorno de producción |
 
 ---
