@@ -376,9 +376,16 @@ produjo código que hubo que corregir o reemplazar.
 - **Rendimiento con la matrícula completa (RNF-03).** Medido en producción con
   5012 alumnos. Cumple los cinco casos.
 - **Navegadores (RNF-05).** Los tres motores vigentes —Chromium, que es el de
-  Chrome y el de Edge; Gecko; y WebKit— sobre las cinco páginas, a 1280 y a
-  375 px. Encontró un desborde horizontal reproducible en los tres, que se
-  corrigió.
+  Chrome y el de Edge; Gecko; y WebKit— sobre las cinco páginas públicas, a
+  1280 y a 375 px. Encontró un desborde horizontal reproducible en los tres,
+  que se corrigió.
+- **Backoffice en pantalla angosta (RNF-05).** Los cuatro paneles en Chromium a
+  1366 y a 375 px. Los cuatro se desplazaban en horizontal: el CSS adaptable
+  compartido existía, pero el `<style>` propio de cada panel lo pisaba. Los
+  cuatro miden ahora 375 px de ancho de desplazamiento.
+- **ABM académico y alta de alumnos y profesores.** Recorrido completo por HTTP
+  contra PostgreSQL real (`pnpm --filter backend test:humo`): 21 comprobaciones,
+  incluidos el rechazo del DNI repetido y las dos guardas de baja.
 - **Contraste de color.** Medido con Lighthouse sobre el sitio desplegado: 93/100
   en la primera corrida, con 17 elementos por debajo del mínimo AA y 7 enlaces
   sin nombre accesible. Corregido, da 100/100 sin auditorías fallidas.
