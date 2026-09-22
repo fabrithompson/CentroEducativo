@@ -1,7 +1,12 @@
 packages:
   - "web/backend"
-  - "web/frontend"
   - "mobile"
+
+# `web/frontend` no figura a propósito: son HTML, CSS y JavaScript planos, sin
+# `package.json` ni paso de compilación. El backend los sirve como estáticos
+# desde `express.static`. Listarlo acá no hacía nada —pnpm ignora los
+# directorios sin `package.json`— pero sugería un paquete que no existe.
+# Si alguna vez se le agrega un `package.json`, hay que volver a listarlo.
 
 # pnpm 11 exige decidir explícitamente qué dependencias pueden ejecutar sus
 # install scripts. Una dependencia con script que no figure acá corta el

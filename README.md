@@ -221,7 +221,7 @@ guarda copia local de los datos. El panel web del tutor y la app móvil consumen
 .
 ├── web/
 │   ├── backend/              API REST (Node + Express + TypeScript + Prisma)
-│   │   ├── prisma/           Esquema, 9 migraciones y semillas
+│   │   ├── prisma/           Esquema, 11 migraciones y semillas
 │   │   ├── scripts/          PostgreSQL embebido y verificación de integración
 │   │   └── src/
 │   │       ├── modules/      15 módulos de dominio
@@ -531,7 +531,7 @@ cp web/backend/.env.example web/backend/.env   # completar DATABASE_URL y los se
 ### Base de datos
 
 ```bash
-pnpm --filter backend prisma:deploy      # aplica las 9 migraciones
+pnpm --filter backend prisma:deploy      # aplica las 11 migraciones
 pnpm --filter backend prisma:seed        # dominio + usuarios de demostración
 ```
 
@@ -580,7 +580,7 @@ pnpm --filter backend test:integracion
 ```
 
 Ese comando levanta **PostgreSQL 15 real** con `embedded-postgres` —sin
-necesidad de Docker—, aplica las 9 migraciones, carga las semillas y corre la
+necesidad de Docker—, aplica las 11 migraciones, carga las semillas y corre la
 suite contra esa base.
 
 **No se usan dobles de prueba para la persistencia.** Las 17 pruebas del motor

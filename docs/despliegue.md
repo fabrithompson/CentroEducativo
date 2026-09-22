@@ -72,11 +72,16 @@ puede estar equivocado.
 El camino que se siguió:
 
 ```bash
-npx @railway/cli login
-npx @railway/cli link
-npx @railway/cli config pull     # importa la configuración REAL del proyecto
-npx @railway/cli config plan     # muestra qué cambiaría, sin aplicar nada
-npx @railway/cli config apply
+# La CLI va instalada global, nunca como dependencia del repositorio: agregarla
+# al package.json de la raíz rompió el workspace de pnpm una vez. Y el paquete
+# de npm es sólo un envoltorio que descarga el binario en un `postinstall`, que
+# pnpm bloquea por defecto: sin `--allow-build` se instala un shim vacío.
+pnpm add -g @railway/cli --allow-build=@railway/cli
+railway login
+railway link
+railway config pull     # importa la configuración REAL del proyecto
+railway config plan     # muestra qué cambiaría, sin aplicar nada
+railway config apply
 ```
 
 `config pull` y no `config migrate`: el primero lee lo que el proyecto tiene
@@ -95,10 +100,37 @@ configuración de infraestructura no habría disparado despliegue y Railway lo
 habría salteado en silencio —el mismo modo de fallar que ya se había cobrado
 varios despliegues del frontend, descrito en §1.4—. Ahora vigila `/.railway/**`.
 
+> **Editar `.railway/railway.ts` no cambia nada por sí solo.** El archivo es la
+> fuente declarada, pero el servicio sólo cambia cuando corre `railway config
+> apply`. La corrección de los `watchPatterns` de arriba viajó en un commit y
+> estuvo un rato en el repositorio mientras Railway seguía vigilando el archivo
+> borrado. Un cambio de infraestructura no está hecho hasta que `config plan`
+> informe «0 to change».
+
+**Dos rarezas de la herramienta, para no perder la tarde con ellas.**
+
+`config plan` y `config apply` fallan con `This version of railway/iac requires
+Railway CLI 5.42.1 or newer` aunque la CLI esté muy por encima de ese mínimo. El
+SDK comprueba la versión con `execFileSync(process.env._)`, y los shims que
+instala pnpm —`railway`, `railway.CMD`, `railway.ps1`— no son ejecutables para
+Node en Windows. Hay que invocar el `railway.exe` real, que vive dentro del store
+de pnpm. El mensaje de error no tiene nada que ver con la causa.
+
+`config plan` anuncia además, en cada corrida, un cambio de `restartPolicyType`
+de `null` a `ON_FAILURE` que no es real: el `config pull` original nunca capturó
+ese campo, así que el motor lo ve vacío y lo vuelve a proponer siempre. La API
+confirma que está puesto. No hay que confundirlo con una configuración que se
+revierte sola.
+
+> **Nunca `config pull --include-variables`.** Esa bandera descifra los valores
+> de las variables no selladas y los escribe en texto plano dentro de
+> `.railway/railway.ts`, que es un archivo versionado. Sin ella quedan como
+> `preserve()`, que conserva lo que ya está configurado sin exponerlo.
+
 > **Cómo verificar que ya corre, sin esperar al próximo cambio de esquema.**
 > Después de un despliegue, `railway ssh --service backend -- sh -c 'cd
 > web/backend && ./node_modules/.bin/prisma migrate status'` tiene que informar
-> las 9 migraciones aplicadas. Si dice "have not yet been applied", el pre-deploy
+> las 11 migraciones aplicadas. Si dice "have not yet been applied", el pre-deploy
 > sigue sin correr y hay que aplicarlas a mano — sección 6.
 >
 > **Un detalle que costó horas.** `railway ssh` entra al despliegue *más
@@ -159,7 +191,7 @@ versión que verifica el CI (`.github/workflows/ci.yml`). Railpack también lo
 respeta. Sin eso, la versión de Node del build la elige el builder y puede
 cambiar sola de un día para el otro, que es la clase de deriva que provocó este
 episodio. Que producción compile sobre la misma versión que las pruebas no es un
-detalle: las 344 pruebas no dicen nada sobre una versión que nunca se probó.
+detalle: las pruebas no dicen nada sobre una versión que nunca se probó.
 
 > **Sobre el archivo de Infrastructure as Code.** Se había generado un
 > `.railway/railway.ts` con `railway config migrate` y se retiró. El comando
@@ -296,8 +328,8 @@ los demás. Ver `web/backend/src/config/env.ts`.
 ## 4. Integración continua
 
 `.github/workflows/ci.yml` corre en cada push y cada PR contra `main` y
-`developer`: typecheck, las 9 migraciones sobre PostgreSQL 15 real, el seed, las
-17 verificaciones de reglas en el motor, las 253 pruebas del backend y las 70 de
+`developer`: typecheck, las 11 migraciones sobre PostgreSQL 15 real, el seed, las
+17 verificaciones de reglas en el motor, las 271 pruebas del backend y las 70 de
 la aplicación móvil.
 
 Usa un *service container* de PostgreSQL y no `embedded-postgres`, porque las

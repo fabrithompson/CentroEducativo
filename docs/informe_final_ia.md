@@ -6,7 +6,7 @@
 **Proyecto:** Sistema integral del Centro Educativo "TRANSFORMAR PARA EDUCAR"
 **Equipo:** **Naft** — Nahuel Alem · Fabricio Ceniquel Thompson
 **Herramienta de IA utilizada:** Claude Code — modelo Opus 5
-**Fecha de cierre del informe:** 16 de septiembre de 2026
+**Fecha de cierre del informe:** 21 de septiembre de 2026
 
 ---
 
@@ -17,9 +17,9 @@ desarrollo del Trabajo Práctico Integrador, sobre un sistema compuesto por tres
 aplicaciones —portal web institucional, sistema de gestión y aplicación móvil—
 que comparten un backend y una base de datos únicos.
 
-El trabajo se organizó en **nueve intervenciones asistidas por IA**, todas
-registradas en `docs/bitacora_ia.md`. El producto resultante comprende 40
-modelos de datos, 140 endpoints REST, 9 migraciones y 327 pruebas automatizadas,
+El trabajo se organizó en **34 intervenciones asistidas por IA**, todas
+registradas en `docs/bitacora_ia.md`. El producto resultante comprende 39
+modelos de datos, 140 endpoints REST, 11 migraciones y 358 pruebas automatizadas,
 **validadas contra una instancia real de PostgreSQL 15**.
 
 La tesis central del informe es la siguiente: **la inteligencia artificial
@@ -298,25 +298,118 @@ sobre las reglas del motor** en verde y los **205 tests del backend** en verde.
 un carácter matemático (`∈`) en un comentario SQL, que la base creada con el
 locale de Windows no podía representar. Se detalla en la conclusión del informe.
 
+### Fase 7 — Reencuadre del proyecto y saneamiento (17/09/2026)
+
+**Intervenciones 9 a 17.** La cátedra cambió los criterios y el equipo pasó de
+cuatro integrantes a dos. El Plan de Trabajo aprobado describía un alcance que
+ya no correspondía, y el README describía una estructura de carpetas que había
+dejado de existir. Buena parte de esta fase no fue construir sino **corregir lo
+que el proyecto afirmaba de sí mismo**.
+
+Los defectos que aparecieron son de una familia reconocible: código que
+funcionaba en el camino feliz y fallaba en el borde. El registro devolvía 409
+sin decir cuál de los tres campos únicos chocaba. El seed daba de alta unas 15
+cuentas de demostración y, con eso, bloqueaba el registro público de cualquiera
+que compartiera DNI o correo con ellas. `TutorAlumno` no se sembraba en ningún
+lado, de modo que todo `/api/padres/mis-hijos/...` devolvía vacío contra una
+base recién creada. El portal se servía sin compresión, con `styles.css`
+viajando entero en cada visita.
+
+*Defecto de otra clase, que conviene registrar:* el alumno de demostración se
+llamaba «Franco Barrabino», que no es un nombre inventado sino el de un autor
+real de commits del repositorio. Un dato personal de una persona concreta,
+introducido como relleno plausible.
+
+### Fase 8 — El despliegue que no desplegaba (18/09 → 21/09/2026)
+
+**Intervenciones 10, 18 a 22, 25, 28 a 30 y 33.** Esta fase merece más espacio
+que las anteriores porque el modo de fallar es distinto de todo lo demás que
+documenta este informe, y es el hallazgo metodológico más incómodo del proyecto.
+
+El `railway.json` declaraba un `preDeployCommand` que aplicaba las migraciones
+antes de que la versión nueva recibiera tráfico. Estaba bien escrito, revisado y
+confirmado en un commit. **Nunca se ejecutó.** Tres días después del despliegue
+que lo introdujo, la base de producción tenía cero tablas. El archivo entero
+estaba siendo ignorado: el servicio corría comandos configurados en el panel
+—otro `buildCommand`, otro `startCommand`, ningún `preDeployCommand`— y nadie lo
+había notado porque el repositorio no da forma de notarlo.
+
+Debajo había una segunda capa. Los `watchPatterns` del servicio apuntaban a
+`/backend/**` cuando el backend de este monorepo vive en `web/backend/`. Ese
+patrón no coincide con ningún archivo, así que Railway venía salteando **todos**
+los push con `"skippedReason": "No changes to watched files"`. Dos migraciones
+—una de ellas agregando una columna `NOT NULL` que el código nuevo ya usaba—
+estuvieron medio día en `main` sin llegar a producción. Si ese código hubiera
+desplegado sin su migración, el login habría fallado para todos los roles.
+
+*Cómo se diagnosticó, que es lo que vale:* el estado de la base no se dedujo del
+repositorio sino que se midió contra ella, y la versión desplegada no se dedujo
+de la rama sino del `uptime` del proceso contrastado con la fecha de los
+commits. El proceso que servía tráfico había arrancado casi siete horas antes de
+que existiera el commit de la migración que se suponía aplicada.
+
+*Resultado:* las 11 migraciones aplicadas y verificadas por introspección, los
+dos secretos JWT rotados, la configuración migrada a Infrastructure as Code
+—`.railway/railway.ts`— con los `watchPatterns` corregidos, y las migraciones
+movidas del `startCommand` al `preDeployCommand`, de modo que una migración
+fallida ahora detiene el despliegue en lugar de crashear el contenedor.
+
+**La lección, que no es la misma que la del resto del informe.** En todos los
+casos del capítulo 3 la IA produjo código que violaba una regla de negocio no
+explicitada. Acá produjo una configuración **correcta en su sintaxis, correcta
+en su intención y sin efecto alguno**, porque el sistema que debía leerla estaba
+configurado en otro lado. Ninguna prueba, ningún typecheck y ninguna revisión
+por lectura podían detectarlo: el archivo era válido y decía lo que había que
+decir. Sólo lo detecta preguntarle al sistema en ejecución qué está haciendo
+realmente. Es una categoría de error que este equipo no tenía prevista, y la
+diferencia práctica es grande: **un archivo de configuración no se verifica
+leyéndolo, se verifica midiendo el comportamiento del sistema que lo consume.**
+
+### Fase 9 — Seguridad, cumplimiento y cierre documental (20/09 → 21/09/2026)
+
+**Intervenciones 23, 24, 26, 27, 31 y 32.** El RNF-06 exigía copias de seguridad
+diarias y no había ninguna: sin workflow, sin script de volcado y con el PITR
+del panel activo pero sin cobertura real. Quedó resuelto con
+`.github/workflows/respaldo.yml`, que vuelca, cifra y **restaura el respaldo en
+una base limpia para verificarlo**, porque un respaldo que nunca se restauró no
+es un respaldo.
+
+El RNF-09 cerró con la política de retención implementada, que corre a diario en
+modo informe hasta que la institución confirme los plazos. Ese detalle no es
+timidez técnica: los plazos son una propuesta razonada del equipo, no una
+decisión de la escuela, y encender un borrado irreversible antes de que alguien
+los confirme sería decidir por la institución algo que no le corresponde al
+equipo de desarrollo.
+
+Aparecieron además dos agujeros de seguridad de la misma familia que los del
+capítulo 3 —lo que el código no dice, la IA no lo infiere—: el refresh token
+llevaba un campo de versión que no se contrastaba contra nada, de modo que
+cambiar la contraseña **no cerraba las sesiones ya abiertas** durante siete
+días; y la política de contraseñas estaba escrita dos veces con reglas
+distintas, así que alguien podía registrarse con una contraseña que el propio
+sistema le rechazaría después.
+
 ### Síntesis cuantitativa
+
+*(Recontada el 21/09/2026 sobre el repositorio, no sobre la memoria del equipo.
+Los recuentos de líneas y archivos incluyen los archivos de prueba.)*
 
 | Métrica | Valor |
 |---|---|
-| Intervenciones registradas | 8 |
-| Modelos de datos | 37 |
-| Enumeraciones | 22 |
-| Endpoints REST | 134 |
-| Migraciones | 8 (4 propias del TP), aplicadas con éxito |
+| Intervenciones registradas | 34 |
+| Modelos de datos | 39 |
+| Enumeraciones | 25 |
+| Endpoints REST | 140 |
+| Migraciones | 11, aplicadas y verificadas contra la base de producción |
 | Funciones y disparadores en PostgreSQL | 7 y 6 (verificados en ejecución) |
 | Restricciones `CHECK` | 12 |
-| Pruebas automatizadas | 290 (205 backend, 70 móvil, 15 sobre el motor) |
-| Archivos de prueba | 16 |
-| Líneas de código (backend) | 14 262 |
-| Líneas de código (frontend) | 10 154 |
-| Líneas de código (móvil) | 4 461 |
-| Líneas de documentación técnica | 3 354 (10 documentos) |
-| Líneas de SQL en migraciones | 1 428 |
-| Archivos fuente (backend / frontend / móvil) | 73 / 16 / 18 |
+| Pruebas automatizadas | 358 (271 backend, 70 móvil, 17 sobre el motor) |
+| Archivos de prueba | 20 |
+| Líneas de código (backend) | 18 931 en 91 archivos |
+| Líneas de código (frontend) | 12 638 en 22 archivos |
+| Líneas de código (móvil) | 4 452 en 18 archivos |
+| Líneas de documentación técnica | 4 577 (13 documentos) |
+| Líneas de SQL en migraciones | 1 605 |
 
 ---
 
@@ -608,7 +701,7 @@ escala es cualitativa: **Alto / Medio / Bajo**.
 | 7 | **Integración** | Medio. Los contratos entre componentes se documentan mal y se rompen seguido. | **Alto.** Mantiene coherencia entre capas y clientes. | El mismo endpoint sirve a web y móvil sin variantes; los tipos de Prisma validan cada consulta en compilación. | Ventaja de la IA, potenciada por el tipado estricto. |
 | 8 | **Seguridad** | Medio. Se aplican buenas prácticas conocidas. | **Alto en mecanismos, bajo en criterio.** Implementa correctamente lo que se le pide; no advierte lo que falta. | Implementó TOTP y hash de tokens sin errores; los dos defectos graves del sistema fueron de *autorización*, es decir, de reglas. | La criptografía se delega; la política de acceso, no. |
 | 9 | **Mantenimiento** | Medio. Código escrito por quien lo mantiene, pero poco documentado. | **Alto, si el código se entiende.** Bien estructurado y comentado; peligroso si nadie lo leyó. | Separación en capas, módulos puros sin dependencias, advertencias explícitas sobre parámetros que deben coincidir entre paquetes. | El mantenimiento mejora sólo si la revisión fue real. |
-| 10 | **Calidad general** | Medio. Homogénea y previsible. | **Alto en forma, variable en fondo.** | 275 pruebas, tipado estricto sin errores; pero ninguna verificación contra base de datos real. | La calidad formal es superior; la funcional permanece sin demostrar. |
+| 10 | **Calidad general** | Medio. Homogénea y previsible. | **Alto en forma, variable en fondo.** | 358 pruebas, tipado estricto sin errores y ejecución contra PostgreSQL real desde la octava intervención; pero la configuración de despliegue estuvo días sin efecto y ninguna de esas verificaciones lo detectó. | La calidad formal es superior; la funcional se demuestra ejecutando, y el entorno de ejecución también hay que medirlo. |
 
 ### Lectura global
 
@@ -809,8 +902,9 @@ alguien que las revisó una por una.
 La bitácora, con sus columnas «¿Funcionó?» y «Modificaciones realizadas», es en
 parte un mecanismo de control sobre eso: obliga a declarar qué se revisó
 efectivamente y qué hubo que corregir. Reconocemos que completarla con honestidad
-—admitiendo seis «Parcialmente» y un «No» sobre nueve intervenciones— fue
-incómodo, y que la tentación de uniformar todo en «Sí» existió.
+—admitiendo dieciocho «Parcialmente» y dos «No» sobre treinta y cuatro
+intervenciones— fue incómodo, y que la tentación de uniformar todo en «Sí»
+existió.
 
 Un tercer efecto, sobre la revisión entre pares: cuando el código lo escribió una
 herramienta, la revisión pierde la carga personal que suele tener. Nadie defiende
@@ -884,7 +978,7 @@ el trabajo en torno a esa asimetría —delegar la forma, retener el propósito�
 es una precaución temporal sino el modo correcto de usar la herramienta.
 
 **Segundo: la verificación es la unidad de valor.** El aporte más sólido de este
-proyecto no son las casi 16 000 líneas de backend sino las 327 pruebas, y en
+proyecto no son las casi 19 000 líneas de backend sino las 358 pruebas, y en
 particular aquellas que demuestran algo no obvio: que nuestra implementación
 criptográfica coincide con la de Node en 300 casos aleatorios; que la tarea de
 fin de mes se dispara exactamente doce veces por año; que un tutor sin hijos
@@ -912,8 +1006,9 @@ restantes conservan algún valor.
 ## Conclusión general
 
 El uso de inteligencia artificial en este Trabajo Práctico Integrador nos
-permitió construir, en nueve intervenciones, un sistema de tres aplicaciones con
-40 modelos de datos, 140 endpoints, 9 migraciones y 327 pruebas automatizadas.
+permitió construir, en treinta y cuatro intervenciones, un sistema de tres
+aplicaciones con 39 modelos de datos, 140 endpoints, 11 migraciones y 358
+pruebas automatizadas.
 Ese volumen no habría sido alcanzable con desarrollo tradicional en el tiempo
 disponible.
 
@@ -937,7 +1032,7 @@ septiembre de 2026 y su resultado es el siguiente:**
 
 | Verificación | Resultado |
 |---|---|
-| Aplicación de las 9 migraciones (`prisma migrate deploy`) | ✅ Correcta |
+| Aplicación de las 11 migraciones (`prisma migrate deploy`) | ✅ Correcta |
 | Creación de las 40 tablas del modelo | ✅ Verificada por consulta al catálogo |
 | Compilación de las 7 funciones PL/pgSQL | ✅ Verificada |
 | Registro de los 6 disparadores | ✅ Verificado |
@@ -997,7 +1092,7 @@ está justamente en la precisión con que se enuncian sus límites.
 
 | Anexo | Documento | Contenido |
 |---|---|---|
-| A | `docs/bitacora_ia.md` | Bitácora completa: 7 intervenciones con prompts y comandos |
+| A | `docs/bitacora_ia.md` | Bitácora completa: 34 intervenciones con prompts y comandos |
 | B | `docs/plan_de_trabajo.md` | Cronograma, hitos y matriz de riesgos |
 | C | `docs/informe_auditoria.md` | Estado del repositorio al 15/09/2026 |
 | D | `docs/modelo_de_datos.md` | Modelo de datos y trazabilidad de las 8 reglas críticas |

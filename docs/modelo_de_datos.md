@@ -147,7 +147,7 @@ PostgreSQL 15.18. Se ejecutan con `pnpm --filter backend test:integracion`.
 volvía dependiente del encoding, y en una base creada con locale de Windows (WIN1252) abortó
 con `has no equivalent in encoding WIN1252`. Se corrigieron los 4 caracteres fuera de Latin-1 y
 se forzó `--encoding=UTF8` en la base de pruebas. Tras eso pasó todo en verde: en la última
-corrida, las 9 migraciones, el seed, las 17 pruebas del motor y los 240 tests del backend.
+corrida, las 11 migraciones, el seed, las 17 pruebas del motor y los 271 tests del backend.
 
 ---
 
