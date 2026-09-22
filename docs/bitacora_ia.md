@@ -135,17 +135,17 @@ reproducir el trabajo. El proyecto usa **pnpm**; no se invoca `npx`.
 
 ## Resumen cuantitativo
 
-*(Recontado sobre la tabla al cierre de la intervención 32 — alimenta el punto 2 de `informe_final_ia.md`)*
+*(Recontado sobre la tabla al cierre de la intervención 33 — alimenta el punto 2 de `informe_final_ia.md`)*
 
 | Métrica | Valor |
 |---|---|
-| Total de intervenciones registradas | 32 |
-| Funcionaron sin retoques (`Sí`) | 12 |
+| Total de intervenciones registradas | 33 |
+| Funcionaron sin retoques (`Sí`) | 13 |
 | Funcionaron con ajustes (`Parcialmente`) | 18 |
 | No funcionaron (`No`) | 2 |
-| Resultados conservados (`Correcto`) | 30 |
+| Resultados conservados (`Correcto`) | 31 |
 | Resultados descartados (`Reemplazado`) | 2 |
-| Herramienta más utilizada | Claude Code — Opus 5 (32 de 32 intervenciones) |
+| Herramienta más utilizada | Claude Code — Opus 5 (33 de 33 intervenciones) |
 | Módulo con mayor intervención de IA | Backend: modelo de datos y capa de servicios (intervenciones 2, 3 y 4) |
 
 Un patrón que conviene mirar antes que los números sueltos: **ocho de los defectos que hubo
