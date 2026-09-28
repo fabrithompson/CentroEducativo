@@ -136,12 +136,14 @@
         const itemsHtml = items.length === 0
             ? `<li class="bell-empty">Sin notificaciones</li>`
             : items.slice(0, 8).map(n => `
-                <li class="bell-item ${n.isRead ? '' : 'bell-unread'}" data-id="${n.id}">
+                <li class="bell-item ${n.isRead ? '' : 'bell-unread'}${n.link ? ' bell-item--enlace' : ''}" data-id="${n.id}" data-link="${window.escapeHtml(n.link || '')}">
                     <div class="bell-item-title">${window.escapeHtml(n.titulo)}</div>
                     <div class="bell-item-body">${window.escapeHtml(n.contenido)}</div>
                     <div class="bell-item-date">${window.formatFechaHora(n.createdAt)}</div>
                 </li>
             `).join('');
+
+        const estabaAbierto = document.getElementById('bellDropdown')?.style.display === 'block';
 
         cont.innerHTML = `
             <button class="bell-button" id="bellButton" aria-label="Notificaciones">
@@ -159,21 +161,24 @@
 
         const btn = document.getElementById('bellButton');
         const dd = document.getElementById('bellDropdown');
+        if (estabaAbierto) dd.style.display = 'block';
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
-        });
-        document.addEventListener('click', (e) => {
-            if (dd && !cont.contains(e.target)) dd.style.display = 'none';
         });
 
         cont.querySelectorAll('.bell-item').forEach(li => {
             li.addEventListener('click', () => {
                 const id = li.getAttribute('data-id');
+                const link = li.getAttribute('data-link');
                 window.apiPost('/api/notifications/' + id + '/read').then(() => {
                     li.classList.remove('bell-unread');
                     refreshBell();
                 });
+                if (link) {
+                    dd.style.display = 'none';
+                    seguirEnlace(link);
+                }
             });
         });
 
@@ -185,6 +190,12 @@
             });
         }
     }
+
+    document.addEventListener('click', (e) => {
+        const cont = document.getElementById('bellContainer');
+        const dd = document.getElementById('bellDropdown');
+        if (cont && dd && !cont.contains(e.target)) dd.style.display = 'none';
+    });
 
     function refreshBell() {
         if (!token()) return;
@@ -226,6 +237,86 @@
     };
 
     document.addEventListener('DOMContentLoaded', syncThemeButton);
+
+    /* ============================================================
+       Navegación de los paneles
+       La sección visible queda en el hash (panel_admin.html#m-alumnos):
+       recargar, abrir un enlace del menú en otra pestaña o seguir el de
+       una notificación vuelve a la misma sección.
+       ============================================================ */
+    function vistaDelEnlace(a) {
+        const m = /switchView\('([^']+)'/.exec(a.getAttribute('onclick') || '');
+        return m ? m[1] : null;
+    }
+
+    // Los enlaces del menú no tenían href: no se llegaba a ellos con Tab ni
+    // se podían abrir en otra pestaña. Reciben el de su sección.
+    function prepararMenu() {
+        document.querySelectorAll('.sidebar .nav-link').forEach((a) => {
+            if (a.dataset.vista) return;
+            const vista = vistaDelEnlace(a);
+            if (!vista) return;
+            a.dataset.vista = vista;
+            if (!a.hasAttribute('href')) a.setAttribute('href', '#' + vista);
+        });
+    }
+    document.addEventListener('DOMContentLoaded', prepararMenu);
+
+    // En fase de captura: corre antes que el onclick del enlace.
+    document.addEventListener('click', (e) => {
+        const a = e.target.closest && e.target.closest('.sidebar .nav-link[data-vista]');
+        if (!a) return;
+        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+            // Otra pestaña o ventana: la abre el navegador y esta no cambia.
+            e.stopPropagation();
+            return;
+        }
+        // La sección la cambia switchView; sin esto el navegador además
+        // saltaría hasta el ancla.
+        e.preventDefault();
+    }, true);
+
+    // replaceState y no pushState: "atrás" sale del panel en lugar de
+    // recorrer cada sección visitada.
+    window.recordarVista = function (id) {
+        if (!id || location.hash === '#' + id) return;
+        history.replaceState(history.state, '', '#' + id);
+    };
+
+    // Activa la sección como si se hubiera tocado su enlace del menú, así
+    // corre el mismo cargador.
+    window.irAVista = function (id) {
+        prepararMenu();
+        const a = document.querySelector('.sidebar .nav-link[data-vista="' + CSS.escape(id) + '"]');
+        if (!a) return false;
+        a.click();
+        return true;
+    };
+
+    // Cada panel la llama al final de su DOMContentLoaded, ya pasado el
+    // control de sesión.
+    window.restaurarVista = function () {
+        const id = decodeURIComponent(location.hash.slice(1));
+        if (!id) return false;
+        const seccion = document.getElementById(id);
+        if (!seccion || !seccion.classList.contains('view-section')) return false;
+        if (seccion.classList.contains('active')) return true;
+        return window.irAVista(id);
+    };
+    window.addEventListener('hashchange', () => window.restaurarVista());
+
+    // Las notificaciones traen un enlace a su sección
+    // ("/panel_padre.html#finanzas").
+    function seguirEnlace(link) {
+        let url;
+        try { url = new URL(link, location.href); } catch (_) { return; }
+        if (url.origin !== location.origin) return;
+        if (url.pathname === location.pathname && url.hash) {
+            window.irAVista(decodeURIComponent(url.hash.slice(1)));
+            return;
+        }
+        location.href = url.href;
+    }
 
     /* ============================================================
        Diálogos modales

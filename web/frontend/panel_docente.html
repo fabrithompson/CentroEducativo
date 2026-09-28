@@ -70,10 +70,10 @@
         </div>
         <nav class="main-nav">
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
-                <div class="logo" style="display: flex; align-items: center; gap: 10px;">
-                    <span class="logo-icon">🎓</span>
+                <a href="index.html" class="logo" title="Ir a la página de inicio" style="display: flex; align-items: center; gap: 10px;">
+                    <span class="logo-icon" aria-hidden="true">🎓</span>
                     <h1 style="margin:0; font-size: 1.3rem; color: #0f172a;">Transformar Para Educar</h1>
-                </div>
+                </a>
                 <ul class="nav-links" style="display: flex; gap: 25px; align-items: center; margin: 0; list-style: none;">
                     <li><a href="index.html#inicio">Inicio</a></li>
                     <li><button id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button></li>
@@ -103,7 +103,6 @@
                 <li><a class="nav-link" onclick="switchView('mis-cursos', this); window.abrirMisCursos();"><i class="fas fa-chalkboard-user"></i> Mis cursos y materias</a></li>
                 <li><a class="nav-link" onclick="switchView('actividades', this); cargarActividades();"><i class="fas fa-tasks"></i> Actividades</a></li>
                 <li><a class="nav-link" onclick="switchView('planes', this); cargarPlanes();"><i class="fas fa-book"></i> Planes de Estudio</a></li>
-                <li><a class="nav-link" onclick="switchView('configurar', this)"><i class="fas fa-cogs"></i> Mis Materias Asignadas</a></li>
                 <li><a class="nav-link" id="navAsistencia" onclick="switchView('asistencia', this)"><i class="fas fa-clipboard-check"></i> Asistencia Diaria</a></li>
                 <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments"></i> Mensajes</a></li>
                 <li><a class="nav-link" onclick="switchView('comunicados', this); cargarComunicados();"><i class="fas fa-bullhorn"></i> Comunicados</a></li>
@@ -191,49 +190,6 @@
             <section id="escaner" class="view-section" aria-labelledby="t-escaner">
                 <h2 class="section-title" id="t-escaner">Control de acceso — carnet digital</h2>
                 <div id="vista-escaner"></div>
-            </section>
-
-            <section id="configurar" class="view-section">
-                <h3 class="section-title">Visualización de Carga Horaria Institucional</h3>
-                <div class="form-layout">
-                    <form onsubmit="asociarMateriaDocente(event)">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="carreraSelect">Nivel General</label>
-                                <select id="carreraSelect" class="form-select" required onchange="manejarNivelEscolar()">
-                                    <option value="">Seleccione un nivel...</option>
-                                    <option value="inicial">Nivel Inicial (Jardín)</option>
-                                    <option value="primario">Nivel Primario</option>
-                                    <option value="secundario">Nivel Secundario</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="materiaEscolar">Materia</label>
-                                <select id="materiaEscolar" class="form-select" required onchange="cargarHorarioFijo()">
-                                    <option value="">Seleccione asignatura...</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Horario Asignado (Inmodificable)</label>
-                                <input type="text" id="docenteHorario" class="form-input" placeholder="Horario automático institucional" disabled>
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <button type="submit" class="btn-action"><i class="fas fa-check"></i> Confirmar Dictado</button>
-                        </div>
-                    </form>
-                </div>
-                <h4 style="color: #475569; font-size: 1.1rem; margin-top: 25px;">Mis Secciones bajo responsabilidad</h4>
-                <table class="data-table" id="tablaMateriasDocente">
-                    <thead>
-                        <tr><th>Nivel</th><th>Materia</th><th>Horario Fijo</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>SECUNDARIO</td><td>Álgebra y Geometría</td><td>Lunes y Miércoles — 07:30 a 09:30</td></tr>
-                        <tr><td>SECUNDARIO</td><td>Literatura</td><td>Lunes y Miércoles — 09:45 a 11:45</td></tr>
-                        <tr><td>PRIMARIO</td><td>Matemáticas</td><td>Lunes a Viernes — 08:00 a 09:30</td></tr>
-                    </tbody>
-                </table>
             </section>
 
             <section id="asistencia" class="view-section">
@@ -450,6 +406,7 @@
                 if (currentChatId === m.from) openChat(m.from);
                 if (typeof cargarContactos === 'function') cargarContactos();
             };
+            window.restaurarVista();
         });
 
         function cargarEstudiantes() {
@@ -477,7 +434,8 @@
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
-            if(element) element.classList.add('active');
+            if (element) element.classList.add('active');
+            window.recordarVista(viewId);
         }
 
         function actualizarMateriasCalificación() {
@@ -488,28 +446,6 @@
                 mapaMaterias[nivel].forEach(m => {
                     selectMateria.innerHTML += `<option value="${m.nombre}">${m.nombre}</option>`;
                 });
-            }
-        }
-
-        function manejarNivelEscolar() {
-            const nivel = document.getElementById('carreraSelect').value;
-            const selectMateria = document.getElementById('materiaEscolar');
-            selectMateria.innerHTML = '<option value="">Seleccione asignatura...</option>';
-            document.getElementById('docenteHorario').value = '';
-            if(nivel && mapaMaterias[nivel]) {
-                mapaMaterias[nivel].forEach(m => {
-                    selectMateria.innerHTML += `<option value="${m.nombre}">${m.nombre}</option>`;
-                });
-            }
-        }
-
-        function cargarHorarioFijo() {
-            const nivel = document.getElementById('carreraSelect').value;
-            const materiaNombre = document.getElementById('materiaEscolar').value;
-            const inputHorario = document.getElementById('docenteHorario');
-            if(nivel && materiaNombre) {
-                const encontrada = mapaMaterias[nivel].find(m => m.nombre === materiaNombre);
-                if(encontrada) inputHorario.value = encontrada.horario;
             }
         }
 
@@ -562,18 +498,6 @@
                     console.error(err);
                     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#c0392b;">Error al cargar el historial.</td></tr>';
                 });
-        }
-
-        function asociarMateriaDocente(e) {
-            e.preventDefault();
-            const nivel = document.getElementById('carreraSelect').value;
-            const materia = document.getElementById('materiaEscolar').value;
-            const horario = document.getElementById('docenteHorario').value;
-            document.querySelector('#tablaMateriasDocente tbody').innerHTML += `<tr><td>${nivel.toUpperCase()}</td><td>${materia}</td><td>${horario}</td></tr>`;
-            document.getElementById('carreraSelect').selectedIndex = 0;
-            document.getElementById('materiaEscolar').innerHTML = '<option value="">Seleccione asignatura...</option>';
-            document.getElementById('docenteHorario').value = '';
-            toastSuccess('Materia agregada a tu carga horaria.');
         }
 
         async function cargarAsistencia() {

@@ -13,7 +13,7 @@
         header { flex-shrink: 0; z-index: 100; }
         .app-wrapper { display: flex; flex: 1; overflow: hidden; }
 
-        .sidebar { width: 260px; background-color: #1e1b4b; color: #e0e7ff; display: flex; flex-direction: column; }
+        .sidebar { width: 260px; background-color: #1e1b4b; color: #e0e7ff; display: flex; flex-direction: column; overflow-y: auto; }
         .sidebar-header { padding: 20px 16px 14px; border-bottom: 1px solid #312e81; }
         .sidebar-header h2 { font-size: 1.1rem; color: #fff; margin: 0 0 4px; }
         .sidebar-menu { list-style: none; padding-top: 10px; }
@@ -35,6 +35,15 @@
         .btn-action:hover { background: #7c3aed; }
         .btn-danger { background: #ef4444; color: #fff; border: none; padding: 5px 11px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
         .btn-secondary { background: #64748b; color: #fff; border: none; padding: 5px 11px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
+
+        /* Recuadros del dashboard: los que tienen sección son botones. */
+        .tarjeta-dato { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; font: inherit; color: inherit; background: var(--fondo); border: 1px solid var(--borde); border-radius: 10px; padding: 18px; }
+        .tarjeta-dato__titulo { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; color: var(--etiqueta); }
+        .tarjeta-dato__valor { font-size: 2rem; font-weight: 700; color: var(--valor); }
+        .tarjeta-dato__ir { margin-top: 4px; font-size: 0.8rem; font-weight: 600; color: var(--etiqueta); }
+        button.tarjeta-dato { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        button.tarjeta-dato:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12); }
+        button.tarjeta-dato:focus-visible { outline: 3px solid #7c3aed; outline-offset: 2px; }
     </style>
 </head>
 <body class="panel-app">
@@ -50,10 +59,10 @@
         </div>
         <nav class="main-nav">
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
-                <div class="logo" style="display: flex; align-items: center; gap: 10px;">
-                    <span class="logo-icon">🎓</span>
+                <a href="index.html" class="logo" title="Ir a la página de inicio" style="display: flex; align-items: center; gap: 10px;">
+                    <span class="logo-icon" aria-hidden="true">🎓</span>
                     <h1 style="margin:0; font-size: 1.3rem; color: #0f172a;">Transformar Para Educar — Admin</h1>
-                </div>
+                </a>
                 <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none; margin: 0;">
                     <li><a href="index.html#inicio">Inicio</a></li>
                     <li><button id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button></li>
@@ -424,6 +433,7 @@
                 if (currentChatId === m.from) openChat(m.from);
                 if (typeof cargarContactos === 'function') cargarContactos();
             };
+            window.restaurarVista();
         });
 
         function switchView(viewId, element) {
@@ -431,28 +441,58 @@
             document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             if (element) element.classList.add('active');
+            window.recordarVista(viewId);
         }
 
         /* ============================================================
            DASHBOARD
            ============================================================ */
+        // Cada recuadro con `vista` lleva a su sección. Notas, actividades y
+        // temas del foro no tienen vista en este panel: quedan como dato.
+        const TARJETAS_DASHBOARD = [
+            { clave: 'totalUsuarios', titulo: 'Usuarios totales', fondo: '#ede9fe', borde: '#ddd6fe', etiqueta: '#5b21b6', valor: '#7c3aed', vista: 'usuarios', rol: '', ir: 'Ver usuarios' },
+            { clave: 'estudiantesActivos', titulo: 'Estudiantes activos', fondo: '#dbeafe', borde: '#bfdbfe', etiqueta: '#1e40af', valor: '#1d4ed8', vista: 'usuarios', rol: 'ESTUDIANTE', ir: 'Ver estudiantes' },
+            { clave: 'docentesActivos', titulo: 'Docentes activos', fondo: '#fef3c7', borde: '#fde68a', etiqueta: '#92400e', valor: '#b45309', vista: 'usuarios', rol: 'DOCENTE', ir: 'Ver docentes' },
+            { clave: 'padresActivos', titulo: 'Padres activos', fondo: '#fce7f3', borde: '#fbcfe8', etiqueta: '#9d174d', valor: '#be185d', vista: 'usuarios', rol: 'PADRE', ir: 'Ver padres' },
+            { clave: 'notasRegistradas', titulo: 'Notas registradas', fondo: '#ecfdf5', borde: '#a7f3d0', etiqueta: '#065f46', valor: '#047857' },
+            { clave: 'totalRecaudado', titulo: 'Recaudado', fondo: '#fef9c3', borde: '#fde047', etiqueta: '#854d0e', valor: '#a16207', moneda: true, vista: 'cuotas', ir: 'Ver cuotas' },
+            { clave: 'anuncios', titulo: 'Anuncios', fondo: '#fee2e2', borde: '#fecaca', etiqueta: '#991b1b', valor: '#dc2626', vista: 'anuncios', ir: 'Ver anuncios' },
+            { clave: 'actividades', titulo: 'Actividades', fondo: '#cffafe', borde: '#a5f3fc', etiqueta: '#155e75', valor: '#0e7490' },
+            { clave: 'temasForo', titulo: 'Temas del foro', fondo: '#ede9fe', borde: '#ddd6fe', etiqueta: '#5b21b6', valor: '#7c3aed' },
+            { clave: 'mensajesIntercambiados', titulo: 'Mensajes', fondo: '#f1f5f9', borde: '#cbd5e1', etiqueta: '#334155', valor: '#475569', vista: 'mensajes', ir: 'Ver mensajes' },
+        ];
+
         async function cargarStats() {
             const data = await window.apiGet('/api/admin/stats');
             if (!data.exito) return;
             const s = data.stats;
             const fmt = (n) => Number(n).toLocaleString('es-AR');
-            document.getElementById('statsGrid').innerHTML = `
-                <div style="background:#ede9fe; border:1px solid #ddd6fe; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#5b21b6; font-weight:600;">USUARIOS TOTALES</div><div style="font-size:2rem; font-weight:700; color:#7c3aed;">${fmt(s.totalUsuarios)}</div></div>
-                <div style="background:#dbeafe; border:1px solid #bfdbfe; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#1e40af; font-weight:600;">ESTUDIANTES ACTIVOS</div><div style="font-size:2rem; font-weight:700; color:#2563eb;">${fmt(s.estudiantesActivos)}</div></div>
-                <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#92400e; font-weight:600;">DOCENTES ACTIVOS</div><div style="font-size:2rem; font-weight:700; color:#d97706;">${fmt(s.docentesActivos)}</div></div>
-                <div style="background:#fce7f3; border:1px solid #fbcfe8; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#9d174d; font-weight:600;">PADRES ACTIVOS</div><div style="font-size:2rem; font-weight:700; color:#db2777;">${fmt(s.padresActivos)}</div></div>
-                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#065f46; font-weight:600;">NOTAS REGISTRADAS</div><div style="font-size:2rem; font-weight:700; color:#10b981;">${fmt(s.notasRegistradas)}</div></div>
-                <div style="background:#fef9c3; border:1px solid #fde047; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#854d0e; font-weight:600;">RECAUDADO</div><div style="font-size:2rem; font-weight:700; color:#ca8a04;">$ ${fmt(Math.round(s.totalRecaudado))}</div></div>
-                <div style="background:#fee2e2; border:1px solid #fecaca; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#991b1b; font-weight:600;">ANUNCIOS</div><div style="font-size:2rem; font-weight:700; color:#ef4444;">${fmt(s.anuncios)}</div></div>
-                <div style="background:#cffafe; border:1px solid #a5f3fc; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#155e75; font-weight:600;">ACTIVIDADES</div><div style="font-size:2rem; font-weight:700; color:#0891b2;">${fmt(s.actividades)}</div></div>
-                <div style="background:#ede9fe; border:1px solid #ddd6fe; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#5b21b6; font-weight:600;">TEMAS DEL FORO</div><div style="font-size:2rem; font-weight:700; color:#7c3aed;">${fmt(s.temasForo)}</div></div>
-                <div style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:10px; padding:18px;"><div style="font-size:0.82rem; color:#334155; font-weight:600;">MENSAJES</div><div style="font-size:2rem; font-weight:700; color:#475569;">${fmt(s.mensajesIntercambiados)}</div></div>
-            `;
+            const grid = document.getElementById('statsGrid');
+            grid.innerHTML = TARJETAS_DASHBOARD.map((t, i) => {
+                const valor = t.moneda ? '$ ' + fmt(Math.round(s[t.clave])) : fmt(s[t.clave]);
+                const colores = `--fondo:${t.fondo}; --borde:${t.borde}; --etiqueta:${t.etiqueta}; --valor:${t.valor};`;
+                const contenido = `
+                    <span class="tarjeta-dato__titulo">${t.titulo}</span>
+                    <span class="tarjeta-dato__valor">${valor}</span>`;
+                return t.vista
+                    ? `<button type="button" class="tarjeta-dato" style="${colores}" data-tarjeta="${i}">${contenido}
+                           <span class="tarjeta-dato__ir">${t.ir} <i class="fas fa-arrow-right" aria-hidden="true"></i></span></button>`
+                    : `<div class="tarjeta-dato" style="${colores}">${contenido}</div>`;
+            }).join('');
+            grid.onclick = (e) => {
+                const boton = e.target.closest('[data-tarjeta]');
+                if (boton) irDesdeDashboard(TARJETAS_DASHBOARD[boton.dataset.tarjeta]);
+            };
+        }
+
+        // "Docentes activos" abre Usuarios ya filtrada por rol, para que la
+        // lista corresponda al número que se tocó.
+        function irDesdeDashboard(t) {
+            if (t.vista === 'usuarios') {
+                document.getElementById('filtroUsuarios').value = '';
+                document.getElementById('filtroRole').value = t.rol || '';
+            }
+            window.irAVista(t.vista);
         }
 
         /* ============================================================
