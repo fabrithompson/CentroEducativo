@@ -324,3 +324,57 @@ export const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
+
+// ==================================================================
+// Diálogos
+// ==================================================================
+
+/**
+ * Marcado de un diálogo con el formato de "Editar usuario": cabecera en
+ * degradé con el ícono en un recuadro, título, subtítulo y cruz redonda.
+ * `cuerpo` es HTML que arma quien llama; el título y el subtítulo se escapan.
+ *
+ * Se abre con `window.abrirDialogo(id)` (campus.js), que agrega lo que el
+ * `<dialog>` nativo no trae: cerrar al tocar afuera y devolver el foco.
+ * Cualquier botón con `data-cerrar-dialogo` lo cierra sin más cableado.
+ */
+export function plantillaDialogo({ id, icono = 'fa-pen', titulo, subtitulo = '', cuerpo = '', angosto = false }) {
+  const idTitulo = `${id}-titulo`;
+  return `
+    <dialog id="${esc(id)}" class="dialogo${angosto ? ' dialogo--angosto' : ''}" aria-labelledby="${esc(idTitulo)}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-cerrar-dialogo aria-label="Cerrar">&times;</button>
+          <h2 id="${esc(idTitulo)}">
+            <i class="fas ${esc(icono)}" aria-hidden="true"></i>
+            <span data-dialogo-titulo>${esc(titulo)}</span>
+          </h2>
+          <p class="modal-subtitle" data-dialogo-subtitulo${subtitulo ? '' : ' hidden'}>${esc(subtitulo)}</p>
+        </div>
+        <div class="modal-body">${cuerpo}</div>
+      </div>
+    </dialog>`;
+}
+
+/** Cambia el título y el subtítulo de un diálogo ya renderizado (alta ↔ edición). */
+export function textosDialogo(dlg, { titulo, subtitulo } = {}) {
+  if (!dlg) return;
+  const t = dlg.querySelector('[data-dialogo-titulo]');
+  const s = dlg.querySelector('[data-dialogo-subtitulo]');
+  if (t && titulo !== undefined) t.textContent = titulo;
+  if (s && subtitulo !== undefined) {
+    s.textContent = subtitulo;
+    s.hidden = !subtitulo;
+  }
+}
+
+/** Pie estándar: "Cancelar" gris y el botón principal violeta. */
+export function pieDialogo({ textoGuardar = 'Guardar cambios', iconoGuardar = 'fa-floppy-disk', idGuardar = '' } = {}) {
+  return `
+    <div class="modal-pie">
+      <button type="button" class="btn-cancelar" data-cerrar-dialogo>Cancelar</button>
+      <button type="submit" class="btn-guardar"${idGuardar ? ` id="${esc(idGuardar)}"` : ''}>
+        <i class="fas ${esc(iconoGuardar)}" aria-hidden="true"></i> ${esc(textoGuardar)}
+      </button>
+    </div>`;
+}

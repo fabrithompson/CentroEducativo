@@ -14,7 +14,18 @@
  */
 
 import api from '../api.js';
-import { avisar, badge, esc, leerFiltros, moneda, render, tabla } from '../ui.js';
+import {
+  avisar,
+  badge,
+  esc,
+  leerFiltros,
+  moneda,
+  pieDialogo,
+  plantillaDialogo,
+  render,
+  tabla,
+  textosDialogo,
+} from '../ui.js';
 
 const TURNOS = [
   ['MANANA', 'Mañana'],
@@ -165,33 +176,33 @@ const anioActual = new Date().getFullYear();
 
 const CAMPOS = {
   niveles: () => `
-    <div class="form-grid">
-      <div class="campo">
-        <label for="ac-nombre" class="requerido">Nombre</label>
-        <input type="text" id="ac-nombre" name="nombre" required minlength="2" maxlength="60"
+    <div class="form-grid-2">
+      <div class="form-group full-width">
+        <label for="ac-nombre"><i class="fas fa-layer-group" aria-hidden="true"></i> Nombre *</label>
+        <input type="text" id="ac-nombre" name="nombre" class="form-input" required minlength="2" maxlength="60"
                placeholder="Educación Primaria">
       </div>
-      <div class="campo">
-        <label for="ac-orden" class="requerido">Orden</label>
-        <input type="number" id="ac-orden" name="orden" required min="1" max="99" value="1">
-        <span class="ayuda">Define en qué secuencia se muestran los niveles.</span>
+      <div class="form-group">
+        <label for="ac-orden"><i class="fas fa-arrow-down-1-9" aria-hidden="true"></i> Orden *</label>
+        <input type="number" id="ac-orden" name="orden" class="form-input" required min="1" max="99" value="1">
+        <small class="form-ayuda">En qué posición se muestra el nivel.</small>
       </div>
-      <div class="campo">
-        <label for="ac-cuota">Cuota mensual base</label>
-        <input type="number" id="ac-cuota" name="cuotaMensual" min="0" step="0.01" value="0">
-        <span class="ayuda">La factura copia el importe, así que cambiarlo no altera el histórico.</span>
+      <div class="form-group">
+        <label for="ac-cuotaMensual"><i class="fas fa-money-bill" aria-hidden="true"></i> Cuota mensual base</label>
+        <input type="number" id="ac-cuotaMensual" name="cuotaMensual" class="form-input" min="0" step="0.01" value="0">
+        <small class="form-ayuda">La factura copia el importe: cambiarlo no altera el histórico.</small>
       </div>
-    </div>
-    <div class="campo" style="margin-top:14px">
-      <label for="ac-descripcion">Descripción</label>
-      <input type="text" id="ac-descripcion" name="descripcion" maxlength="300">
+      <div class="form-group full-width">
+        <label for="ac-descripcion"><i class="fas fa-align-left" aria-hidden="true"></i> Descripción</label>
+        <input type="text" id="ac-descripcion" name="descripcion" class="form-input" maxlength="300">
+      </div>
     </div>`,
 
   cursos: () => `
-    <div class="form-grid">
-      <div class="campo">
-        <label for="ac-nivelId" class="requerido">Nivel</label>
-        <select id="ac-nivelId" name="nivelId" required>
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label for="ac-nivelId"><i class="fas fa-layer-group" aria-hidden="true"></i> Nivel *</label>
+        <select id="ac-nivelId" name="nivelId" class="form-select" required>
           <option value="">Seleccioná un nivel…</option>
           ${niveles
             .filter((n) => n.activo)
@@ -199,41 +210,45 @@ const CAMPOS = {
             .join('')}
         </select>
       </div>
-      <div class="campo">
-        <label for="ac-nombre" class="requerido">Nombre del curso</label>
-        <input type="text" id="ac-nombre" name="nombre" required maxlength="60" placeholder="3° grado">
+      <div class="form-group">
+        <label for="ac-nombre"><i class="fas fa-door-open" aria-hidden="true"></i> Nombre del curso *</label>
+        <input type="text" id="ac-nombre" name="nombre" class="form-input" required maxlength="60" placeholder="3° grado">
       </div>
-      <div class="campo">
-        <label for="ac-division">División</label>
-        <input type="text" id="ac-division" name="division" maxlength="10" value="A">
+      <div class="form-group">
+        <label for="ac-division"><i class="fas fa-font" aria-hidden="true"></i> División</label>
+        <input type="text" id="ac-division" name="division" class="form-input" maxlength="10" value="A">
       </div>
-      <div class="campo">
-        <label for="ac-turno">Turno</label>
-        <select id="ac-turno" name="turno">
+      <div class="form-group">
+        <label for="ac-turno"><i class="fas fa-sun" aria-hidden="true"></i> Turno</label>
+        <select id="ac-turno" name="turno" class="form-select">
           ${TURNOS.map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join('')}
         </select>
       </div>
-      <div class="campo">
-        <label for="ac-anioLectivo" class="requerido">Ciclo lectivo</label>
-        <input type="number" id="ac-anioLectivo" name="anioLectivo" required min="2000" max="2100"
+      <div class="form-group">
+        <label for="ac-anioLectivo"><i class="fas fa-calendar" aria-hidden="true"></i> Ciclo lectivo *</label>
+        <input type="number" id="ac-anioLectivo" name="anioLectivo" class="form-input" required min="2000" max="2100"
                value="${anioActual}">
       </div>
-      <div class="campo">
-        <label for="ac-cupoMaximo">Cupo máximo</label>
-        <input type="number" id="ac-cupoMaximo" name="cupoMaximo" min="1" max="100" value="30">
+      <div class="form-group">
+        <label for="ac-cupoMaximo"><i class="fas fa-users" aria-hidden="true"></i> Cupo máximo</label>
+        <input type="number" id="ac-cupoMaximo" name="cupoMaximo" class="form-input" min="1" max="100" value="30">
       </div>
     </div>`,
 
   materias: () => `
-    <div class="form-grid">
-      <div class="campo">
-        <label for="ac-nombre" class="requerido">Nombre</label>
-        <input type="text" id="ac-nombre" name="nombre" required minlength="2" maxlength="80"
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label for="ac-nombre"><i class="fas fa-book" aria-hidden="true"></i> Nombre *</label>
+        <input type="text" id="ac-nombre" name="nombre" class="form-input" required minlength="2" maxlength="80"
                placeholder="Matemática">
       </div>
-      <div class="campo">
-        <label for="ac-cursoId" class="requerido">Curso</label>
-        <select id="ac-cursoId" name="cursoId" required>
+      <div class="form-group">
+        <label for="ac-cargaHoraria"><i class="fas fa-clock" aria-hidden="true"></i> Carga horaria semanal</label>
+        <input type="number" id="ac-cargaHoraria" name="cargaHoraria" class="form-input" min="1" max="20" value="4">
+      </div>
+      <div class="form-group full-width">
+        <label for="ac-cursoId"><i class="fas fa-door-open" aria-hidden="true"></i> Curso *</label>
+        <select id="ac-cursoId" name="cursoId" class="form-select" required>
           <option value="">Seleccioná un curso…</option>
           ${cursos
             .filter((c) => c.activo)
@@ -241,9 +256,9 @@ const CAMPOS = {
             .join('')}
         </select>
       </div>
-      <div class="campo">
-        <label for="ac-profesorId">Profesor a cargo</label>
-        <select id="ac-profesorId" name="profesorId">
+      <div class="form-group full-width">
+        <label for="ac-profesorId"><i class="fas fa-chalkboard-user" aria-hidden="true"></i> Profesor a cargo</label>
+        <select id="ac-profesorId" name="profesorId" class="form-select">
           <option value="">Sin asignar por ahora</option>
           ${profesores
             .map(
@@ -253,35 +268,33 @@ const CAMPOS = {
             .join('')}
         </select>
       </div>
-      <div class="campo">
-        <label for="ac-cargaHoraria">Carga horaria semanal</label>
-        <input type="number" id="ac-cargaHoraria" name="cargaHoraria" min="1" max="20" value="4">
-      </div>
     </div>`,
 };
 
 function dialogo() {
-  return `
-    <dialog id="dlg-academico" class="dialogo" aria-labelledby="dlg-ac-titulo">
-      <form method="dialog" id="form-academico">
-        <h2 id="dlg-ac-titulo" class="ficha__titulo">
-          <i class="fas fa-graduation-cap" aria-hidden="true"></i>
-          <span id="dlg-ac-encabezado"></span>
-        </h2>
+  return plantillaDialogo({
+    id: 'dlg-academico',
+    icono: 'fa-graduation-cap',
+    titulo: '',
+    cuerpo: `
+      <form id="form-academico" novalidate>
         <input type="hidden" id="ac-id" name="id">
         <div id="dlg-ac-campos"></div>
         <p class="campo__error" id="ac-error" role="alert" hidden></p>
-        <div class="acciones-fila" style="margin-top:18px;justify-content:flex-end">
-          <button type="button" class="btn btn--suave" data-cerrar-academico>Cancelar</button>
-          <button type="submit" class="btn btn--primario" id="ac-guardar">
-            <i class="fas fa-floppy-disk" aria-hidden="true"></i> Guardar
-          </button>
-        </div>
-      </form>
-    </dialog>`;
+        ${pieDialogo({ textoGuardar: 'Guardar', idGuardar: 'ac-guardar' })}
+      </form>`,
+  });
 }
 
 const SINGULAR = { niveles: 'nivel', cursos: 'curso', materias: 'materia' };
+const NUEVO = { niveles: 'Nuevo nivel', cursos: 'Nuevo curso', materias: 'Nueva materia' };
+const EDITAR = { niveles: 'Editar nivel', cursos: 'Editar curso', materias: 'Editar materia' };
+const GUARDADO = { niveles: 'Nivel guardado.', cursos: 'Curso guardado.', materias: 'Materia guardada.' };
+const SUBTITULO = {
+  niveles: 'Inicial, Primario, Secundario: la estructura de la que cuelgan los cursos.',
+  cursos: 'Cada curso pertenece a un nivel y a un ciclo lectivo.',
+  materias: 'Cada materia pertenece a un curso; el profesor se puede asignar después.',
+};
 
 function registroActual(id) {
   if (solapa === 'niveles') return niveles.find((n) => n.id === id);
@@ -289,7 +302,7 @@ function registroActual(id) {
   return null;
 }
 
-async function abrirDialogo(id) {
+async function abrirFormulario(id) {
   const dlg = document.getElementById('dlg-academico');
   const form = document.getElementById('form-academico');
 
@@ -297,8 +310,10 @@ async function abrirDialogo(id) {
   form.reset();
   document.getElementById('ac-error').hidden = true;
   document.getElementById('ac-id').value = id ?? '';
-  document.getElementById('dlg-ac-encabezado').textContent =
-    `${id ? 'Editar' : 'Nuevo'} ${SINGULAR[solapa]}`;
+  textosDialogo(dlg, {
+    titulo: id ? EDITAR[solapa] : NUEVO[solapa],
+    subtitulo: SUBTITULO[solapa],
+  });
 
   if (id) {
     // Materias no está cacheado: es la lista más larga y cambia más seguido.
@@ -330,8 +345,7 @@ async function abrirDialogo(id) {
     }
   }
 
-  dlg.showModal();
-  document.getElementById('ac-nombre')?.focus();
+  window.abrirDialogo(dlg, { foco: '#ac-nombre' });
 }
 
 const ALTA = {
@@ -357,7 +371,17 @@ async function guardar(e) {
   const boton = document.getElementById('ac-guardar');
   error.hidden = true;
 
-  const datos = leerFiltros(e.target);
+  const form = e.target;
+  if (!form.checkValidity()) {
+    const invalido = form.querySelector(':invalid');
+    const etiqueta = form.querySelector(`label[for="${invalido.id}"]`)?.textContent.replace('*', '').trim();
+    error.textContent = `Revisá el campo "${etiqueta}": ${invalido.validationMessage}`;
+    error.hidden = false;
+    invalido.focus();
+    return;
+  }
+
+  const datos = leerFiltros(form);
   const id = datos.id;
   delete datos.id;
 
@@ -366,8 +390,8 @@ async function guardar(e) {
     if (id) await EDICION[solapa](id, datos);
     else await ALTA[solapa](datos);
 
-    avisar(`${SINGULAR[solapa]} guardado.`, 'ok');
-    document.getElementById('dlg-academico').close();
+    avisar(GUARDADO[solapa], 'ok');
+    window.cerrarDialogo('dlg-academico');
     await refrescarCatalogos();
     await pintar();
   } catch (err) {
@@ -378,8 +402,41 @@ async function guardar(e) {
   }
 }
 
+const BAJA_TEXTOS = {
+  niveles: {
+    titulo: 'Dar de baja el nivel',
+    consecuencias: [
+      'Deja de ofrecerse para cursos nuevos.',
+      'El sistema no lo deja dar de baja mientras tenga cursos activos: primero hay que dar de baja esos cursos.',
+      'Se puede reactivar después.',
+    ],
+  },
+  cursos: {
+    titulo: 'Dar de baja el curso',
+    consecuencias: [
+      'No admite más alumnos ni materias nuevas.',
+      'El sistema no lo deja dar de baja mientras tenga alumnos activos: hay que reubicarlos o darlos de baja antes.',
+      'Se puede reactivar después.',
+    ],
+  },
+  materias: {
+    titulo: 'Dar de baja la materia',
+    consecuencias: [
+      'Deja de figurar en el curso y no se le pueden asignar notas nuevas.',
+      'Las notas que ya tiene se conservan.',
+      'Se puede reactivar después.',
+    ],
+  },
+};
+
 async function darDeBaja(id) {
-  if (!window.confirm(`¿Dar de baja este ${SINGULAR[solapa]}?`)) return;
+  const textos = BAJA_TEXTOS[solapa];
+  const confirmado = await window.uxBaja({
+    titulo: textos.titulo,
+    icono: 'fa-ban',
+    consecuencias: textos.consecuencias,
+  });
+  if (!confirmado) return;
 
   try {
     await BAJA[solapa](id);
@@ -431,9 +488,9 @@ async function pintar() {
       ${contenido}`;
   });
 
-  document.getElementById('btn-nuevo-academico')?.addEventListener('click', () => abrirDialogo(null));
+  document.getElementById('btn-nuevo-academico')?.addEventListener('click', () => abrirFormulario(null));
   panel.querySelectorAll('[data-editar]').forEach((b) => {
-    b.addEventListener('click', () => abrirDialogo(Number(b.dataset.editar)));
+    b.addEventListener('click', () => abrirFormulario(Number(b.dataset.editar)));
   });
   panel.querySelectorAll('[data-baja]').forEach((b) => {
     b.addEventListener('click', () => darDeBaja(Number(b.dataset.baja)));
@@ -472,9 +529,6 @@ export async function iniciarAdminAcademico(id) {
   });
 
   document.getElementById('form-academico').addEventListener('submit', guardar);
-  contenedor.querySelectorAll('[data-cerrar-academico]').forEach((b) => {
-    b.addEventListener('click', () => document.getElementById('dlg-academico')?.close());
-  });
 
   await pintar();
 }

@@ -21,8 +21,11 @@ import {
   dia,
   moneda,
   periodoActual,
+  pieDialogo,
+  plantillaDialogo,
   render,
   tabla,
+  textosDialogo,
   avisar,
 } from '../ui.js';
 
@@ -315,9 +318,10 @@ function abrirDialogoComprobante(facturaId, numero, saldo) {
   const dlg = document.getElementById('dlg-comprobante');
   if (!dlg) return;
 
+  dlg.querySelector('form').reset();
+  dlg.querySelector('#cmp-error').hidden = true;
   dlg.querySelector('#cmp-factura').value = facturaId;
-  dlg.querySelector('#cmp-numero-factura').textContent = numero;
-  dlg.querySelector('#cmp-saldo').textContent = moneda(saldo);
+  textosDialogo(dlg, { subtitulo: `Comprobante ${numero} · saldo pendiente ${moneda(saldo)}` });
 
   const monto = dlg.querySelector('#cmp-monto');
   monto.value = saldo;
@@ -326,66 +330,55 @@ function abrirDialogoComprobante(facturaId, numero, saldo) {
   dlg.querySelector('#cmp-fecha').value = new Date().toISOString().slice(0, 10);
   dlg.querySelector('#cmp-fecha').max = new Date().toISOString().slice(0, 10);
 
-  dlg.showModal();
-  dlg.querySelector('#cmp-monto').focus();
+  window.abrirDialogo(dlg, { foco: '#cmp-monto' });
 }
 
 function dialogoComprobante() {
-  return `
-    <dialog id="dlg-comprobante" class="dialogo" aria-labelledby="dlg-titulo">
-      <form method="dialog" id="form-comprobante">
-        <h2 id="dlg-titulo" class="ficha__titulo">
-          <i class="fas fa-upload" aria-hidden="true"></i> Subir comprobante de transferencia
-        </h2>
+  const cuerpo = `
+    <form id="form-comprobante" novalidate>
+      <input type="hidden" id="cmp-factura" name="facturaId">
 
-        <p class="dialogo__contexto">
-          Comprobante <strong id="cmp-numero-factura"></strong> ·
-          saldo pendiente <strong id="cmp-saldo"></strong>
-        </p>
-
-        <input type="hidden" id="cmp-factura" name="facturaId">
-
-        <div class="form-grid">
-          <div class="campo">
-            <label for="cmp-monto" class="requerido">Importe transferido</label>
-            <input type="number" id="cmp-monto" name="monto" step="0.01" min="0.01" required>
-          </div>
-          <div class="campo">
-            <label for="cmp-fecha" class="requerido">Fecha de la transferencia</label>
-            <input type="date" id="cmp-fecha" name="fechaTransferencia" required>
-          </div>
-          <div class="campo">
-            <label for="cmp-banco" class="requerido">Banco de origen</label>
-            <input type="text" id="cmp-banco" name="bancoOrigen" required maxlength="80"
-                   placeholder="Banco Nación">
-          </div>
-          <div class="campo">
-            <label for="cmp-operacion" class="requerido">N° de operación</label>
-            <input type="text" id="cmp-operacion" name="numeroOperacion" required maxlength="60"
-                   placeholder="NAC-7781204">
-          </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="cmp-monto"><i class="fas fa-money-bill-transfer" aria-hidden="true"></i> Importe transferido *</label>
+          <input type="number" id="cmp-monto" name="monto" class="form-input" step="0.01" min="0.01" required>
         </div>
-
-        <div class="campo" style="margin-top:14px">
-          <label for="cmp-archivo" class="requerido">Comprobante</label>
-          <input type="file" id="cmp-archivo" name="comprobante" required
+        <div class="form-group">
+          <label for="cmp-fecha"><i class="fas fa-calendar" aria-hidden="true"></i> Fecha de la transferencia *</label>
+          <input type="date" id="cmp-fecha" name="fechaTransferencia" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label for="cmp-banco"><i class="fas fa-building-columns" aria-hidden="true"></i> Banco de origen *</label>
+          <input type="text" id="cmp-banco" name="bancoOrigen" class="form-input" required maxlength="80"
+                 placeholder="Banco Nación">
+        </div>
+        <div class="form-group">
+          <label for="cmp-operacion"><i class="fas fa-hashtag" aria-hidden="true"></i> N° de operación *</label>
+          <input type="text" id="cmp-operacion" name="numeroOperacion" class="form-input" required maxlength="60"
+                 placeholder="NAC-7781204">
+        </div>
+        <div class="form-group full-width">
+          <label for="cmp-archivo"><i class="fas fa-paperclip" aria-hidden="true"></i> Comprobante *</label>
+          <input type="file" id="cmp-archivo" name="comprobante" class="form-input" required
                  accept="image/png,image/jpeg,image/webp,application/pdf"
                  aria-describedby="cmp-archivo-ayuda">
-          <span class="ayuda" id="cmp-archivo-ayuda">
+          <small class="form-ayuda" id="cmp-archivo-ayuda">
             Imagen o PDF del comprobante bancario. Sin el archivo adjunto no se puede registrar el pago.
-          </span>
+          </small>
         </div>
+      </div>
 
-        <p class="campo__error" id="cmp-error" role="alert" hidden></p>
+      <p class="campo__error" id="cmp-error" role="alert" hidden></p>
+      ${pieDialogo({ textoGuardar: 'Enviar comprobante', iconoGuardar: 'fa-paper-plane', idGuardar: 'cmp-enviar' })}
+    </form>`;
 
-        <div class="acciones-fila" style="margin-top:18px;justify-content:flex-end">
-          <button type="button" class="btn btn--suave" data-cerrar-dialogo>Cancelar</button>
-          <button type="submit" class="btn btn--primario" id="cmp-enviar">
-            <i class="fas fa-paper-plane" aria-hidden="true"></i> Enviar comprobante
-          </button>
-        </div>
-      </form>
-    </dialog>`;
+  return plantillaDialogo({
+    id: 'dlg-comprobante',
+    icono: 'fa-upload',
+    titulo: 'Subir comprobante de transferencia',
+    subtitulo: '',
+    cuerpo,
+  });
 }
 
 async function enviarComprobante(e) {
@@ -396,6 +389,17 @@ async function enviarComprobante(e) {
   const boton = document.getElementById('cmp-enviar');
 
   error.hidden = true;
+
+  // El formulario es `novalidate`: el mensaje sale dentro del diálogo.
+  if (!form.checkValidity()) {
+    const invalido = form.querySelector(':invalid');
+    const etiqueta = form.querySelector(`label[for="${invalido.id}"]`)?.textContent.replace('*', '').trim();
+    error.textContent = `Revisá el campo "${etiqueta}": ${invalido.validationMessage}`;
+    error.hidden = false;
+    invalido.focus();
+    return;
+  }
+
   boton.disabled = true;
   boton.textContent = 'Enviando…';
 
@@ -403,7 +407,7 @@ async function enviarComprobante(e) {
     const fd = new FormData(form);
     const resp = await api.facturacion.subirComprobante(fd);
 
-    document.getElementById('dlg-comprobante').close();
+    window.cerrarDialogo('dlg-comprobante');
     avisar(resp.mensaje, 'ok');
     if (resp.advertencia) avisar(resp.advertencia, 'info');
 
@@ -525,10 +529,6 @@ export async function iniciarMisHijos(idContenedor = 'vista-mis-hijos') {
 
   const form = document.getElementById('form-comprobante');
   if (form) form.addEventListener('submit', enviarComprobante);
-
-  contenedor.querySelectorAll('[data-cerrar-dialogo]').forEach((btn) => {
-    btn.addEventListener('click', () => document.getElementById('dlg-comprobante')?.close());
-  });
 
   await dibujarSeccion();
 }

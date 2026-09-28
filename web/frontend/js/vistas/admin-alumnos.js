@@ -13,7 +13,19 @@
  */
 
 import api from '../api.js';
-import { avisar, badge, esc, fecha, filtros, leerFiltros, render, tabla } from '../ui.js';
+import {
+  avisar,
+  badge,
+  esc,
+  fecha,
+  filtros,
+  leerFiltros,
+  pieDialogo,
+  plantillaDialogo,
+  render,
+  tabla,
+  textosDialogo,
+} from '../ui.js';
 
 let cursos = [];
 let ultimosFiltros = {};
@@ -121,83 +133,74 @@ async function listado() {
 function formulario() {
   const hoy = new Date().toISOString().slice(0, 10);
 
-  return `
-    <dialog id="dlg-alumno" class="dialogo" aria-labelledby="dlg-alumno-titulo">
-      <form method="dialog" id="form-alumno">
-        <h2 id="dlg-alumno-titulo" class="ficha__titulo">
-          <i class="fas fa-user-graduate" aria-hidden="true"></i>
-          <span id="dlg-alumno-encabezado">Nuevo alumno</span>
-        </h2>
+  const cuerpo = `
+    <form id="form-alumno" novalidate>
+      <input type="hidden" id="al-id" name="id">
 
-        <p class="dialogo__contexto" id="dlg-alumno-contexto">
-          El legajo lo asigna el sistema al guardar.
-        </p>
-
-        <input type="hidden" id="al-id" name="id">
-
-        <div class="form-grid">
-          <div class="campo">
-            <label for="al-dni" class="requerido">DNI</label>
-            <input type="text" id="al-dni" name="dni" required minlength="6" maxlength="15"
-                   inputmode="numeric" placeholder="45123456">
-          </div>
-          <div class="campo">
-            <label for="al-apellido" class="requerido">Apellido</label>
-            <input type="text" id="al-apellido" name="apellido" required minlength="2" maxlength="80">
-          </div>
-          <div class="campo">
-            <label for="al-nombres" class="requerido">Nombres</label>
-            <input type="text" id="al-nombres" name="nombres" required minlength="2" maxlength="80">
-          </div>
-          <div class="campo">
-            <label for="al-nacimiento" class="requerido">Fecha de nacimiento</label>
-            <input type="date" id="al-nacimiento" name="fechaNacimiento" required max="${hoy}">
-          </div>
-          <div class="campo">
-            <label for="al-curso" class="requerido">Curso</label>
-            <select id="al-curso" name="cursoId" required></select>
-          </div>
-          <div class="campo">
-            <label for="al-ingreso">Fecha de ingreso</label>
-            <input type="date" id="al-ingreso" name="fechaIngreso" value="${hoy}" max="${hoy}">
-          </div>
-          <div class="campo">
-            <label for="al-domicilio" class="requerido">Domicilio</label>
-            <input type="text" id="al-domicilio" name="domicilio" required minlength="4" maxlength="200">
-          </div>
-          <div class="campo">
-            <label for="al-localidad">Localidad</label>
-            <input type="text" id="al-localidad" name="localidad" maxlength="80" value="Resistencia">
-          </div>
-          <div class="campo">
-            <label for="al-provincia">Provincia</label>
-            <input type="text" id="al-provincia" name="provincia" maxlength="80" value="Chaco">
-          </div>
-          <div class="campo">
-            <label for="al-telefono">Teléfono</label>
-            <input type="tel" id="al-telefono" name="telefono" maxlength="30" placeholder="362 4123456">
-          </div>
-          <div class="campo">
-            <label for="al-email">Correo</label>
-            <input type="email" id="al-email" name="email" maxlength="120">
-          </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="al-apellido"><i class="fas fa-user" aria-hidden="true"></i> Apellido *</label>
+          <input type="text" id="al-apellido" name="apellido" class="form-input" required minlength="2" maxlength="80">
         </div>
-
-        <div class="campo" style="margin-top:14px">
-          <label for="al-observaciones">Observaciones</label>
-          <textarea id="al-observaciones" name="observaciones" rows="2" maxlength="1000"></textarea>
+        <div class="form-group">
+          <label for="al-nombres"><i class="fas fa-user" aria-hidden="true"></i> Nombres *</label>
+          <input type="text" id="al-nombres" name="nombres" class="form-input" required minlength="2" maxlength="80">
         </div>
-
-        <p class="campo__error" id="al-error" role="alert" hidden></p>
-
-        <div class="acciones-fila" style="margin-top:18px;justify-content:flex-end">
-          <button type="button" class="btn btn--suave" data-cerrar-dialogo>Cancelar</button>
-          <button type="submit" class="btn btn--primario" id="al-guardar">
-            <i class="fas fa-floppy-disk" aria-hidden="true"></i> Guardar
-          </button>
+        <div class="form-group">
+          <label for="al-dni"><i class="fas fa-id-card" aria-hidden="true"></i> DNI *</label>
+          <input type="text" id="al-dni" name="dni" class="form-input" required minlength="6" maxlength="15"
+                 inputmode="numeric" placeholder="45123456">
         </div>
-      </form>
-    </dialog>`;
+        <div class="form-group">
+          <label for="al-nacimiento"><i class="fas fa-cake-candles" aria-hidden="true"></i> Fecha de nacimiento *</label>
+          <input type="date" id="al-nacimiento" name="fechaNacimiento" class="form-input" required max="${hoy}">
+        </div>
+        <div class="form-group">
+          <label for="al-curso"><i class="fas fa-school" aria-hidden="true"></i> Curso *</label>
+          <select id="al-curso" name="cursoId" class="form-select" required></select>
+          <small class="form-ayuda">Al lado de cada curso, los lugares ocupados sobre el cupo.</small>
+        </div>
+        <div class="form-group">
+          <label for="al-ingreso"><i class="fas fa-calendar-check" aria-hidden="true"></i> Fecha de ingreso</label>
+          <input type="date" id="al-ingreso" name="fechaIngreso" class="form-input" value="${hoy}" max="${hoy}">
+        </div>
+        <div class="form-group full-width">
+          <label for="al-domicilio"><i class="fas fa-house" aria-hidden="true"></i> Domicilio *</label>
+          <input type="text" id="al-domicilio" name="domicilio" class="form-input" required minlength="4" maxlength="200">
+        </div>
+        <div class="form-group">
+          <label for="al-localidad"><i class="fas fa-city" aria-hidden="true"></i> Localidad</label>
+          <input type="text" id="al-localidad" name="localidad" class="form-input" maxlength="80" value="Resistencia">
+        </div>
+        <div class="form-group">
+          <label for="al-provincia"><i class="fas fa-map" aria-hidden="true"></i> Provincia</label>
+          <input type="text" id="al-provincia" name="provincia" class="form-input" maxlength="80" value="Chaco">
+        </div>
+        <div class="form-group">
+          <label for="al-telefono"><i class="fas fa-phone" aria-hidden="true"></i> Teléfono</label>
+          <input type="tel" id="al-telefono" name="telefono" class="form-input" maxlength="30" placeholder="362 4123456">
+        </div>
+        <div class="form-group">
+          <label for="al-email"><i class="fas fa-envelope" aria-hidden="true"></i> Correo</label>
+          <input type="email" id="al-email" name="email" class="form-input" maxlength="120">
+        </div>
+        <div class="form-group full-width">
+          <label for="al-observaciones"><i class="fas fa-note-sticky" aria-hidden="true"></i> Observaciones</label>
+          <textarea id="al-observaciones" name="observaciones" class="form-input" rows="2" maxlength="1000"></textarea>
+        </div>
+      </div>
+
+      <p class="campo__error" id="al-error" role="alert" hidden></p>
+      ${pieDialogo({ textoGuardar: 'Guardar', idGuardar: 'al-guardar' })}
+    </form>`;
+
+  return plantillaDialogo({
+    id: 'dlg-alumno',
+    icono: 'fa-user-graduate',
+    titulo: 'Nuevo alumno',
+    subtitulo: 'El legajo lo asigna el sistema al guardar.',
+    cuerpo,
+  });
 }
 
 function poblarCursos(seleccionado) {
@@ -221,9 +224,6 @@ async function abrirFormulario(id) {
   document.getElementById('al-id').value = id ?? '';
 
   const esEdicion = Boolean(id);
-  document.getElementById('dlg-alumno-encabezado').textContent = esEdicion
-    ? 'Editar alumno'
-    : 'Nuevo alumno';
 
   let alumno = null;
   if (esEdicion) {
@@ -234,8 +234,10 @@ async function abrirFormulario(id) {
   poblarCursos(alumno?.curso?.id);
 
   if (alumno) {
-    document.getElementById('dlg-alumno-contexto').textContent =
-      `Legajo ${alumno.legajo} · alta del ${fecha(alumno.fechaIngreso)}`;
+    textosDialogo(dlg, {
+      titulo: 'Editar alumno',
+      subtitulo: `Legajo ${alumno.legajo} · alta del ${fecha(alumno.fechaIngreso)}`,
+    });
     for (const [campo, valor] of Object.entries({
       'al-dni': alumno.dni,
       'al-apellido': alumno.apellido,
@@ -252,12 +254,13 @@ async function abrirFormulario(id) {
       document.getElementById(campo).value = valor ?? '';
     }
   } else {
-    document.getElementById('dlg-alumno-contexto').textContent =
-      'El legajo lo asigna el sistema al guardar.';
+    textosDialogo(dlg, {
+      titulo: 'Nuevo alumno',
+      subtitulo: 'El legajo lo asigna el sistema al guardar.',
+    });
   }
 
-  dlg.showModal();
-  document.getElementById('al-dni').focus();
+  window.abrirDialogo(dlg);
 }
 
 async function guardar(e) {
@@ -267,6 +270,17 @@ async function guardar(e) {
   const error = document.getElementById('al-error');
   const boton = document.getElementById('al-guardar');
   error.hidden = true;
+
+  // El formulario es `novalidate` para que el mensaje salga dentro del
+  // diálogo y no en el globo del navegador, que el fondo puede tapar.
+  if (!form.checkValidity()) {
+    const invalido = form.querySelector(':invalid');
+    const etiqueta = form.querySelector(`label[for="${invalido.id}"]`)?.textContent.replace('*', '').trim();
+    error.textContent = `Revisá el campo "${etiqueta}": ${invalido.validationMessage}`;
+    error.hidden = false;
+    invalido.focus();
+    return;
+  }
 
   const datos = leerFiltros(form);
   const id = datos.id;
@@ -284,7 +298,7 @@ async function guardar(e) {
       const r = await api.alumnos.crear(datos);
       avisar(`Alumno dado de alta con el legajo ${r.alumno?.legajo ?? ''}.`, 'ok');
     }
-    document.getElementById('dlg-alumno').close();
+    window.cerrarDialogo('dlg-alumno');
     await dibujar();
   } catch (err) {
     error.textContent = err?.message || 'No se pudo guardar el alumno.';
@@ -295,20 +309,26 @@ async function guardar(e) {
 }
 
 async function darDeBaja(id, nombre) {
-  const estado = window.prompt(
-    `Baja de ${nombre}.\n\nEscribí el motivo: INACTIVO, EGRESADO o SUSPENDIDO.`,
-    'INACTIVO',
-  );
-  if (!estado) return;
-
-  const valido = ['INACTIVO', 'EGRESADO', 'SUSPENDIDO'];
-  if (!valido.includes(estado.toUpperCase())) {
-    avisar(`Estado inválido. Usá uno de: ${valido.join(', ')}.`, 'error');
-    return;
-  }
+  const r = await window.uxBaja({
+    titulo: 'Dar de baja al alumno',
+    subtitulo: nombre,
+    etiquetaEstado: 'Motivo de la baja',
+    opciones: [
+      { valor: 'INACTIVO', texto: 'Inactivo — deja de cursar' },
+      { valor: 'EGRESADO', texto: 'Egresado — terminó el ciclo' },
+      { valor: 'SUSPENDIDO', texto: 'Suspendido — por un tiempo' },
+    ],
+    valor: 'INACTIVO',
+    consecuencias: [
+      'Deja de figurar entre los alumnos activos de su curso.',
+      'Se dan de baja sus inscripciones a deportes, transporte y comedor, para que no ocupe cupo ni genere cargos.',
+      'Sus notas, asistencias y facturas se conservan. Se puede reactivar después.',
+    ],
+  });
+  if (!r) return;
 
   try {
-    await api.alumnos.darDeBaja(id, estado.toUpperCase());
+    await api.alumnos.darDeBaja(id, r.estado);
     avisar('Alumno dado de baja.', 'ok');
     await dibujar();
   } catch (err) {
@@ -361,10 +381,6 @@ export async function iniciarAdminAlumnos(id) {
 
   document.getElementById('btn-nuevo-alumno').addEventListener('click', () => abrirFormulario(null));
   document.getElementById('form-alumno').addEventListener('submit', guardar);
-
-  contenedor.querySelectorAll('[data-cerrar-dialogo]').forEach((b) => {
-    b.addEventListener('click', () => document.getElementById('dlg-alumno')?.close());
-  });
 
   const form = document.getElementById('filtros-alumnos');
   form.addEventListener('submit', async (e) => {

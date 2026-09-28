@@ -333,11 +333,11 @@
     </div>
 
     <!-- Modal de edición de usuario -->
-    <div class="modal" id="editUserModal" style="display:none;">
+    <dialog class="dialogo" id="editUserModal" aria-labelledby="editUserTitulo">
         <div class="modal-content modal-wide">
             <div class="modal-header">
-                <span class="close" onclick="cerrarEditarUsuario()">&times;</span>
-                <h2><i class="fas fa-user-edit"></i> Editar usuario</h2>
+                <button type="button" class="close" data-cerrar-dialogo aria-label="Cerrar">&times;</button>
+                <h2 id="editUserTitulo"><i class="fas fa-user-edit" aria-hidden="true"></i> Editar usuario</h2>
                 <p class="modal-subtitle">Actualizá los datos del usuario seleccionado.</p>
             </div>
             <div class="modal-body">
@@ -397,14 +397,14 @@
                             <small class="form-ayuda" style="color:#94a3b8;">Solo aplica para estudiantes. Si no figura el curso actual exactamente, se mantiene como texto libre.</small>
                         </div>
                     </div>
-                    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:18px;">
-                        <button type="button" class="btn-secondary" onclick="cerrarEditarUsuario()">Cancelar</button>
-                        <button type="submit" class="btn-action"><i class="fas fa-save"></i> Guardar cambios</button>
+                    <div class="modal-pie">
+                        <button type="button" class="btn-cancelar" data-cerrar-dialogo>Cancelar</button>
+                        <button type="submit" class="btn-guardar"><i class="fas fa-save" aria-hidden="true"></i> Guardar cambios</button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <script src="toast.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -572,8 +572,7 @@
                 sel.value = '';
             }
             editUserToggleCurso();
-            document.getElementById('editUserModal').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+            window.abrirDialogo('editUserModal');
         }
 
         function editUserToggleCurso() {
@@ -583,8 +582,7 @@
         }
 
         function cerrarEditarUsuario() {
-            document.getElementById('editUserModal').style.display = 'none';
-            document.body.style.overflow = 'auto';
+            window.cerrarDialogo('editUserModal');
         }
 
         async function guardarEdicionUsuario(e) {

@@ -244,9 +244,14 @@ async function ejecutar(e) {
   // Forzar la facturación manda correos de verdad a todas las familias del
   // período. No es algo que convenga poder hacer sin querer.
   if (forzar) {
-    const seguir = window.confirm(
-      `Vas a ejecutar "${ETIQUETA_TAREA[tarea]}" para ${MESES[mes - 1]} ${anio} forzando la ` +
-        'repetición.\n\nSi ya había corrido, se vuelven a enviar los correos. ¿Continuar?',
+    const seguir = await window.uxConfirm(
+      `Vas a ejecutar "${ETIQUETA_TAREA[tarea]}" para ${MESES[mes - 1]} ${anio} forzando la repetición.`,
+      {
+        title: 'Forzar una tarea programada',
+        danger: true,
+        okLabel: 'Ejecutar igual',
+        consecuencias: ['Si ya había corrido para ese período, los correos se vuelven a enviar a las familias.'],
+      },
     );
     if (!seguir) return;
   }

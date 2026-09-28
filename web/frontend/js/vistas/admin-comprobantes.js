@@ -149,10 +149,19 @@ async function aprobar(id) {
   // Si el importe no cuadra con el saldo se pide una confirmación explícita:
   // es el error caro de esta pantalla y no debería poder cometerse de un clic.
   if (!c.coincideConSaldo) {
-    const seguir = window.confirm(
+    const seguir = await window.uxConfirm(
       `El importe transferido (${moneda(c.monto)}) no coincide con el saldo de la ` +
-        `factura (${moneda(c.factura.saldo)}).\n\n` +
-        'Si acreditás igual, la factura queda con la diferencia. ¿Continuar?',
+        `factura (${moneda(c.factura.saldo)}).`,
+      {
+        title: 'El importe no coincide',
+        subtitle: `${c.factura.alumno} · factura ${c.factura.numero}`,
+        variant: 'warning',
+        okLabel: 'Acreditar igual',
+        consecuencias: [
+          'La factura queda con la diferencia como saldo pendiente.',
+          'Si fue un pago parcial es lo correcto; si es el comprobante de otra cuota, conviene rechazarlo.',
+        ],
+      },
     );
     if (!seguir) return;
   }
@@ -169,20 +178,26 @@ async function aprobar(id) {
 async function rechazar(id) {
   // El motivo es obligatorio del lado del servidor, y con razón: le llega a la
   // familia por correo y es lo único que le dice qué corregir.
-  const motivo = window.prompt(
-    'Motivo del rechazo.\n\nSe le envía a la familia tal como lo escribas, así que conviene ' +
-      'que diga qué tiene que corregir.',
-    '',
-  );
-  if (motivo === null) return;
-
-  if (!motivo.trim()) {
-    avisar('Para rechazar un comprobante hay que indicar el motivo.', 'error');
-    return;
-  }
+  const c = pendientes.find((x) => x.id === id);
+  const r0 = await window.uxBaja({
+    titulo: 'Rechazar comprobante',
+    subtitulo: c ? `${c.factura.alumno} · ${moneda(c.monto)}` : '',
+    icono: 'fa-file-circle-xmark',
+    pedirMotivo: true,
+    motivoObligatorio: true,
+    etiquetaMotivo: 'Motivo del rechazo',
+    placeholderMotivo: 'Ej.: el comprobante corresponde a otra cuenta de destino.',
+    ayudaMotivo: 'Se le envía a la familia tal como lo escribas: conviene que diga qué tiene que corregir.',
+    mensajeMotivoObligatorio: 'Para rechazar un comprobante hay que indicar el motivo.',
+    consecuencias: ['La cuota vuelve a figurar como pendiente de pago.', 'La familia recibe el motivo por correo.'],
+    aceptar: 'Rechazar',
+    okIcono: 'fa-xmark',
+  });
+  if (!r0) return;
+  const motivo = r0.motivo;
 
   try {
-    const r = await api.facturacion.validar(id, false, motivo.trim());
+    const r = await api.facturacion.validar(id, false, motivo);
     avisar(r.mensaje || 'Comprobante rechazado.', 'ok');
     await dibujar();
   } catch (err) {

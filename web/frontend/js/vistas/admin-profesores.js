@@ -12,7 +12,20 @@
  */
 
 import api from '../api.js';
-import { avisar, badge, esc, estadoVacio, fecha, filtros, leerFiltros, render, tabla } from '../ui.js';
+import {
+  avisar,
+  badge,
+  esc,
+  estadoVacio,
+  fecha,
+  filtros,
+  leerFiltros,
+  pieDialogo,
+  plantillaDialogo,
+  render,
+  tabla,
+  textosDialogo,
+} from '../ui.js';
 
 let materiasLibres = [];
 let ultimosFiltros = {};
@@ -102,67 +115,58 @@ async function listado() {
 function formulario() {
   const hoy = new Date().toISOString().slice(0, 10);
 
-  return `
-    <dialog id="dlg-profesor" class="dialogo" aria-labelledby="dlg-profesor-titulo">
-      <form method="dialog" id="form-profesor">
-        <h2 id="dlg-profesor-titulo" class="ficha__titulo">
-          <i class="fas fa-chalkboard-user" aria-hidden="true"></i>
-          <span id="dlg-profesor-encabezado">Nuevo profesor</span>
-        </h2>
+  const cuerpo = `
+    <form id="form-profesor" novalidate>
+      <input type="hidden" id="pr-id" name="id">
 
-        <p class="dialogo__contexto" id="dlg-profesor-contexto">
-          El legajo lo asigna el sistema al guardar.
-        </p>
-
-        <input type="hidden" id="pr-id" name="id">
-
-        <div class="form-grid">
-          <div class="campo">
-            <label for="pr-dni" class="requerido">DNI</label>
-            <input type="text" id="pr-dni" name="dni" required minlength="6" maxlength="15"
-                   inputmode="numeric" placeholder="28123456">
-          </div>
-          <div class="campo">
-            <label for="pr-apellido" class="requerido">Apellido</label>
-            <input type="text" id="pr-apellido" name="apellido" required minlength="2" maxlength="80">
-          </div>
-          <div class="campo">
-            <label for="pr-nombres" class="requerido">Nombres</label>
-            <input type="text" id="pr-nombres" name="nombres" required minlength="2" maxlength="80">
-          </div>
-          <div class="campo">
-            <label for="pr-especialidad" class="requerido">Especialidad</label>
-            <input type="text" id="pr-especialidad" name="especialidad" required minlength="2"
-                   maxlength="120" placeholder="Matemática">
-          </div>
-          <div class="campo">
-            <label for="pr-email" class="requerido">Correo</label>
-            <input type="email" id="pr-email" name="email" required maxlength="120">
-          </div>
-          <div class="campo">
-            <label for="pr-telefono">Teléfono</label>
-            <input type="tel" id="pr-telefono" name="telefono" maxlength="30" placeholder="362 4123456">
-          </div>
-          <div class="campo">
-            <label for="pr-domicilio">Domicilio</label>
-            <input type="text" id="pr-domicilio" name="domicilio" maxlength="200">
-          </div>
-          <div class="campo">
-            <label for="pr-ingreso">Fecha de ingreso</label>
-            <input type="date" id="pr-ingreso" name="fechaIngreso" value="${hoy}" max="${hoy}">
-          </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="pr-apellido"><i class="fas fa-user" aria-hidden="true"></i> Apellido *</label>
+          <input type="text" id="pr-apellido" name="apellido" class="form-input" required minlength="2" maxlength="80">
         </div>
-
-        <p class="campo__error" id="pr-error" role="alert" hidden></p>
-
-        <div class="acciones-fila" style="margin-top:18px;justify-content:flex-end">
-          <button type="button" class="btn btn--suave" data-cerrar-profesor>Cancelar</button>
-          <button type="submit" class="btn btn--primario" id="pr-guardar">
-            <i class="fas fa-floppy-disk" aria-hidden="true"></i> Guardar
-          </button>
+        <div class="form-group">
+          <label for="pr-nombres"><i class="fas fa-user" aria-hidden="true"></i> Nombres *</label>
+          <input type="text" id="pr-nombres" name="nombres" class="form-input" required minlength="2" maxlength="80">
         </div>
-      </form>
-    </dialog>`;
+        <div class="form-group">
+          <label for="pr-dni"><i class="fas fa-id-card" aria-hidden="true"></i> DNI *</label>
+          <input type="text" id="pr-dni" name="dni" class="form-input" required minlength="6" maxlength="15"
+                 inputmode="numeric" placeholder="28123456">
+        </div>
+        <div class="form-group">
+          <label for="pr-especialidad"><i class="fas fa-graduation-cap" aria-hidden="true"></i> Especialidad *</label>
+          <input type="text" id="pr-especialidad" name="especialidad" class="form-input" required minlength="2"
+                 maxlength="120" placeholder="Matemática">
+        </div>
+        <div class="form-group">
+          <label for="pr-email"><i class="fas fa-envelope" aria-hidden="true"></i> Correo *</label>
+          <input type="email" id="pr-email" name="email" class="form-input" required maxlength="120">
+        </div>
+        <div class="form-group">
+          <label for="pr-telefono"><i class="fas fa-phone" aria-hidden="true"></i> Teléfono</label>
+          <input type="tel" id="pr-telefono" name="telefono" class="form-input" maxlength="30" placeholder="362 4123456">
+        </div>
+        <div class="form-group">
+          <label for="pr-domicilio"><i class="fas fa-house" aria-hidden="true"></i> Domicilio</label>
+          <input type="text" id="pr-domicilio" name="domicilio" class="form-input" maxlength="200">
+        </div>
+        <div class="form-group">
+          <label for="pr-ingreso"><i class="fas fa-calendar-check" aria-hidden="true"></i> Fecha de ingreso</label>
+          <input type="date" id="pr-ingreso" name="fechaIngreso" class="form-input" value="${hoy}" max="${hoy}">
+        </div>
+      </div>
+
+      <p class="campo__error" id="pr-error" role="alert" hidden></p>
+      ${pieDialogo({ textoGuardar: 'Guardar', idGuardar: 'pr-guardar' })}
+    </form>`;
+
+  return plantillaDialogo({
+    id: 'dlg-profesor',
+    icono: 'fa-chalkboard-user',
+    titulo: 'Nuevo profesor',
+    subtitulo: 'El legajo lo asigna el sistema al guardar.',
+    cuerpo,
+  });
 }
 
 async function abrirFormulario(id) {
@@ -172,14 +176,12 @@ async function abrirFormulario(id) {
   document.getElementById('pr-error').hidden = true;
   document.getElementById('pr-id').value = id ?? '';
 
-  document.getElementById('dlg-profesor-encabezado').textContent = id
-    ? 'Editar profesor'
-    : 'Nuevo profesor';
-
   if (id) {
     const { profesor } = await api.profesores.obtener(id);
-    document.getElementById('dlg-profesor-contexto').textContent =
-      `Legajo ${profesor.legajo} · alta del ${fecha(profesor.fechaIngreso)}`;
+    textosDialogo(dlg, {
+      titulo: 'Editar profesor',
+      subtitulo: `Legajo ${profesor.legajo} · alta del ${fecha(profesor.fechaIngreso)}`,
+    });
     for (const [campo, valor] of Object.entries({
       'pr-dni': profesor.dni,
       'pr-apellido': profesor.apellido,
@@ -193,12 +195,13 @@ async function abrirFormulario(id) {
       document.getElementById(campo).value = valor ?? '';
     }
   } else {
-    document.getElementById('dlg-profesor-contexto').textContent =
-      'El legajo lo asigna el sistema al guardar.';
+    textosDialogo(dlg, {
+      titulo: 'Nuevo profesor',
+      subtitulo: 'El legajo lo asigna el sistema al guardar.',
+    });
   }
 
-  dlg.showModal();
-  document.getElementById('pr-dni').focus();
+  window.abrirDialogo(dlg);
 }
 
 async function guardar(e) {
@@ -208,7 +211,17 @@ async function guardar(e) {
   const boton = document.getElementById('pr-guardar');
   error.hidden = true;
 
-  const datos = leerFiltros(e.target);
+  const form = e.target;
+  if (!form.checkValidity()) {
+    const invalido = form.querySelector(':invalid');
+    const etiqueta = form.querySelector(`label[for="${invalido.id}"]`)?.textContent.replace('*', '').trim();
+    error.textContent = `Revisá el campo "${etiqueta}": ${invalido.validationMessage}`;
+    error.hidden = false;
+    invalido.focus();
+    return;
+  }
+
+  const datos = leerFiltros(form);
   const id = datos.id;
   delete datos.id;
 
@@ -222,7 +235,7 @@ async function guardar(e) {
       const r = await api.profesores.crear(datos);
       avisar(`Profesor dado de alta con el legajo ${r.profesor?.legajo ?? ''}.`, 'ok');
     }
-    document.getElementById('dlg-profesor').close();
+    window.cerrarDialogo('dlg-profesor');
     await dibujar();
   } catch (err) {
     error.textContent = err?.message || 'No se pudo guardar el profesor.';
@@ -233,19 +246,25 @@ async function guardar(e) {
 }
 
 async function darDeBaja(id, nombre) {
-  const estado = window.prompt(
-    `Baja de ${nombre}.\n\nEscribí el motivo: INACTIVO o LICENCIA.`,
-    'LICENCIA',
-  );
-  if (!estado) return;
-
-  if (!['INACTIVO', 'LICENCIA'].includes(estado.toUpperCase())) {
-    avisar('Estado inválido. Usá INACTIVO o LICENCIA.', 'error');
-    return;
-  }
+  const r = await window.uxBaja({
+    titulo: 'Dar de baja al profesor',
+    subtitulo: nombre,
+    etiquetaEstado: 'Tipo de baja',
+    opciones: [
+      { valor: 'LICENCIA', texto: 'Licencia — vuelve más adelante' },
+      { valor: 'INACTIVO', texto: 'Inactivo — deja la institución' },
+    ],
+    valor: 'LICENCIA',
+    consecuencias: [
+      'En licencia conserva sus materias; como inactivo, las materias quedan sin profesor para reasignarlas.',
+      'Si es responsable de algún deporte activo, el sistema no deja darlo de baja como inactivo hasta reasignarlo.',
+      'Se puede reactivar después.',
+    ],
+  });
+  if (!r) return;
 
   try {
-    await api.profesores.darDeBaja(id, estado.toUpperCase());
+    await api.profesores.darDeBaja(id, r.estado);
     avisar('Profesor dado de baja.', 'ok');
     await dibujar();
   } catch (err) {
@@ -258,29 +277,31 @@ async function darDeBaja(id, nombre) {
 // ==================================================================
 
 function dialogoMaterias() {
-  return `
-    <dialog id="dlg-materias" class="dialogo" aria-labelledby="dlg-materias-titulo">
-      <h2 id="dlg-materias-titulo" class="ficha__titulo">
-        <i class="fas fa-book" aria-hidden="true"></i> Materias a cargo
-      </h2>
-      <p class="dialogo__contexto" id="dlg-materias-contexto"></p>
+  const cuerpo = `
+    <div id="materias-asignadas"></div>
 
-      <div id="materias-asignadas"></div>
+    <form id="form-asignar" novalidate style="margin-top:18px">
+      <div class="form-group">
+        <label for="ma-materia"><i class="fas fa-book" aria-hidden="true"></i> Asignar una materia sin profesor *</label>
+        <select id="ma-materia" name="materiaId" class="form-select" required></select>
+        <small class="form-ayuda">Cada materia pertenece a un curso: asignarla ya dice en qué curso da clase.</small>
+      </div>
+      <p class="campo__error" id="ma-error" role="alert" hidden></p>
+      <div class="modal-pie">
+        <button type="button" class="btn-cancelar" data-cerrar-dialogo>Cerrar</button>
+        <button type="submit" class="btn-guardar" id="ma-asignar">
+          <i class="fas fa-plus" aria-hidden="true"></i> Asignar
+        </button>
+      </div>
+    </form>`;
 
-      <form id="form-asignar" style="margin-top:18px">
-        <div class="campo">
-          <label for="ma-materia">Asignar una materia sin profesor</label>
-          <select id="ma-materia" name="materiaId" required></select>
-        </div>
-        <p class="campo__error" id="ma-error" role="alert" hidden></p>
-        <div class="acciones-fila" style="margin-top:14px;justify-content:flex-end">
-          <button type="button" class="btn btn--suave" data-cerrar-materias>Cerrar</button>
-          <button type="submit" class="btn btn--primario" id="ma-asignar">
-            <i class="fas fa-plus" aria-hidden="true"></i> Asignar
-          </button>
-        </div>
-      </form>
-    </dialog>`;
+  return plantillaDialogo({
+    id: 'dlg-materias',
+    icono: 'fa-book',
+    titulo: 'Materias a cargo',
+    subtitulo: '',
+    cuerpo,
+  });
 }
 
 let profesorActivo = null;
@@ -337,10 +358,11 @@ async function pintarMaterias() {
 
 async function abrirMaterias(id, nombre) {
   profesorActivo = id;
-  document.getElementById('dlg-materias-contexto').textContent = nombre;
+  const dlg = document.getElementById('dlg-materias');
+  textosDialogo(dlg, { subtitulo: nombre });
   document.getElementById('ma-error').hidden = true;
   await pintarMaterias();
-  document.getElementById('dlg-materias').showModal();
+  window.abrirDialogo(dlg);
 }
 
 async function asignarMateria(e) {
@@ -349,7 +371,11 @@ async function asignarMateria(e) {
   error.hidden = true;
 
   const materiaId = document.getElementById('ma-materia').value;
-  if (!materiaId) return;
+  if (!materiaId) {
+    error.textContent = 'Elegí una materia de la lista.';
+    error.hidden = false;
+    return;
+  }
 
   try {
     await api.profesores.asignarMateria(profesorActivo, Number(materiaId));
@@ -362,6 +388,12 @@ async function asignarMateria(e) {
 }
 
 async function quitarMateria(materiaId) {
+  const ok = await window.uxConfirm(
+    'La materia queda sin profesor a cargo hasta que se le asigne otro.',
+    { title: 'Quitar materia', danger: true, okLabel: 'Quitar' },
+  );
+  if (!ok) return;
+
   try {
     await api.profesores.quitarMateria(materiaId);
     avisar('Materia liberada.', 'ok');
@@ -415,13 +447,6 @@ export async function iniciarAdminProfesores(id) {
     .addEventListener('click', () => abrirFormulario(null));
   document.getElementById('form-profesor').addEventListener('submit', guardar);
   document.getElementById('form-asignar').addEventListener('submit', asignarMateria);
-
-  contenedor.querySelectorAll('[data-cerrar-profesor]').forEach((b) => {
-    b.addEventListener('click', () => document.getElementById('dlg-profesor')?.close());
-  });
-  contenedor.querySelectorAll('[data-cerrar-materias]').forEach((b) => {
-    b.addEventListener('click', () => document.getElementById('dlg-materias')?.close());
-  });
 
   const form = document.getElementById('filtros-profesores');
   form.addEventListener('submit', async (e) => {

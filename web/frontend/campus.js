@@ -51,8 +51,26 @@
         return res;
     }
 
+    /**
+     * El backend responde `mensaje` cuando sale bien y `message` cuando falla
+     * (middleware/errorHandler.ts), con el detalle de validación en `details`.
+     * Los paneles leen `r.mensaje` en todos lados, así que hasta acá ningún
+     * error real llegaba a verse: "Ese email ya está registrado" salía como
+     * "No se pudo actualizar". Se copia el motivo real a `mensaje` una vez.
+     */
+    function normalizarRespuesta(data) {
+        if (data && typeof data === 'object' && !data.mensaje && data.message) {
+            const detalles = data.details
+                ? Object.values(data.details).flat().filter(Boolean)
+                : [];
+            data.mensaje = detalles.length > 0 ? detalles.join(' ') : data.message;
+        }
+        return data;
+    }
+    window.normalizarRespuesta = normalizarRespuesta;
+
     window.apiGet = function (url) {
-        return authedFetch(url).then(r => r.json());
+        return authedFetch(url).then(r => r.json()).then(normalizarRespuesta);
     };
 
     window.apiPost = function (url, body) {
@@ -60,7 +78,7 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body || {})
-        }).then(r => r.json());
+        }).then(r => r.json()).then(normalizarRespuesta);
     };
 
     window.apiPatch = function (url, body) {
@@ -68,15 +86,15 @@
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body || {})
-        }).then(r => r.json());
+        }).then(r => r.json()).then(normalizarRespuesta);
     };
 
     window.apiUpload = function (url, formData) {
-        return authedFetch(url, { method: 'POST', body: formData }).then(r => r.json());
+        return authedFetch(url, { method: 'POST', body: formData }).then(r => r.json()).then(normalizarRespuesta);
     };
 
     window.apiDelete = function (url) {
-        return authedFetch(url, { method: 'DELETE' }).then(r => r.json());
+        return authedFetch(url, { method: 'DELETE' }).then(r => r.json()).then(normalizarRespuesta);
     };
 
     window.formatFecha = function (iso) {
@@ -210,117 +228,285 @@
     document.addEventListener('DOMContentLoaded', syncThemeButton);
 
     /* ============================================================
-       Modal custom para confirm() y prompt() (reemplaza los nativos del browser)
-       ============================================================ */
-    function ensureUxModal() {
-        let modal = document.getElementById('uxModal');
-        if (modal) return modal;
-        modal = document.createElement('div');
-        modal.id = 'uxModal';
-        modal.className = 'ux-modal';
-        modal.style.display = 'none';
-        modal.innerHTML = `
-            <div class="ux-modal-content">
-                <div class="ux-modal-header">
-                    <div class="ux-modal-icon ux-info"><i class="fas fa-question"></i></div>
-                    <h3 class="ux-modal-title">Confirmar</h3>
-                </div>
-                <p class="ux-modal-message"></p>
-                <input type="text" class="ux-modal-input" style="display:none;" />
-                <div class="ux-modal-actions">
-                    <button type="button" class="ux-modal-cancel">Cancelar</button>
-                    <button type="button" class="ux-modal-ok">Aceptar</button>
-                </div>
-            </div>`;
-        document.body.appendChild(modal);
-        return modal;
+       Diálogos modales
+       ============================================================
+       Todos los modales usan el <dialog> nativo con el formato de "Editar
+       usuario". El navegador lo pone en la capa superior —por encima de
+       cualquier otro diálogo abierto, sin pelear con z-index—, encierra el foco
+       adentro y lo cierra con Escape. Lo que el nativo no hace se agrega acá:
+       cerrarlo al tocar afuera y devolver el foco a quien lo abrió.
+
+       El div #uxModal que había antes tenía z-index 5000: si se abría desde un
+       <dialog>, quedaba detrás y no se podía tocar. */
+
+    function prepararDialogo(dlg) {
+        if (!dlg || dlg._preparado) return;
+        dlg._preparado = true;
+
+        // En un <dialog> modal, un clic sobre el fondo llega con target = el
+        // propio <dialog>, porque la tarjeta lo cubre entero. Se exige además
+        // que el mousedown haya empezado afuera: si no, seleccionar texto en un
+        // campo arrastrando hasta afuera cerraba el formulario a medio llenar.
+        let empezoAfuera = false;
+        dlg.addEventListener('mousedown', (e) => { empezoAfuera = e.target === dlg; });
+        dlg.addEventListener('click', (e) => {
+            if (e.target === dlg) {
+                if (empezoAfuera) dlg.close('afuera');
+            } else if (e.target.closest && e.target.closest('[data-cerrar-dialogo]')) {
+                dlg.close('cancelar');
+            }
+            empezoAfuera = false;
+        });
+
+        dlg.addEventListener('close', () => {
+            const origen = dlg._origenFoco;
+            dlg._origenFoco = null;
+            if (origen && document.contains(origen) && typeof origen.focus === 'function') {
+                origen.focus();
+            }
+        });
     }
 
-    function openUxModal(opts) {
+    function primerCampo(dlg) {
+        return dlg.querySelector(
+            '.modal-body input:not([type="hidden"]):not([disabled]),' +
+            '.modal-body select:not([disabled]),' +
+            '.modal-body textarea:not([disabled])'
+        );
+    }
+
+    /** Abre un <dialog> (elemento o id) y enfoca su primer campo o `opciones.foco`. */
+    window.abrirDialogo = function (dlg, opciones) {
+        if (typeof dlg === 'string') dlg = document.getElementById(dlg);
+        if (!dlg) return null;
+        prepararDialogo(dlg);
+        dlg._origenFoco = document.activeElement;
+        if (!dlg.open) dlg.showModal();
+        const foco = opciones && opciones.foco ? dlg.querySelector(opciones.foco) : primerCampo(dlg);
+        if (foco) setTimeout(() => foco.focus(), 30);
+        return dlg;
+    };
+
+    window.cerrarDialogo = function (dlg) {
+        if (typeof dlg === 'string') dlg = document.getElementById(dlg);
+        if (dlg && dlg.open) dlg.close();
+    };
+
+    const ICONOS_UX = {
+        question: 'fa-circle-question',
+        info: 'fa-circle-info',
+        warning: 'fa-triangle-exclamation',
+        danger: 'fa-triangle-exclamation',
+        success: 'fa-circle-check',
+        baja: 'fa-user-slash',
+    };
+
+    function campoUx(c, i) {
+        const esc = window.escapeHtml;
+        const id = 'ux-campo-' + Date.now() + '-' + i;
+        const req = c.requerido ? ' required' : '';
+        const icono = c.icono ? '<i class="fas ' + esc(c.icono) + '" aria-hidden="true"></i> ' : '';
+        const etiqueta = '<label for="' + id + '">' + icono + esc(c.etiqueta) + (c.requerido ? ' *' : '') + '</label>';
+
+        let control;
+        if (c.tipo === 'select') {
+            control = '<select id="' + id + '" name="' + esc(c.nombre) + '" class="form-select"' + req + '>' +
+                (c.opciones || []).map(o =>
+                    '<option value="' + esc(o.valor) + '"' +
+                    (String(o.valor) === String(c.valor == null ? '' : c.valor) ? ' selected' : '') +
+                    '>' + esc(o.texto) + '</option>'
+                ).join('') +
+                '</select>';
+        } else if (c.tipo === 'textarea') {
+            control = '<textarea id="' + id + '" name="' + esc(c.nombre) + '" class="form-input" rows="3"' +
+                ' maxlength="' + (c.maxlength || 500) + '" placeholder="' + esc(c.placeholder || '') + '"' + req + '>' +
+                esc(c.valor || '') + '</textarea>';
+        } else {
+            control = '<input id="' + id + '" name="' + esc(c.nombre) + '" type="' + esc(c.tipo || 'text') + '"' +
+                ' class="form-input" value="' + esc(c.valor || '') + '" placeholder="' + esc(c.placeholder || '') + '"' +
+                (c.maxlength ? ' maxlength="' + c.maxlength + '"' : '') + req + '>';
+        }
+
+        const ayuda = c.ayuda ? '<small class="form-ayuda">' + esc(c.ayuda) + '</small>' : '';
+        return '<div class="form-group">' + etiqueta + control + ayuda + '</div>';
+    }
+
+    /**
+     * Diálogo de confirmación con el formato de la referencia. Devuelve una
+     * Promise: `null` si se cancela —con el botón, la cruz, Escape o tocando
+     * afuera— y, si se acepta, un objeto con el valor de cada campo.
+     */
+    function abrirUx(opts) {
         return new Promise((resolve) => {
-            const modal = ensureUxModal();
-            const iconEl = modal.querySelector('.ux-modal-icon');
-            const titleEl = modal.querySelector('.ux-modal-title');
-            const msgEl = modal.querySelector('.ux-modal-message');
-            const inputEl = modal.querySelector('.ux-modal-input');
-            const okBtn = modal.querySelector('.ux-modal-ok');
-            const cancelBtn = modal.querySelector('.ux-modal-cancel');
+            const esc = window.escapeHtml;
+            const dlg = document.createElement('dialog');
+            dlg.className = 'dialogo dialogo--angosto';
+            const idTitulo = 'ux-titulo-' + Date.now();
+            dlg.setAttribute('aria-labelledby', idTitulo);
 
-            const ICONS = {
-                info:    { cls: 'ux-info',    icon: 'fa-circle-info' },
-                warning: { cls: 'ux-warning', icon: 'fa-triangle-exclamation' },
-                danger:  { cls: 'ux-danger',  icon: 'fa-circle-exclamation' },
-                success: { cls: 'ux-success', icon: 'fa-circle-check' },
-                question:{ cls: 'ux-info',    icon: 'fa-question' },
-            };
-            const variant = ICONS[opts.variant || 'question'] || ICONS.question;
-            iconEl.className = 'ux-modal-icon ' + variant.cls;
-            iconEl.innerHTML = `<i class="fas ${variant.icon}"></i>`;
-            titleEl.textContent = opts.title || 'Confirmar';
-            msgEl.textContent = opts.message || '';
+            const icono = opts.icono || ICONOS_UX[opts.variante] || ICONOS_UX.question;
+            const consecuencias = opts.consecuencias && opts.consecuencias.length
+                ? '<div class="modal-consecuencias"><strong>Qué pasa si confirmás:</strong><ul>' +
+                  opts.consecuencias.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul></div>'
+                : '';
 
-            okBtn.textContent = opts.okLabel || 'Aceptar';
-            cancelBtn.textContent = opts.cancelLabel || 'Cancelar';
-            okBtn.className = 'ux-modal-ok' + (opts.danger ? ' ux-danger-btn' : '');
-            cancelBtn.style.display = opts.hideCancel ? 'none' : '';
+            dlg.innerHTML =
+                '<div class="modal-content">' +
+                    '<div class="modal-header">' +
+                        '<button type="button" class="close" data-cerrar-dialogo aria-label="Cerrar">&times;</button>' +
+                        '<h2 id="' + idTitulo + '"><i class="fas ' + esc(icono) + '" aria-hidden="true"></i> ' +
+                            esc(opts.titulo || 'Confirmar') + '</h2>' +
+                        (opts.subtitulo ? '<p class="modal-subtitle">' + esc(opts.subtitulo) + '</p>' : '') +
+                    '</div>' +
+                    '<div class="modal-body">' +
+                        '<form novalidate>' +
+                            (opts.mensaje ? '<p class="modal-mensaje">' + esc(opts.mensaje) + '</p>' : '') +
+                            (opts.campos || []).map(campoUx).join('') +
+                            consecuencias +
+                            '<p class="campo__error" role="alert" hidden></p>' +
+                            '<div class="modal-pie">' +
+                                (opts.ocultarCancelar ? '' :
+                                    '<button type="button" class="btn-cancelar" data-cerrar-dialogo>' +
+                                    esc(opts.cancelar || 'Cancelar') + '</button>') +
+                                '<button type="submit" class="' + (opts.peligro ? 'btn-peligro' : 'btn-guardar') + '">' +
+                                    (opts.okIcono ? '<i class="fas ' + esc(opts.okIcono) + '" aria-hidden="true"></i> ' : '') +
+                                    esc(opts.aceptar || 'Aceptar') +
+                                '</button>' +
+                            '</div>' +
+                        '</form>' +
+                    '</div>' +
+                '</div>';
+            document.body.appendChild(dlg);
 
-            if (opts.prompt) {
-                inputEl.style.display = '';
-                inputEl.value = opts.defaultValue || '';
-                inputEl.placeholder = opts.placeholder || '';
-                inputEl.type = opts.inputType || 'text';
-                setTimeout(() => inputEl.focus(), 60);
-            } else {
-                inputEl.style.display = 'none';
-                inputEl.value = '';
-                setTimeout(() => okBtn.focus(), 60);
-            }
+            const form = dlg.querySelector('form');
+            const error = dlg.querySelector('.campo__error');
+            let resultado = null;
 
-            modal.style.display = 'flex';
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const valores = {};
+                for (const el of form.elements) {
+                    if (el.name) valores[el.name] = typeof el.value === 'string' ? el.value.trim() : el.value;
+                }
+                // Validación propia en lugar de la del navegador: el globo nativo
+                // queda tapado por el fondo en algunos navegadores, y así el
+                // mensaje sale siempre en el mismo lugar.
+                for (const c of (opts.campos || [])) {
+                    if (c.requerido && !valores[c.nombre]) {
+                        error.textContent = c.mensajeRequerido || ('Completá "' + c.etiqueta + '".');
+                        error.hidden = false;
+                        form.elements[c.nombre].focus();
+                        return;
+                    }
+                }
+                resultado = valores;
+                dlg.close('ok');
+            });
 
-            function close(result) {
-                modal.style.display = 'none';
-                okBtn.onclick = null;
-                cancelBtn.onclick = null;
-                modal.onclick = null;
-                document.removeEventListener('keydown', onKey);
-                resolve(result);
-            }
-            function onKey(e) {
-                if (e.key === 'Escape') close(opts.prompt ? null : false);
-                else if (e.key === 'Enter' && opts.prompt) close(inputEl.value);
-            }
+            dlg.addEventListener('close', () => {
+                resolve(dlg.returnValue === 'ok' ? resultado : null);
+                // Se saca del DOM después de que se devolvió el foco.
+                setTimeout(() => dlg.remove(), 0);
+            });
 
-            okBtn.onclick = () => close(opts.prompt ? inputEl.value : true);
-            cancelBtn.onclick = () => close(opts.prompt ? null : false);
-            modal.onclick = (e) => { if (e.target === modal) close(opts.prompt ? null : false); };
-            document.addEventListener('keydown', onKey);
+            // Sin campos, el foco va al botón de aceptar; si la acción es
+            // destructiva, a Cancelar: un Enter distraído no debería borrar nada.
+            const sinCampos = !(opts.campos && opts.campos.length);
+            const foco = sinCampos ? (opts.peligro ? '.btn-cancelar' : 'button[type="submit"]') : null;
+            window.abrirDialogo(dlg, foco ? { foco } : undefined);
         });
     }
 
     window.uxConfirm = function (message, opts = {}) {
-        return openUxModal({
-            message,
-            title: opts.title || 'Confirmar',
-            variant: opts.variant || (opts.danger ? 'danger' : 'question'),
-            okLabel: opts.okLabel,
-            cancelLabel: opts.cancelLabel,
-            danger: !!opts.danger,
-        });
+        return abrirUx({
+            titulo: opts.title || 'Confirmar',
+            subtitulo: opts.subtitle,
+            mensaje: message,
+            variante: opts.variant || (opts.danger ? 'danger' : 'question'),
+            aceptar: opts.okLabel || 'Aceptar',
+            cancelar: opts.cancelLabel,
+            peligro: !!opts.danger,
+            consecuencias: opts.consecuencias,
+        }).then(r => r !== null);
     };
 
     window.uxPrompt = function (message, opts = {}) {
-        return openUxModal({
-            message,
-            title: opts.title || 'Ingresar dato',
-            variant: opts.variant || 'info',
-            prompt: true,
-            defaultValue: opts.defaultValue || '',
-            placeholder: opts.placeholder || '',
-            inputType: opts.inputType || 'text',
-            okLabel: opts.okLabel || 'Guardar',
-            cancelLabel: opts.cancelLabel,
-        });
+        return abrirUx({
+            titulo: opts.title || 'Ingresar dato',
+            subtitulo: opts.subtitle,
+            variante: opts.variant || 'info',
+            campos: [{
+                tipo: opts.multiline ? 'textarea' : (opts.inputType || 'text'),
+                nombre: 'valor',
+                // La pregunta es la etiqueta del campo: así el lector de pantalla
+                // la anuncia al entrar al campo.
+                etiqueta: opts.label || message,
+                icono: 'fa-pen',
+                valor: opts.defaultValue || '',
+                placeholder: opts.placeholder || '',
+                requerido: !!opts.required,
+            }],
+            aceptar: opts.okLabel || 'Guardar',
+            cancelar: opts.cancelLabel,
+            peligro: !!opts.danger,
+        }).then(r => (r === null ? null : r.valor));
+    };
+
+    window.uxAlert = function (message, opts = {}) {
+        return abrirUx({
+            titulo: opts.title || 'Aviso',
+            mensaje: message,
+            variante: opts.variant || 'info',
+            aceptar: opts.okLabel || 'Entendido',
+            ocultarCancelar: true,
+        }).then(() => true);
+    };
+
+    /**
+     * Baja de una entidad —alumno, profesor, curso, comprobante—. Muestra el
+     * estado a elegir, lo que implica confirmar y, si se pide, un motivo.
+     * Devuelve `null` si se cancela, o `{ estado, motivo }`.
+     */
+    window.uxBaja = function (opts = {}) {
+        const campos = [];
+        if (opts.opciones && opts.opciones.length) {
+            campos.push({
+                tipo: 'select',
+                nombre: 'estado',
+                etiqueta: opts.etiquetaEstado || 'Motivo de la baja',
+                icono: 'fa-tag',
+                opciones: opts.opciones,
+                valor: opts.valor,
+                requerido: true,
+            });
+        }
+        if (opts.pedirMotivo) {
+            campos.push({
+                tipo: 'textarea',
+                nombre: 'motivo',
+                etiqueta: opts.etiquetaMotivo || 'Detalle',
+                icono: 'fa-comment',
+                placeholder: opts.placeholderMotivo || '',
+                ayuda: opts.ayudaMotivo,
+                requerido: !!opts.motivoObligatorio,
+                mensajeRequerido: opts.mensajeMotivoObligatorio,
+            });
+        }
+        return abrirUx({
+            titulo: opts.titulo || 'Dar de baja',
+            subtitulo: opts.subtitulo,
+            mensaje: opts.mensaje,
+            variante: 'baja',
+            icono: opts.icono || 'fa-user-slash',
+            campos,
+            consecuencias: opts.consecuencias,
+            aceptar: opts.aceptar || 'Dar de baja',
+            okIcono: opts.okIcono || 'fa-ban',
+            peligro: opts.peligro !== false,
+        }).then(r => (r === null ? null : {
+            estado: r.estado == null ? null : r.estado,
+            motivo: r.motivo == null ? '' : r.motivo,
+        }));
     };
 
     /* ============================================================
@@ -354,16 +540,6 @@
         });
     });
     _mo.observe(document.documentElement, { childList: true, subtree: true });
-
-    window.uxAlert = function (message, opts = {}) {
-        return openUxModal({
-            message,
-            title: opts.title || 'Aviso',
-            variant: opts.variant || 'info',
-            okLabel: opts.okLabel || 'Entendido',
-            hideCancel: true,
-        });
-    };
 
     /* ============================================================
        Socket.io para tiempo real (chat + bell)
