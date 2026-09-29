@@ -25,6 +25,9 @@ const seleccionListado = {
   email: true,
   estado: true,
   fechaIngreso: true,
+  // Las notas y la asistencia del primer sprint van contra la cuenta del
+  // campus del alumno: el formulario de notas la necesita para calificarlo.
+  userId: true,
   curso: {
     select: {
       id: true,

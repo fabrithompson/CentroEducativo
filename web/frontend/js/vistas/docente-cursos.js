@@ -31,6 +31,17 @@ async function resolverPerfil() {
   return perfil;
 }
 
+/**
+ * Materias activas a cargo del docente de la sesión. Las usa también el
+ * formulario de notas, que antes tenía una lista escrita a mano que no
+ * coincidía con las materias cargadas.
+ */
+export async function materiasDelDocente() {
+  const p = await resolverPerfil();
+  if (!p) return [];
+  return (p.profesor?.materias ?? p.materias ?? []).filter((m) => m.activo !== false);
+}
+
 function sinFicha() {
   return `
     <div class="estado estado--vacio">
@@ -173,4 +184,4 @@ export async function iniciarCursosDocente(idContenedor = 'vista-mis-cursos') {
   engancharEventos(contenedor);
 }
 
-export default { iniciarCursosDocente };
+export default { iniciarCursosDocente, materiasDelDocente };

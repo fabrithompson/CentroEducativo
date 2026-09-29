@@ -112,61 +112,56 @@
 
         <main class="main-content" id="contenido-principal" tabindex="-1">
             <section id="calificaciones" class="view-section active">
-                <h3 class="section-title">Registro Oficial de Calificaciones (RF-8)</h3>
+                <h3 class="section-title">Registro de calificaciones</h3>
                 <div class="form-layout">
-                    <form onsubmit="registrarNota(event)">
+                    <form id="formNota" onsubmit="registrarNota(event)">
+                        <p id="notaSinMaterias" class="campo__error" role="status" hidden>
+                            Todavía no tenés materias a cargo. Administración las asigna desde el panel de gestión;
+                            mientras tanto no se pueden cargar notas.
+                        </p>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="notaNivel">Nivel Educativo</label>
-                                <select id="notaNivel" class="form-select" required onchange="actualizarMateriasCalificación()">
-                                    <option value="">Seleccione Nivel...</option>
-                                    <option value="inicial">Nivel Inicial (Jardín)</option>
-                                    <option value="primario">Nivel Primario</option>
-                                    <option value="secundario">Nivel Secundario</option>
+                                <label for="notaMateria">Materia</label>
+                                <select id="notaMateria" class="form-select" required onchange="cargarAlumnosDeMateria()">
+                                    <option value="">Cargando tus materias...</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="notaMateria">Materia</label>
-                                <select id="notaMateria" class="form-select" required>
-                                    <option value="">Seleccione Asignatura...</option>
+                                <label for="notaAlumno">Alumno</label>
+                                <select id="notaAlumno" class="form-select" required disabled>
+                                    <option value="">Elegí primero la materia</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="notaAlumno">Alumno</label>
-                                <select id="notaAlumno" class="form-select" required>
-                                    <option value="">Cargando estudiantes...</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="notaInstancia">Instancia de Evaluación</label>
+                                <label for="notaInstancia">Instancia de evaluación</label>
                                 <select id="notaInstancia" class="form-select" required>
-                                    <option value="">Seleccione Período...</option>
+                                    <option value="">Elegí la instancia...</option>
                                     <option value="1er Trimestre">1er Trimestre</option>
                                     <option value="2do Trimestre">2do Trimestre</option>
                                     <option value="3er Trimestre">3er Trimestre</option>
                                     <option value="Examen Libre">Examen Libre</option>
                                 </select>
                             </div>
+                            <div class="form-group">
+                                <label for="notaValor">Nota (1 a 10)</label>
+                                <input type="number" id="notaValor" class="form-input" min="1" max="10" step="1" placeholder="Ej: 8" required>
+                            </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Nota Numérica (1 al 10)</label>
-                                <input type="number" id="notaValor" class="form-input" min="1" max="10" placeholder="Ej: 8" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="notaFecha">Fecha de Registro</label>
+                                <label for="notaFecha">Fecha de la evaluación</label>
                                 <input type="date" id="notaFecha" class="form-input" required>
                             </div>
                         </div>
                         <div style="text-align: right; margin-top: 10px;">
-                            <button type="submit" class="btn-action"><i class="fas fa-save"></i> Guardar Calificación</button>
+                            <button type="submit" class="btn-action" id="notaGuardar"><i class="fas fa-save" aria-hidden="true"></i> Guardar calificación</button>
                         </div>
                     </form>
                 </div>
 
-                <h4 style="color: #475569; font-size: 1.1rem; margin-top: 35px; margin-bottom: 15px;">Últimas Notas Asentadas</h4>
+                <h4 style="color: #475569; font-size: 1.1rem; margin-top: 35px; margin-bottom: 15px;">Últimas notas que cargaste</h4>
                 <table class="data-table" id="tablaNotasHistorial">
                     <thead>
                         <tr>
@@ -175,6 +170,7 @@
                             <th>Instancia</th>
                             <th>Nota</th>
                             <th>Fecha</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -364,29 +360,6 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="campus.js"></script>
     <script>
-        const mapaMaterias = {
-            inicial: [
-                { nombre: "Estimulación Temprana", horario: "Lunes a Viernes — 08:00 a 09:00" },
-                { nombre: "Juegos de Integración", horario: "Lunes a Viernes — 09:00 a 10:00" },
-                { nombre: "Música y Expresión Corporal", horario: "Martes y Jueves — 10:15 a 11:00" },
-                { nombre: "Arte y Plástica", horario: "Lunes y Miércoles — 10:15 a 11:00" },
-                { nombre: "Iniciación a la Lectoescritura", horario: "Lunes a Viernes — 11:15 a 12:00" }
-            ],
-            primario: [
-                { nombre: "Matemáticas", horario: "Lunes a Viernes — 08:00 a 09:30" },
-                { nombre: "Prácticas del Lenguaje", horario: "Lunes a Viernes — 09:30 a 11:00" },
-                { nombre: "Ciencias Naturales", horario: "Martes y Jueves — 11:15 a 12:45" },
-                { nombre: "Ciencias Sociales", horario: "Lunes y Miércoles — 11:15 a 12:45" }
-            ],
-            secundario: [
-                { nombre: "Álgebra y Geometría", horario: "Lunes y Miércoles — 07:30 a 09:30" },
-                { nombre: "Literatura", horario: "Lunes y Miércoles — 09:45 a 11:45" },
-                { nombre: "Física", horario: "Martes y Jueves — 07:30 a 09:30" },
-                { nombre: "Química", horario: "Martes y Jueves — 09:45 a 11:45" },
-                { nombre: "Metodología de Sistemas I", horario: "Viernes — 08:00 a 12:00" }
-            ]
-        };
-
         document.addEventListener('DOMContentLoaded', () => {
             const user = JSON.parse(localStorage.getItem('usuarioActual'));
             if (!user || (user.tipo !== 'docente' && user.tipo !== 'autoridad' && user.tipo !== 'personal')) {
@@ -397,7 +370,7 @@
             document.getElementById('notaFecha').valueAsDate = new Date();
             const hoy = new Date();
             document.getElementById('asistenciaFecha').textContent = hoy.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            cargarEstudiantes();
+            cargarMateriasDocente();
             cargarHistorialNotas();
             cargarAsistencia();
             window.initBell();
@@ -409,27 +382,6 @@
             window.restaurarVista();
         });
 
-        function cargarEstudiantes() {
-            const select = document.getElementById('notaAlumno');
-            fetch('/api/students', { headers: authHeaders() })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.exito) {
-                        select.innerHTML = `<option value="">${data.mensaje || 'Sin permisos.'}</option>`;
-                        return;
-                    }
-                    select.innerHTML = '<option value="">Seleccione Estudiante...</option>';
-                    data.estudiantes.forEach(e => {
-                        const label = e.curso ? `${e.nombre} (${e.curso}) — DNI ${e.dni}` : `${e.nombre} — DNI ${e.dni}`;
-                        select.innerHTML += `<option value="${e.id}">${label}</option>`;
-                    });
-                })
-                .catch(err => {
-                    console.error(err);
-                    select.innerHTML = '<option value="">Error al cargar estudiantes.</option>';
-                });
-        }
-
         function switchView(viewId, element) {
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
@@ -438,66 +390,157 @@
             window.recordarVista(viewId);
         }
 
-        function actualizarMateriasCalificación() {
-            const nivel = document.getElementById('notaNivel').value;
-            const selectMateria = document.getElementById('notaMateria');
-            selectMateria.innerHTML = '<option value="">Seleccione Asignatura...</option>';
-            if(nivel && mapaMaterias[nivel]) {
-                mapaMaterias[nivel].forEach(m => {
-                    selectMateria.innerHTML += `<option value="${m.nombre}">${m.nombre}</option>`;
+        const INSTANCIAS = ['1er Trimestre', '2do Trimestre', '3er Trimestre', 'Examen Libre'];
+        let _materiasDocente = [];
+        let _notas = [];
+
+        // Las materias del formulario son las que el docente tiene a cargo —las
+        // mismas de "Mis cursos y materias"—, no una lista escrita a mano.
+        async function cargarMateriasDocente() {
+            const select = document.getElementById('notaMateria');
+            const esc = window.escapeHtml;
+            try {
+                _materiasDocente = await window.materiasDelDocente();
+            } catch (err) {
+                select.innerHTML = '<option value="">No se pudieron cargar tus materias</option>';
+                return;
+            }
+            if (_materiasDocente.length === 0) {
+                select.innerHTML = '<option value="">No tenés materias a cargo</option>';
+                select.disabled = true;
+                document.getElementById('notaSinMaterias').hidden = false;
+                document.getElementById('notaGuardar').disabled = true;
+                return;
+            }
+            select.innerHTML = '<option value="">Elegí una materia...</option>' + _materiasDocente.map(m =>
+                `<option value="${m.id}">${esc(m.nombre)} — ${esc(m.curso.nivel.nombre)} · ${esc(m.curso.nombre)} "${esc(m.curso.division)}"</option>`
+            ).join('');
+        }
+
+        // Elegida la materia se conoce el curso: el alumno sale de ese curso.
+        async function cargarAlumnosDeMateria() {
+            const materia = _materiasDocente.find(m => String(m.id) === document.getElementById('notaMateria').value);
+            const select = document.getElementById('notaAlumno');
+            const esc = window.escapeHtml;
+            select.disabled = true;
+            if (!materia) {
+                select.innerHTML = '<option value="">Elegí primero la materia</option>';
+                return;
+            }
+            select.innerHTML = '<option value="">Cargando alumnos...</option>';
+            const data = await window.apiGet('/api/alumnos?cursoId=' + materia.curso.id + '&estado=ACTIVO&pageSize=100');
+            const alumnos = data.items || [];
+            if (alumnos.length === 0) {
+                select.innerHTML = '<option value="">El curso no tiene alumnos activos</option>';
+                return;
+            }
+            // La nota se guarda contra la cuenta del campus del alumno: uno que
+            // todavía no tiene cuenta aparece, pero no se puede elegir.
+            select.innerHTML = '<option value="">Elegí un alumno...</option>' + alumnos.map(a => a.userId
+                ? `<option value="${a.userId}">${esc(a.apellido)}, ${esc(a.nombres)} (${esc(a.legajo)})</option>`
+                : `<option value="" disabled>${esc(a.apellido)}, ${esc(a.nombres)} — sin cuenta en el campus</option>`
+            ).join('');
+            select.disabled = false;
+        }
+
+        async function registrarNota(e) {
+            e.preventDefault();
+            const boton = document.getElementById('notaGuardar');
+            boton.disabled = true;
+            try {
+                const res = await window.apiPost('/api/grades', {
+                    estudiante_id: Number(document.getElementById('notaAlumno').value),
+                    materiaId: Number(document.getElementById('notaMateria').value),
+                    instancia_evaluacion: document.getElementById('notaInstancia').value,
+                    nota: Number(document.getElementById('notaValor').value),
+                    fecha: document.getElementById('notaFecha').value,
                 });
+                if (res.exito) {
+                    toastSuccess('Calificación guardada.');
+                    // Materia, instancia y fecha quedan: lo habitual es cargar la
+                    // misma evaluación para varios alumnos seguidos.
+                    document.getElementById('notaValor').value = '';
+                    document.getElementById('notaAlumno').value = '';
+                    document.getElementById('notaAlumno').focus();
+                    cargarHistorialNotas(res.id);
+                } else {
+                    toastError(res.mensaje || 'No se pudo guardar la nota.');
+                }
+            } finally {
+                boton.disabled = false;
             }
         }
 
-        function registrarNota(e) {
-            e.preventDefault();
-            const datosNota = {
-                estudiante_id: document.getElementById('notaAlumno').value,
-                materia: document.getElementById('notaMateria').value,
-                instancia_evaluacion: document.getElementById('notaInstancia').value,
-                nota: document.getElementById('notaValor').value,
-                fecha: document.getElementById('notaFecha').value
-            };
-            fetch('/api/grades', {
-                method: 'POST',
-                headers: authHeaders(),
-                body: JSON.stringify(datosNota)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.exito) {
-                    toastSuccess('¡Calificación guardada correctamente!');
-                    document.getElementById('notaValor').value = '';
-                    cargarHistorialNotas();
-                } else {
-                    toastError(data.mensaje || 'No se pudo guardar la nota.');
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                toastError('Error al conectar con el servidor.');
-            });
+        async function cargarHistorialNotas(idNueva) {
+            const tbody = document.querySelector('#tablaNotasHistorial tbody');
+            const esc = window.escapeHtml;
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Cargando...</td></tr>';
+            const data = await window.apiGet('/api/grades/mine');
+            if (!data.exito) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#b91c1c;">No se pudo cargar el historial.</td></tr>';
+                return;
+            }
+            _notas = data.notas || [];
+            if (_notas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Aún no cargaste calificaciones.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = _notas.map(n => `
+                <tr${n.id === idNueva ? ' style="background:#ecfdf5;"' : ''}>
+                    <td>${esc(n.alumno)}</td>
+                    <td>${esc(n.materia)}</td>
+                    <td>${esc(n.instancia_evaluacion)}</td>
+                    <td><b>${esc(n.nota)}</b></td>
+                    <td>${window.formatFecha(n.fecha)}</td>
+                    <td>
+                        <div class="acciones-fila">
+                            <button type="button" class="btn btn--chico btn--suave" onclick="editarNota(${n.id})" aria-label="Editar la nota de ${esc(n.alumno)}"><i class="fas fa-pen" aria-hidden="true"></i> Editar</button>
+                            <button type="button" class="btn btn--chico btn--peligro" onclick="borrarNota(${n.id})" aria-label="Borrar la nota de ${esc(n.alumno)}"><i class="fas fa-trash" aria-hidden="true"></i> Borrar</button>
+                        </div>
+                    </td>
+                </tr>`).join('');
         }
 
-        function cargarHistorialNotas() {
-            const tbody = document.querySelector('#tablaNotasHistorial tbody');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b;">Cargando...</td></tr>';
-            fetch('/api/grades/mine', { headers: authHeaders() })
-                .then(res => res.json())
-                .then(data => {
-                    tbody.innerHTML = '';
-                    if (!data.exito || !data.notas || data.notas.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b;">Aún no cargaste calificaciones.</td></tr>';
-                        return;
-                    }
-                    data.notas.forEach(n => {
-                        tbody.innerHTML += `<tr><td>${n.alumno}</td><td>${n.materia}</td><td>${n.instancia_evaluacion}</td><td><b>${n.nota}</b></td><td>${n.fecha}</td></tr>`;
-                    });
-                })
-                .catch(err => {
-                    console.error(err);
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#c0392b;">Error al cargar el historial.</td></tr>';
-                });
+        // Se corrige nota, instancia o fecha. Alumno y materia no: eso es otra nota.
+        async function editarNota(id) {
+            const n = _notas.find(x => x.id === id);
+            if (!n) return;
+            const instancias = INSTANCIAS.includes(n.instancia_evaluacion) ? INSTANCIAS : [n.instancia_evaluacion, ...INSTANCIAS];
+            const r = await window.uxFormulario({
+                titulo: 'Editar calificación',
+                subtitulo: n.alumno + ' · ' + n.materia,
+                icono: 'fa-pen-to-square',
+                campos: [
+                    { nombre: 'nota', tipo: 'number', etiqueta: 'Nota (1 a 10)', icono: 'fa-star', valor: String(n.nota), requerido: true, min: 1, max: 10, step: 1 },
+                    { nombre: 'instancia_evaluacion', tipo: 'select', etiqueta: 'Instancia de evaluación', icono: 'fa-list-check', valor: n.instancia_evaluacion, requerido: true, opciones: instancias.map(i => ({ valor: i, texto: i })) },
+                    { nombre: 'fecha', tipo: 'date', etiqueta: 'Fecha de la evaluación', icono: 'fa-calendar', valor: n.fecha, requerido: true },
+                ],
+                aceptar: 'Guardar cambios',
+                okIcono: 'fa-floppy-disk',
+            });
+            if (!r) return;
+            const res = await window.apiPatch('/api/grades/' + id, {
+                nota: Number(r.nota),
+                instancia_evaluacion: r.instancia_evaluacion,
+                fecha: r.fecha,
+            });
+            if (res.exito) { toastSuccess('Calificación actualizada.'); cargarHistorialNotas(id); }
+            else toastError(res.mensaje || 'No se pudo actualizar la calificación.');
+        }
+
+        async function borrarNota(id) {
+            const n = _notas.find(x => x.id === id);
+            const ok = await window.uxConfirm('Vas a borrar esta calificación.', {
+                title: 'Borrar calificación',
+                subtitle: n ? n.alumno + ' · ' + n.materia + ' · ' + n.instancia_evaluacion + ': ' + n.nota : '',
+                danger: true,
+                okLabel: 'Borrar',
+                consecuencias: ['Deja de figurar en el boletín del alumno y en el de su familia. No se puede deshacer.'],
+            });
+            if (!ok) return;
+            const res = await window.apiDelete('/api/grades/' + id);
+            if (res.exito) { toastSuccess('Calificación borrada.'); cargarHistorialNotas(); }
+            else toastError(res.mensaje || 'No se pudo borrar la calificación.');
         }
 
         async function cargarAsistencia() {
@@ -610,8 +653,8 @@
                         </div>
                         <div class="campus-card-body">${window.escapeHtml(a.contenido)}</div>
                         ${a.puedeEditar ? `<div style="display:flex; gap:8px; margin-top:10px;">
-                            <button class="btn-secondary" onclick="editarComunicado(${a.id})"><i class="fas fa-pen" aria-hidden="true"></i> Editar</button>
-                            <button class="btn-danger" onclick="borrarComunicado(${a.id})"><i class="fas fa-trash" aria-hidden="true"></i> Borrar</button>
+                            <button type="button" class="btn btn--chico btn--suave" onclick="editarComunicado(${a.id})"><i class="fas fa-pen" aria-hidden="true"></i> Editar</button>
+                            <button type="button" class="btn btn--chico btn--peligro" onclick="borrarComunicado(${a.id})"><i class="fas fa-trash" aria-hidden="true"></i> Borrar</button>
                         </div>` : ''}
                     </div>
                 `).join('');
@@ -894,9 +937,10 @@
     </script>
 
 <script type="module">
-  import { iniciarCursosDocente } from './js/vistas/docente-cursos.js';
+  import { iniciarCursosDocente, materiasDelDocente } from './js/vistas/docente-cursos.js';
   // Se expone en window porque la navegación del panel usa onclick inline.
   window.abrirMisCursos = () => iniciarCursosDocente('vista-mis-cursos');
+  window.materiasDelDocente = materiasDelDocente;
 </script>
 
 <script type="module">

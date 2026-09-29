@@ -418,8 +418,11 @@
                 esc(c.valor || '') + '</textarea>';
         } else {
             control = '<input id="' + id + '" name="' + esc(c.nombre) + '" type="' + esc(c.tipo || 'text') + '"' +
-                ' class="form-input" value="' + esc(c.valor || '') + '" placeholder="' + esc(c.placeholder || '') + '"' +
-                (c.maxlength ? ' maxlength="' + c.maxlength + '"' : '') + req + '>';
+                ' class="form-input" value="' + esc(c.valor == null ? '' : c.valor) + '" placeholder="' + esc(c.placeholder || '') + '"' +
+                (c.maxlength ? ' maxlength="' + c.maxlength + '"' : '') +
+                (c.min != null ? ' min="' + esc(c.min) + '"' : '') +
+                (c.max != null ? ' max="' + esc(c.max) + '"' : '') +
+                (c.step != null ? ' step="' + esc(c.step) + '"' : '') + req + '>';
         }
 
         const ayuda = c.ayuda ? '<small class="form-ayuda">' + esc(c.ayuda) + '</small>' : '';
@@ -487,10 +490,19 @@
                 // queda tapado por el fondo en algunos navegadores, y así el
                 // mensaje sale siempre en el mismo lugar.
                 for (const c of (opts.campos || [])) {
+                    const el = form.elements[c.nombre];
                     if (c.requerido && !valores[c.nombre]) {
                         error.textContent = c.mensajeRequerido || ('Completá "' + c.etiqueta + '".');
                         error.hidden = false;
-                        form.elements[c.nombre].focus();
+                        el.focus();
+                        return;
+                    }
+                    // Mínimo, máximo y formato de cada campo (por ejemplo, una
+                    // nota fuera de 1 a 10), con el mensaje del navegador.
+                    if (el && el.checkValidity && !el.checkValidity()) {
+                        error.textContent = c.etiqueta + ': ' + el.validationMessage;
+                        error.hidden = false;
+                        el.focus();
                         return;
                     }
                 }
@@ -511,6 +523,13 @@
             window.abrirDialogo(dlg, foco ? { foco } : undefined);
         });
     }
+
+    /**
+     * Formulario en un diálogo, para ediciones de pocos campos. `campos`:
+     * `{ nombre, etiqueta, tipo, valor, requerido, opciones, min, max, step,
+     * maxlength, icono }`. Devuelve `null` si se cancela o los valores.
+     */
+    window.uxFormulario = abrirUx;
 
     window.uxConfirm = function (message, opts = {}) {
         return abrirUx({

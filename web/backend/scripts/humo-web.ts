@@ -349,6 +349,70 @@ async function main() {
     afirmar(borradoAjeno.status === 403, 'REGLA: otro docente tampoco puede borrarlo');
     const borrado = await pedir('DELETE', `/api/announcements/${idAnuncio}`, { token: lopezOtraVez.token });
     afirmar(borrado.status === 200 && !(await titulosDe(admin.token)).some((t) => t.startsWith('Reunión de padres de humo')), 'su autora lo borra');
+
+    // ------------------------------------------------------------------
+    console.log('\n=== Notas: materias reales, editar y borrar ===');
+    // Una materia de mlopez con algún alumno que tenga cuenta en el campus.
+    const profesores = (await comoAdmin('GET', '/api/profesores?pageSize=100')).cuerpo.items as Cuerpo[];
+    const fichaLopez = profesores.find((x) => x.userId === idLopez)!;
+    const perfilLopez = (await comoAdmin('GET', `/api/profesores/${fichaLopez.id}`)).cuerpo;
+    const materiasLopez = ((perfilLopez.profesor ?? perfilLopez).materias as Cuerpo[]).filter((m) => m.activo);
+    let materiaLopez: Cuerpo | undefined;
+    let alumnoConCuenta: Cuerpo | undefined;
+    for (const m of materiasLopez) {
+      const delCursoM = (await comoAdmin('GET', `/api/alumnos?cursoId=${m.curso.id}&estado=ACTIVO&pageSize=100`)).cuerpo.items as Cuerpo[];
+      alumnoConCuenta = delCursoM.find((a) => a.userId);
+      if (alumnoConCuenta) { materiaLopez = m; break; }
+    }
+    afirmar(Boolean(materiaLopez && alumnoConCuenta), 'mlopez tiene una materia con alumnos que tienen cuenta', materiasLopez.map((m) => m.nombre));
+
+    const nuevaNota = await pedir('POST', '/api/grades', {
+      token: lopezOtraVez.token,
+      body: { estudiante_id: alumnoConCuenta!.userId, materiaId: materiaLopez!.id, instancia_evaluacion: '1er Trimestre', nota: 7, fecha: '2026-09-29' },
+    });
+    const idNota = nuevaNota.cuerpo.id as number;
+    afirmar(nuevaNota.status === 200 && Boolean(idNota), 'mlopez carga una nota en su materia y la respuesta trae el id', nuevaNota.cuerpo);
+
+    const mias = (await pedir('GET', '/api/grades/mine', { token: lopezOtraVez.token })).cuerpo.notas as Cuerpo[];
+    const guardada = mias.find((n) => n.id === idNota);
+    afirmar(guardada?.materia === materiaLopez!.nombre, 'se guarda con el nombre exacto de la materia', guardada);
+
+    const sinMateria = await pedir('POST', '/api/grades', {
+      token: lopezOtraVez.token,
+      body: { estudiante_id: alumnoConCuenta!.userId, materia: 'Cualquier cosa', instancia_evaluacion: '1er Trimestre', nota: 7, fecha: '2026-09-29' },
+    });
+    afirmar(sinMateria.status === 400, 'REGLA: un docente ya no puede inventar el nombre de la materia', sinMateria.cuerpo);
+
+    const materiaAjena = (await comoAdmin('GET', '/api/academico/materias')).cuerpo.materias as Cuerpo[];
+    const deOtro = materiaAjena.find((m) => m.profesor && m.profesor.id !== fichaLopez.id && m.activo);
+    const ajenaNota = await pedir('POST', '/api/grades', {
+      token: lopezOtraVez.token,
+      body: { estudiante_id: alumnoConCuenta!.userId, materiaId: deOtro!.id, instancia_evaluacion: '1er Trimestre', nota: 7, fecha: '2026-09-29' },
+    });
+    afirmar(ajenaNota.status === 403, 'REGLA: no puede calificar una materia que no tiene a cargo', ajenaNota.cuerpo);
+
+    const fueraRango = await pedir('PATCH', `/api/grades/${idNota}`, { token: lopezOtraVez.token, body: { nota: 11 } });
+    afirmar(fueraRango.status === 400, 'una nota fuera de 1 a 10 se rechaza');
+
+    const editadaAjena = await pedir('PATCH', `/api/grades/${idNota}`, { token: garcia.token, body: { nota: 2 } });
+    afirmar(editadaAjena.status === 403, 'REGLA: otro docente no puede editar la nota', editadaAjena.cuerpo);
+
+    const editada = await pedir('PATCH', `/api/grades/${idNota}`, {
+      token: lopezOtraVez.token,
+      body: { nota: 9, instancia_evaluacion: '2do Trimestre' },
+    });
+    afirmar(editada.status === 200 && editada.cuerpo.nota?.nota === 9, 'quien la cargó la corrige', editada.cuerpo);
+
+    const usuarioAlumno = (await comoAdmin('GET', `/api/admin/users?q=`)).cuerpo.usuarios.find((u: Cuerpo) => u.id === alumnoConCuenta!.userId)?.usuario;
+    const alumnoSesion = await ingresar(usuarioAlumno);
+    const boletin = (await pedir('GET', `/api/grades?estudiante_id=${alumnoConCuenta!.userId}`, { token: alumnoSesion.token })).cuerpo.notas as Cuerpo[];
+    afirmar(boletin.some((n) => n.id === idNota && n.nota === 9 && n.instancia_evaluacion === '2do Trimestre'), 'y el alumno ve la nota corregida en su boletín');
+
+    const borradaAjena = await pedir('DELETE', `/api/grades/${idNota}`, { token: garcia.token });
+    afirmar(borradaAjena.status === 403, 'REGLA: otro docente no puede borrarla');
+    const borradaNota = await pedir('DELETE', `/api/grades/${idNota}`, { token: lopezOtraVez.token });
+    const tras = (await pedir('GET', '/api/grades/mine', { token: lopezOtraVez.token })).cuerpo.notas as Cuerpo[];
+    afirmar(borradaNota.status === 200 && !tras.some((n) => n.id === idNota), 'quien la cargó la borra');
   } finally {
     server?.close();
     // Sin esto, apagar PostgreSQL con conexiones abiertas en el pool llena la

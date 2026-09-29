@@ -243,7 +243,7 @@
                     return;
                 }
                 data.notas.forEach(n => {
-                    tbody.innerHTML += `<tr><td>${n.materia}</td><td>${n.instancia_evaluacion}</td><td><b>${n.nota}</b></td><td>${n.fecha}</td></tr>`;
+                    tbody.innerHTML += `<tr><td>${window.escapeHtml(n.materia)}</td><td>${window.escapeHtml(n.instancia_evaluacion)}</td><td><b>${window.escapeHtml(n.nota)}</b></td><td>${window.formatFecha(n.fecha)}</td></tr>`;
                 });
             })
             .catch(err => {
@@ -255,7 +255,7 @@
         function registrarExamenLibre(e) {
             e.preventDefault();
             const materia = document.getElementById('selectLibre').value;
-            document.querySelector('#tablaLibres tbody').innerHTML += `<tr><td>${materia}</td><td><span style="color:#f39c12; font-weight:bold;">Pendiente de Aprobación por Bedelía</span></td></tr>`;
+            document.querySelector('#tablaLibres tbody').innerHTML += `<tr><td>${window.escapeHtml(materia)}</td><td><span style="color:#f39c12; font-weight:bold;">Pendiente de Aprobación por Bedelía</span></td></tr>`;
             document.getElementById('selectLibre').selectedIndex = 0;
             toastSuccess('Solicitud de examen libre enviada correctamente.');
         }

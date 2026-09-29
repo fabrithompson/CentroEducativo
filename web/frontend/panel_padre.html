@@ -348,7 +348,7 @@
                     : `<td style="text-align:center;"><b style="color:${Number(v)>=7?'#10b981':Number(v)>=4?'#f59e0b':'#ef4444'};">${v}</b></td>`;
                 tbodyAgr.innerHTML += `
                     <tr>
-                        <td><b>${materia}</b></td>
+                        <td><b>${window.escapeHtml(materia)}</b></td>
                         ${tdNota(porTrim[0])}
                         ${tdNota(porTrim[1])}
                         ${tdNota(porTrim[2])}
@@ -361,7 +361,7 @@
             // Historial completo
             tbody.innerHTML = '';
             notas.forEach(n => {
-                tbody.innerHTML += `<tr><td>${n.materia}</td><td>${n.instancia_evaluacion}</td><td><b style="color:${Number(n.nota)>=7?'#10b981':Number(n.nota)>=4?'#f59e0b':'#ef4444'};">${n.nota}</b></td><td>${n.fecha}</td><td>${n.nombre_docente}</td></tr>`;
+                tbody.innerHTML += `<tr><td>${window.escapeHtml(n.materia)}</td><td>${window.escapeHtml(n.instancia_evaluacion)}</td><td><b style="color:${Number(n.nota)>=7?'#10b981':Number(n.nota)>=4?'#f59e0b':'#ef4444'};">${window.escapeHtml(n.nota)}</b></td><td>${window.formatFecha(n.fecha)}</td><td>${window.escapeHtml(n.nombre_docente)}</td></tr>`;
             });
         }
 
@@ -388,12 +388,12 @@
                     <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.04); transition: transform 0.15s;">
                         <div style="background:${color}; color:#fff; padding:14px 16px; display:flex; align-items:center; gap:10px;">
                             <i class="fas fa-book" style="font-size:1.2rem;"></i>
-                            <strong style="flex:1;">${materia}</strong>
+                            <strong style="flex:1;">${window.escapeHtml(materia)}</strong>
                         </div>
                         <div style="padding:14px 16px;">
                             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                                 <span style="color:#64748b; font-size:0.85rem;">Docente</span>
-                                <span style="font-weight:600;">${docente}</span>
+                                <span style="font-weight:600;">${window.escapeHtml(docente)}</span>
                             </div>
                             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                                 <span style="color:#64748b; font-size:0.85rem;">Evaluaciones</span>
@@ -401,7 +401,7 @@
                             </div>
                             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                                 <span style="color:#64748b; font-size:0.85rem;">Última nota</span>
-                                <span style="font-weight:600;">${ultima.nota} (${ultima.instancia_evaluacion})</span>
+                                <span style="font-weight:600;">${window.escapeHtml(ultima.nota)} (${window.escapeHtml(ultima.instancia_evaluacion)})</span>
                             </div>
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid #f1f5f9;">
                                 <span style="color:#64748b; font-size:0.85rem;">Promedio</span>
