@@ -830,8 +830,8 @@
                 <div class="chat-main-header"><i class="fas fa-user"></i> ${window.escapeHtml(data.contacto.nombre)} <span style="font-size:0.8rem; color:#94a3b8; font-weight:normal;">(${ROLE_LABEL[data.contacto.role]})</span></div>
                 <div class="chat-messages" id="chatMessages">${msgsHtml || '<div class="chat-empty">Sin mensajes — escribí el primero</div>'}</div>
                 <form class="chat-composer" onsubmit="enviarMensaje(event)">
-                    <textarea id="chatInput" rows="2" placeholder="Escribí tu mensaje..." required></textarea>
-                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                    <textarea id="chatInput" rows="2" aria-label="Mensaje" placeholder="Escribí tu mensaje · Enter para enviar, Shift+Enter para otra línea" required></textarea>
+                    <button type="submit" aria-label="Enviar mensaje"><i class="fas fa-paper-plane" aria-hidden="true"></i></button>
                 </form>
             `;
             const mEl = document.getElementById('chatMessages');
@@ -839,18 +839,27 @@
             window.refreshBell();
         }
 
+        let enviandoMensaje = false;
+
         async function enviarMensaje(e) {
             e.preventDefault();
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
-            if (!text || !currentChatId) return;
-            const res = await window.apiPost('/api/messages', { receiverId: currentChatId, contenido: text });
-            if (res.exito) {
-                input.value = '';
-                openChat(currentChatId);
-                cargarContactos();
-            } else {
-                toastError(res.mensaje || 'No se pudo enviar.');
+            if (!text || !currentChatId || enviandoMensaje) return;
+            enviandoMensaje = true;
+            try {
+                const res = await window.apiPost('/api/messages', { receiverId: currentChatId, contenido: text });
+                if (res.exito) {
+                    input.value = '';
+                    await openChat(currentChatId);
+                    const nuevo = document.getElementById('chatInput');
+                    if (nuevo) nuevo.focus();
+                    cargarContactos();
+                } else {
+                    toastError(res.mensaje || 'No se pudo enviar.');
+                }
+            } finally {
+                enviandoMensaje = false;
             }
         }
 

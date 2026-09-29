@@ -637,6 +637,22 @@
     _mo.observe(document.documentElement, { childList: true, subtree: true });
 
     /* ============================================================
+       Mensajes: Enter envía, Shift+Enter agrega un salto de línea
+       ============================================================ */
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' || e.shiftKey || e.altKey) return;
+        // Mientras se compone un carácter (acentos con tecla muerta, IME),
+        // Enter lo confirma: no tiene que mandar el mensaje a medio escribir.
+        if (e.isComposing || e.keyCode === 229) return;
+        const ta = e.target;
+        if (!(ta instanceof HTMLTextAreaElement) || !ta.form || !ta.closest('.chat-composer')) return;
+        e.preventDefault();
+        if (!ta.value.trim()) return;
+        if (ta.form.requestSubmit) ta.form.requestSubmit();
+        else ta.form.querySelector('[type="submit"]').click();
+    });
+
+    /* ============================================================
        Socket.io para tiempo real (chat + bell)
        ============================================================ */
     let _socket = null;

@@ -92,49 +92,93 @@ document.addEventListener('DOMContentLoaded', () => {
 // 2. GESTIÓN DE MODALES
 // ==========================================
 
-function openLoginModal() {
-    const modal = document.getElementById('loginModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
+// Al abrir un modal el foco entra a su primer campo. Antes quedaba en el
+// enlace que lo abrió: lo que se tipeaba no iba a ningún lado, Tab recorría
+// la página de atrás, y Enter volvía a abrir el modal en vez de ingresar.
+let origenFocoModal = null;
+let clicEmpezoAfuera = false;
+
+function modalAbierto() {
+    return [...document.querySelectorAll('.modal')].find((m) => m.style.display === 'flex') || null;
+}
+
+function abrirModal(id, foco) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    if (!origenFocoModal) origenFocoModal = document.activeElement;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    const campo = modal.querySelector(foco);
+    if (campo) setTimeout(() => campo.focus(), 0);
+}
+
+function cerrarModal(id, { devolverFoco = true } = {}) {
+    const modal = document.getElementById(id);
+    if (!modal || modal.style.display !== 'flex') return;
+    modal.style.display = 'none';
+    // '' y no 'auto': vuelve a lo que diga la hoja de estilos.
+    document.body.style.overflow = '';
+    if (devolverFoco) {
+        if (origenFocoModal && document.contains(origenFocoModal)) origenFocoModal.focus();
+        origenFocoModal = null;
     }
+}
+
+function openLoginModal() {
+    abrirModal('loginModal', '#username');
 }
 
 function closeModal() {
-    const modal = document.getElementById('loginModal');
-    if (modal) {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }
+    cerrarModal('loginModal');
 }
 
 function openRegisterModal() {
-    closeModal();
-    const regModal = document.getElementById('registerModal');
-    if (regModal) {
-        regModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
+    cerrarModal('loginModal', { devolverFoco: false });
+    abrirModal('registerModal', '#reg-tipo');
 }
 
 function closeRegisterModal() {
-    const regModal = document.getElementById('registerModal');
-    if (regModal) {
-        regModal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }
+    cerrarModal('registerModal');
 }
 
 function switchToLogin() {
-    closeRegisterModal();
+    cerrarModal('registerModal', { devolverFoco: false });
     openLoginModal();
 }
 
-// Cerrar modales al hacer clic afuera
+// Cerrar al tocar afuera, salvo que el clic haya empezado adentro: al
+// seleccionar texto de un campo es fácil soltar el mouse fuera del recuadro.
+window.addEventListener('mousedown', function (e) {
+    clicEmpezoAfuera = e.target.classList && e.target.classList.contains('modal');
+});
 window.addEventListener('click', function (e) {
-    if (e.target.classList.contains('modal')) {
-        e.target.style.display = 'none';
-        document.body.style.overflow = 'auto';
+    if (e.target.classList.contains('modal') && clicEmpezoAfuera) cerrarModal(e.target.id);
+});
+
+// Escape cierra, y Tab no se escapa a la página de atrás.
+document.addEventListener('keydown', function (e) {
+    const modal = modalAbierto();
+    if (!modal) return;
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        cerrarModal(modal.id);
+        return;
+    }
+    if (e.key !== 'Tab') return;
+    const enfocables = [...modal.querySelectorAll('a[href], button, input, select, textarea')]
+        .filter((el) => !el.disabled && el.offsetParent !== null);
+    if (enfocables.length === 0) return;
+    const primero = enfocables[0];
+    const ultimo = enfocables[enfocables.length - 1];
+    if (!modal.contains(document.activeElement)) {
+        e.preventDefault();
+        primero.focus();
+    } else if (e.shiftKey && document.activeElement === primero) {
+        e.preventDefault();
+        ultimo.focus();
+    } else if (!e.shiftKey && document.activeElement === ultimo) {
+        e.preventDefault();
+        primero.focus();
     }
 });
 
