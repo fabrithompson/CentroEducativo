@@ -557,6 +557,44 @@
         }).then(() => true);
     };
 
+    /** Destinatarios de un anuncio, con el texto que ve la gente. */
+    window.DESTINATARIOS_ANUNCIO = {
+        ALL: 'Toda la comunidad',
+        ESTUDIANTE: 'Estudiantes',
+        DOCENTE: 'Docentes',
+        PADRE: 'Familias',
+    };
+
+    /**
+     * Edita un anuncio ya publicado, con el mismo diálogo en el panel del
+     * administrador y en el del docente. Devuelve true si se guardó.
+     */
+    window.editarAnuncio = async function (a) {
+        const valores = await abrirUx({
+            titulo: 'Editar anuncio',
+            subtitulo: 'Los cambios los ven todos sus destinatarios. No se vuelve a notificar.',
+            icono: 'fa-bullhorn',
+            campos: [
+                { nombre: 'titulo', etiqueta: 'Título', icono: 'fa-heading', valor: a.titulo, requerido: true, maxlength: 150 },
+                { nombre: 'contenido', tipo: 'textarea', etiqueta: 'Contenido', icono: 'fa-align-left', valor: a.contenido, requerido: true, maxlength: 5000 },
+                {
+                    nombre: 'targetRole', tipo: 'select', etiqueta: 'Destinatarios', icono: 'fa-users', valor: a.targetRole, requerido: true,
+                    opciones: Object.entries(window.DESTINATARIOS_ANUNCIO).map(([valor, texto]) => ({ valor, texto })),
+                },
+            ],
+            aceptar: 'Guardar cambios',
+            okIcono: 'fa-floppy-disk',
+        });
+        if (!valores) return false;
+        const r = await window.apiPatch('/api/announcements/' + a.id, valores);
+        if (r.exito) {
+            if (window.toastSuccess) window.toastSuccess('Anuncio actualizado.');
+            return true;
+        }
+        if (window.toastError) window.toastError(r.mensaje || 'No se pudo actualizar el anuncio.');
+        return false;
+    };
+
     /**
      * Baja de una entidad —alumno, profesor, curso, comprobante—. Muestra el
      * estado a elegir, lo que implica confirmar y, si se pide, un motivo.

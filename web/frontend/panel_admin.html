@@ -1117,6 +1117,8 @@
         /* ============================================================
            ANUNCIOS
            ============================================================ */
+        let _anuncios = [];
+
         async function cargarAnuncios() {
             const data = await window.apiGet('/api/announcements');
             const cont = document.getElementById('listaAnuncios');
@@ -1124,18 +1126,27 @@
                 cont.innerHTML = '<p style="color:#94a3b8; text-align:center;">No hay anuncios.</p>';
                 return;
             }
+            _anuncios = data.anuncios;
             cont.innerHTML = data.anuncios.map(a => `
                 <div class="campus-card" style="border-left: 4px solid #8b5cf6;">
                     <h4 class="campus-card-title">${window.escapeHtml(a.titulo)}</h4>
                     <div class="campus-card-meta">
                         <span><i class="fas fa-user"></i> ${window.escapeHtml(a.autor)}</span>
-                        <span><i class="fas fa-users"></i> ${a.targetRole}</span>
+                        <span><i class="fas fa-users"></i> ${window.DESTINATARIOS_ANUNCIO[a.targetRole] || window.escapeHtml(a.targetRole)}</span>
                         <span><i class="fas fa-clock"></i> ${window.formatFecha(a.createdAt)}</span>
                     </div>
                     <div class="campus-card-body">${window.escapeHtml(a.contenido)}</div>
-                    <button class="btn-danger" style="margin-top:10px;" onclick="borrarAnuncio(${a.id})">Borrar</button>
+                    ${a.puedeEditar ? `<div style="display:flex; gap:8px; margin-top:10px;">
+                        <button class="btn-secondary" onclick="editarAnuncioAdmin(${a.id})"><i class="fas fa-pen" aria-hidden="true"></i> Editar</button>
+                        <button class="btn-danger" onclick="borrarAnuncio(${a.id})"><i class="fas fa-trash" aria-hidden="true"></i> Borrar</button>
+                    </div>` : ''}
                 </div>
             `).join('');
+        }
+
+        async function editarAnuncioAdmin(id) {
+            const a = _anuncios.find(x => x.id === id);
+            if (a && await window.editarAnuncio(a)) cargarAnuncios();
         }
 
         async function crearAnuncio(e) {
@@ -1147,11 +1158,18 @@
             };
             const r = await window.apiPost('/api/announcements', body);
             if (r.exito) { toastSuccess('Anuncio publicado.'); e.target.reset(); cargarAnuncios(); }
-            else toastError(r.mensaje || 'Error.');
+            else toastError(r.mensaje || 'No se pudo publicar el anuncio.');
         }
 
         async function borrarAnuncio(id) {
-            const ok = await window.uxConfirm('¿Borrar este anuncio definitivamente?', { title: 'Borrar anuncio', danger: true, okLabel: 'Borrar' });
+            const a = _anuncios.find(x => x.id === id);
+            const ok = await window.uxConfirm('Vas a borrar este anuncio.', {
+                title: 'Borrar anuncio',
+                subtitle: a ? a.titulo : '',
+                danger: true,
+                okLabel: 'Borrar',
+                consecuencias: ['Deja de verse para todos sus destinatarios. No se puede deshacer.'],
+            });
             if (!ok) return;
             const r = await window.apiDelete('/api/announcements/' + id);
             if (r.exito) { toastSuccess('Anuncio borrado.'); cargarAnuncios(); }

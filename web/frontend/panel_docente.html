@@ -566,8 +566,30 @@
         /* ============================================================
            ANUNCIOS
            ============================================================ */
-        const TARGET_LABELS = { ALL: 'Toda la comunidad', ESTUDIANTE: 'Estudiantes', DOCENTE: 'Docentes', PADRE: 'Padres' };
         const TARGET_COLORS = { ALL: '#3498db', ESTUDIANTE: '#10b981', DOCENTE: '#8b5cf6', PADRE: '#f59e0b' };
+
+        let _comunicados = [];
+
+        async function editarComunicado(id) {
+            const a = _comunicados.find(x => x.id === id);
+            if (a && await window.editarAnuncio(a)) cargarComunicados();
+        }
+
+        // El backend ya dejaba borrar al autor; faltaba el botón.
+        async function borrarComunicado(id) {
+            const a = _comunicados.find(x => x.id === id);
+            const ok = await window.uxConfirm('Vas a borrar este anuncio.', {
+                title: 'Borrar anuncio',
+                subtitle: a ? a.titulo : '',
+                danger: true,
+                okLabel: 'Borrar',
+                consecuencias: ['Deja de verse para todos sus destinatarios. No se puede deshacer.'],
+            });
+            if (!ok) return;
+            const r = await window.apiDelete('/api/announcements/' + id);
+            if (r.exito) { toastSuccess('Anuncio borrado.'); cargarComunicados(); }
+            else toastError(r.mensaje || 'No se pudo borrar el anuncio.');
+        }
 
         async function cargarComunicados() {
             const cont = document.getElementById('listaComunicados');
@@ -577,15 +599,20 @@
                     cont.innerHTML = '<p style="color:#94a3b8; text-align:center;">No hay anuncios publicados.</p>';
                     return;
                 }
+                _comunicados = data.anuncios;
                 cont.innerHTML = data.anuncios.map(a => `
                     <div class="campus-card" style="border-left: 4px solid ${TARGET_COLORS[a.targetRole] || '#3498db'};">
-                        <h4 class="campus-card-title"><i class="fas fa-bullhorn" style="color:${TARGET_COLORS[a.targetRole]};"></i> ${window.escapeHtml(a.titulo)}</h4>
+                        <h4 class="campus-card-title"><i class="fas fa-bullhorn" style="color:${TARGET_COLORS[a.targetRole]};" aria-hidden="true"></i> ${window.escapeHtml(a.titulo)}</h4>
                         <div class="campus-card-meta">
                             <span><i class="fas fa-user"></i> ${window.escapeHtml(a.autor)}</span>
-                            <span><i class="fas fa-users"></i> ${TARGET_LABELS[a.targetRole] || a.targetRole}</span>
+                            <span><i class="fas fa-users"></i> ${window.DESTINATARIOS_ANUNCIO[a.targetRole] || window.escapeHtml(a.targetRole)}</span>
                             <span><i class="fas fa-clock"></i> ${window.formatFecha(a.createdAt)}</span>
                         </div>
                         <div class="campus-card-body">${window.escapeHtml(a.contenido)}</div>
+                        ${a.puedeEditar ? `<div style="display:flex; gap:8px; margin-top:10px;">
+                            <button class="btn-secondary" onclick="editarComunicado(${a.id})"><i class="fas fa-pen" aria-hidden="true"></i> Editar</button>
+                            <button class="btn-danger" onclick="borrarComunicado(${a.id})"><i class="fas fa-trash" aria-hidden="true"></i> Borrar</button>
+                        </div>` : ''}
                     </div>
                 `).join('');
             } catch (err) {

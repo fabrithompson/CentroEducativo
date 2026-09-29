@@ -89,6 +89,8 @@ const RUTAS_PROTEGIDAS: [string, string][] = [
   ['POST', '/api/profesores'],
   ['GET', '/api/admin/retencion'],
   ['GET', '/api/admin/payments'],
+  ['PATCH', '/api/announcements/1'],
+  ['DELETE', '/api/announcements/1'],
   ['POST', '/api/admin/payments'],
   ['GET', '/api/academico/niveles'],
   ['POST', '/api/academico/niveles'],

@@ -1000,6 +1000,16 @@ html[data-theme='dark'] .pestania--activa { color: #7dd3fc; border-bottom-color:
 /* Íconos de las etiquetas en violeta, como en la referencia. */
 .modal-body label > i.fas { color: #7c3aed; margin-right: 6px; }
 
+/* El panel docente declara su propio `.form-group label` —mayúsculas, 0.85rem—
+   después de las hojas compartidas. Dentro de un diálogo manda el formato de
+   referencia, igual en los cuatro paneles. */
+.dialogo .modal-body .form-group label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--primary, #2c3e50);
+  text-transform: none;
+}
+
 .modal-contexto {
   font-size: 0.9rem;
   color: var(--c-texto-suave);

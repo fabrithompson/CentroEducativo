@@ -302,6 +302,53 @@ async function main() {
       vencimiento: '2026-10-10',
     });
     afirmar(aDocente.status === 400, 'REGLA: no se le carga una cuota a quien no es estudiante', aDocente.cuerpo);
+
+    // ------------------------------------------------------------------
+    console.log('\n=== Anuncios: editar y ver ===');
+    const lopezOtraVez = await ingresar('mlopez');
+    const garcia = await ingresar('jgarcia');
+    const titulosDe = async (token: string) =>
+      ((await pedir('GET', '/api/announcements', { token })).cuerpo.anuncios as Cuerpo[]).map((x) => x.titulo);
+
+    const anuncio = await pedir('POST', '/api/announcements', {
+      token: lopezOtraVez.token,
+      body: { titulo: 'Reunión de padres de humo', contenido: 'El jueves a las 18.', targetRole: 'PADRE' },
+    });
+    const idAnuncio = anuncio.cuerpo.anuncio?.id as number;
+    afirmar(anuncio.status === 200 && Boolean(idAnuncio), 'mlopez publica un anuncio para las familias', anuncio.cuerpo);
+
+    afirmar(
+      (await titulosDe(lopezOtraVez.token)).includes('Reunión de padres de humo'),
+      'REGLA: quien lo publicó lo ve, aunque no vaya dirigido a su rol',
+    );
+    afirmar((await titulosDe(admin.token)).includes('Reunión de padres de humo'), 'REGLA: el administrador ve todos los anuncios');
+    afirmar(!(await titulosDe(garcia.token)).includes('Reunión de padres de humo'), 'otro docente no lo ve: no es para docentes');
+
+    const ajeno = await pedir('PATCH', `/api/announcements/${idAnuncio}`, { token: garcia.token, body: { titulo: 'Cambiado por otro' } });
+    afirmar(ajeno.status === 403, 'REGLA: otro docente no puede editarlo', ajeno.cuerpo);
+
+    const propio = await pedir('PATCH', `/api/announcements/${idAnuncio}`, {
+      token: lopezOtraVez.token,
+      body: { titulo: 'Reunión de padres de humo (19 h)' },
+    });
+    afirmar(propio.status === 200 && propio.cuerpo.anuncio?.titulo === 'Reunión de padres de humo (19 h)', 'su autora lo edita', propio.cuerpo);
+    afirmar((await titulosDe(tutora.token)).includes('Reunión de padres de humo (19 h)'), 'y la familia ve el título nuevo');
+
+    const vacio = await pedir('PATCH', `/api/announcements/${idAnuncio}`, { token: lopezOtraVez.token, body: {} });
+    afirmar(vacio.status === 400, 'un PATCH sin cambios se rechaza');
+
+    const aTodos = await comoAdmin('PATCH', `/api/announcements/${idAnuncio}`, { targetRole: 'ALL' });
+    afirmar(aTodos.status === 200, 'el administrador puede cambiarle los destinatarios');
+    afirmar((await titulosDe(garcia.token)).includes('Reunión de padres de humo (19 h)'), 'dirigido a toda la comunidad, ahora lo ve otro docente');
+
+    const avisoAnuncio = ((await pedir('GET', '/api/notifications', { token: tutora.token })).cuerpo.notificaciones as Cuerpo[])
+      .find((x) => x.titulo === 'Nuevo anuncio: Reunión de padres de humo');
+    afirmar(avisoAnuncio?.link === '/panel_padre.html#anuncios', 'el aviso del anuncio lleva a la sección de anuncios de la familia', avisoAnuncio);
+
+    const borradoAjeno = await pedir('DELETE', `/api/announcements/${idAnuncio}`, { token: garcia.token });
+    afirmar(borradoAjeno.status === 403, 'REGLA: otro docente tampoco puede borrarlo');
+    const borrado = await pedir('DELETE', `/api/announcements/${idAnuncio}`, { token: lopezOtraVez.token });
+    afirmar(borrado.status === 200 && !(await titulosDe(admin.token)).some((t) => t.startsWith('Reunión de padres de humo')), 'su autora lo borra');
   } finally {
     server?.close();
     // Sin esto, apagar PostgreSQL con conexiones abiertas en el pool llena la
