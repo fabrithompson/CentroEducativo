@@ -5,7 +5,8 @@
 **Equipo:** **Naft** — Nahuel Alem · Fabricio Ceniquel Thompson
 **Localidad:** Resistencia, Chaco · Inicio previsto de actividades de la institución: marzo de 2027
 **Repositorio:** monorepo pnpm — `web/backend/` · `web/frontend/` · `mobile/`
-**Versión de este documento:** 2.1 — 19/09/2026 (reemplaza la 2.0 del 16/09 y la 1.0 del 24/08/2026)
+**Versión de este documento:** 2.2 — 29/09/2026 (reemplaza la 2.1 del 19/09, la 2.0 del 16/09 y la 1.0 del 24/08/2026)
+**Documentos que acompañan este plan:** `docs/patrones_de_diseno.md` (patrones de diseño, con archivo y línea) y `docs/plan_de_trabajo_mobile.md` (plan de la aplicación móvil)
 
 ---
 
@@ -109,7 +110,7 @@ camino alternativo; una restricción del motor no.
 | Acceso a datos | Prisma 6 (ORM) |
 | Base de datos | PostgreSQL 15 |
 | Frontend web | HTML5 · CSS3 · JavaScript con módulos ES |
-| Aplicación móvil | Expo SDK 57 · React Native 0.87 |
+| Aplicación móvil | Expo SDK 57 · React Native 0.86.3 · React 19.2.3 |
 | Pruebas | Ejecutor nativo de Node (`node --test`) contra PostgreSQL real mediante `embedded-postgres` |
 | Repositorio | Monorepo pnpm · Git · GitHub |
 | Gestión | Jira (tablero Kanban) |
@@ -138,12 +139,16 @@ transportan identidad y rol, y un ORM entre la lógica de negocio y la base.
 Cambia la implementación del ORM —Prisma en lugar de JDBC o Hibernate—, no el
 conector.
 
-**4. Los patrones exigidos están presentes.** *Repository* mediante Prisma como
-capa única de acceso; *Singleton* en la instancia compartida de conexión;
-*Strategy* en el proveedor de mensajería, que se intercambia sin tocar el módulo
-de servicios; *Observer* en el disparo de notificaciones ante un evento de
-negocio. MVC se resuelve con la separación `rutas / servicios / modelo`, dado
-que la presentación queda del lado del cliente.
+**4. Los patrones exigidos están presentes**, con archivo y línea en
+`docs/patrones_de_diseno.md`. *Strategy* en el proveedor de mensajería de RF-07,
+que se intercambia sin tocar el módulo de avisos; *Singleton* en el cliente de
+base de datos, el transporte de correo y el servidor de Socket.IO; *Observer* en
+la mensajería en tiempo real (Socket.IO) y en la app móvil, que avisa a la
+interfaz cuando la sesión se cae. MVC se resuelve con la separación
+`rutas / servicios / modelo`, dado que la presentación queda del lado del
+cliente. *Repository* está cubierto por Prisma Client como capa única de acceso,
+que los servicios reciben por parámetro, **sin clases repositorio propias**: el
+documento explica por qué y qué cambiaría si la cátedra pide la forma clásica.
 
 **5. Una sola tecnología en todo el proyecto.** La aplicación móvil está fijada
 en React Native, que es TypeScript. Sostener el backend en el mismo lenguaje
@@ -295,11 +300,11 @@ hará y si hay algún bloqueo. Lo acordado se refleja en el tablero de Jira.
 | Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 271 |
 | De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **271** |
 | Del motor de base de datos | Verifican que el motor **rechace efectivamente** el tercer deporte, el cruce de horarios, el quinto recorrido, el comprobante sin archivo, el tutor que no es padre y la reutilización de un código QR | **17** |
-| De la aplicación móvil | Cliente HTTP, formateo y equivalencia de la implementación propia de HMAC-SHA256 contra `node:crypto` en 300 casos aleatorios | **70** |
+| De la aplicación móvil | Selección de ítems a pagar, formato de importes y fechas, y equivalencia de la implementación propia de HMAC-SHA256 contra `node:crypto` en 300 casos aleatorios. Todas de dominio: el cliente HTTP todavía no tiene pruebas (ver `docs/plan_de_trabajo_mobile.md`) | **70** |
 | **Total** | | **358** |
 
 **Entorno de pruebas.** La suite levanta una instancia real de PostgreSQL 15
-mediante `embedded-postgres`, aplica las nueve migraciones, carga las semillas y
+mediante `embedded-postgres`, aplica las doce migraciones, carga las semillas y
 corre las pruebas contra esa base. No se usan dobles de prueba para la
 persistencia: lo que se verifica es el comportamiento del motor, no una
 imitación. Existe además un `docker-compose.yml` con `postgres:15-alpine` para
@@ -346,6 +351,8 @@ produjo código que hubo que corregir o reemplazar.
 | Entregable | Fecha | Formato |
 |---|---|---|
 | Plan de Trabajo | 29/09/2026, 14:00 hs | Este documento |
+| Patrones de diseño | 29/09/2026, 14:00 hs | `docs/patrones_de_diseno.md` |
+| Plan de trabajo de la aplicación móvil | 29/09/2026, 14:00 hs | `docs/plan_de_trabajo_mobile.md` |
 | Código congelado | 11/11/2026 | Etiqueta en GitHub sobre `main` |
 | Aplicación móvil | 17/11/2026 | Proyecto Expo con instrucciones de ejecución |
 | Informe de uso de IA | 17/11/2026 | `docs/informe_final_ia.md` |
@@ -361,10 +368,10 @@ produjo código que hubo que corregir o reemplazar.
 
 | Métrica | Valor |
 |---|---|
-| Requerimientos funcionales cubiertos | **8 de 8** |
+| Requerimientos funcionales cubiertos | **8 de 8 en el backend.** RF-08 no tiene todavía pantalla en la app móvil: el rastreo está planificado para los sprints 4 y 5 en `docs/plan_de_trabajo_mobile.md` |
 | Modelos de datos | 39 |
 | Enumeraciones | 25 |
-| Migraciones aplicadas | 11 |
+| Migraciones aplicadas | 12 |
 | Endpoints REST | 141 |
 | Módulos de dominio | 15 |
 | Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 17 734 |
@@ -395,3 +402,35 @@ produjo código que hubo que corregir o reemplazar.
 **Pendiente de verificación:** prueba en un dispositivo físico, envío real de SMS
 y de correo, y lectura del QR con cámara sobre hardware real. Queda asignado a la
 semana de pruebas y a la jornada del 11/11.
+
+---
+
+## 13. Revisión de la cátedra (versión 2.2)
+
+La cátedra revisó la web y pidió, además, documentar el patrón de diseño
+utilizado y armar el plan de trabajo de la aplicación móvil. Los dos documentos
+acompañan esta versión: `docs/patrones_de_diseno.md` y
+`docs/plan_de_trabajo_mobile.md`.
+
+**Ya corregido en la web y desplegado:**
+
+- Los modales quedaban pegados arriba a la izquierda. Ahora aparecen centrados,
+  todos con el formato de "Editar usuario", y se cierran con Escape o al tocar
+  afuera. Hay un modal propio para dar de baja, que muestra las consecuencias.
+- El menú lateral del administrador no tenía scroll y sus últimas opciones
+  quedaban fuera de la pantalla.
+- Los recuadros del dashboard llevan a su sección. El logo vuelve a la página de
+  inicio. Al recargar, el panel sigue en la misma sección.
+- Se pueden reactivar usuarios, alumnos, profesores, niveles, cursos y materias.
+  Antes había que resolver un defecto grave: un docente desactivado aparecía como
+  "pendiente de aprobación", y rechazarlo borraba su cuenta con todo lo que había
+  publicado.
+- Al cargar una cuota queda registrada en un historial y se avisa a los tutores
+  del alumno.
+- Se quitó la sección duplicada del docente ("Mis Materias Asignadas").
+
+**En curso, en este orden:** Enter para enviar mensajes y para ingresar al
+campus; edición de anuncios; editar y borrar notas desde el panel docente, sin la
+referencia equivocada a RF-8; el escáner de carnet del administrador y del
+docente; varias cuentas abiertas a la vez en el mismo navegador; y actualización
+en tiempo real de anuncios y eventos.

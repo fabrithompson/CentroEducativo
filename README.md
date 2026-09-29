@@ -169,7 +169,7 @@ Ya no están en esta lista:
 | ORM | Prisma | 6 |
 | Base de datos | PostgreSQL | 15 |
 | Frontend web | HTML5 · CSS3 · JavaScript con módulos ES | — |
-| App móvil | Expo · React Native | SDK 57 · 0.87 |
+| App móvil | Expo · React Native | SDK 57 · 0.86.3 |
 | Validación | Zod | 3 |
 | Autenticación | JWT (acceso + refresco) · bcrypt | — |
 | Pruebas | Ejecutor nativo de Node sobre PostgreSQL real | — |
@@ -221,7 +221,7 @@ guarda copia local de los datos. El panel web del tutor y la app móvil consumen
 .
 ├── web/
 │   ├── backend/              API REST (Node + Express + TypeScript + Prisma)
-│   │   ├── prisma/           Esquema, 11 migraciones y semillas
+│   │   ├── prisma/           Esquema, 12 migraciones y semillas
 │   │   ├── scripts/          PostgreSQL embebido y verificación de integración
 │   │   └── src/
 │   │       ├── modules/      15 módulos de dominio
@@ -245,7 +245,7 @@ guarda copia local de los datos. El panel web del tutor y la app móvil consumen
 
 ## 6. Base de datos
 
-**39 tablas · 25 enumeraciones · 11 migraciones · 7 funciones PL/pgSQL ·
+**39 tablas · 25 enumeraciones · 12 migraciones · 7 funciones PL/pgSQL ·
 6 disparadores · 12 restricciones CHECK.**
 
 ### 6.1 MER — Modelo Entidad-Relación
@@ -531,7 +531,7 @@ cp web/backend/.env.example web/backend/.env   # completar DATABASE_URL y los se
 ### Base de datos
 
 ```bash
-pnpm --filter backend prisma:deploy      # aplica las 11 migraciones
+pnpm --filter backend prisma:deploy      # aplica las 12 migraciones
 pnpm --filter backend prisma:seed        # dominio + usuarios de demostración
 ```
 
@@ -580,7 +580,7 @@ pnpm --filter backend test:integracion
 ```
 
 Ese comando levanta **PostgreSQL 15 real** con `embedded-postgres` —sin
-necesidad de Docker—, aplica las 11 migraciones, carga las semillas y corre la
+necesidad de Docker—, aplica las 12 migraciones, carga las semillas y corre la
 suite contra esa base.
 
 **No se usan dobles de prueba para la persistencia.** Las 17 pruebas del motor
@@ -596,6 +596,8 @@ reutilización de un código QR.
 | Documento | Contenido |
 |---|---|
 | [`plan_de_trabajo.md`](docs/plan_de_trabajo.md) | Objetivo, alcance, RF y RNF, cronograma, riesgos, entregables |
+| [`patrones_de_diseno.md`](docs/patrones_de_diseno.md) | Los patrones de diseño del sistema —MVC, Strategy, Singleton, Observer, Repository y otros—, con archivo y línea |
+| [`plan_de_trabajo_mobile.md`](docs/plan_de_trabajo_mobile.md) | Plan de la app móvil de tutores: alcance, cronograma por sprint, pruebas, riesgos y estado de avance |
 | [`informe_final_ia.md`](docs/informe_final_ia.md) | Informe académico sobre el uso de IA — los 5 puntos de la consigna |
 | [`bitacora_ia.md`](docs/bitacora_ia.md) | Registro de cada intervención asistida por IA |
 | [`modelo_de_datos.md`](docs/modelo_de_datos.md) | Decisiones del esquema y validación contra PostgreSQL |

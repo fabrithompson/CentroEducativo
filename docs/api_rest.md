@@ -204,7 +204,11 @@ Notas:
 - **El legajo lo asigna el sistema** (`A-0001`), dentro de una transacción
   `Serializable`. Es la identidad administrativa del alumno; no puede depender de
   que alguien no se equivoque al tipearlo.
-- El alta valida el **cupo del curso**.
+- El alta valida el **cupo del curso**, que ocupan sólo los alumnos activos: un
+  egresado o un inactivo no cuentan.
+- **Reactivar es `PATCH` con `estado: "ACTIVO"`.** Pide lo mismo que el alta
+  —curso activo y con lugar—, igual que un cambio de curso. Pasar a un estado de
+  baja por `PATCH` tiene el mismo efecto que el `DELETE`.
 - El `DELETE` es **baja lógica** y además da de baja las inscripciones activas a
   deportes, transporte y comedor: si no, el alumno seguiría ocupando cupo y
   generando cargos. No se borra el registro porque tiene facturas y notas
@@ -228,6 +232,9 @@ teléfono del personal.
 La baja **se niega si el profesor es responsable de algún deporte activo**. La
 regla de negocio exige que cada deporte tenga responsable; primero hay que
 reasignarlo.
+
+Reactivar es `PATCH` con `estado: "ACTIVO"`. Pasar a `INACTIVO` por `PATCH`
+respeta la misma guarda y libera las materias, igual que el `DELETE`.
 
 ### 4.3 Estructura académica
 
@@ -266,6 +273,11 @@ Notas:
 - `PATCH /cursos/:id` **rechaza bajar el cupo por debajo de la matrícula ya
   inscripta**: dejaría al curso en un estado que el propio alta de alumnos
   considera inválido.
+- **Reactivar es `PATCH` con `activo: true`**, en los tres. Un curso se reactiva
+  sólo con su nivel activo, y una materia sólo con su curso activo. `activo: false`
+  por `PATCH` pide lo mismo que el `DELETE`.
+- `_count.alumnos` en `GET /cursos` cuenta sólo los alumnos activos, que son los
+  que ocupan cupo.
 - El catálogo se devuelve **sin paginar**. Son decenas de filas y los
   desplegables las necesitan completas; el corte natural, si algún día dejara
   de serlo, es `anioLectivo`, que ya es filtro de `GET /cursos`.
@@ -368,6 +380,17 @@ Criterios que hay que conocer para leer bien los números:
   saldría listado por un horario de Secundario del mismo deporte.
 - Los importes salen como `number`. El `Decimal` de Prisma serializa a un objeto
   `{s,e,d}` inservible del lado del cliente; todo pasa por `aNumero()`.
+
+### 4.8 Administración: usuarios y cuotas (29/09/2026)
+
+| Método | Ruta | Qué cambió |
+|---|---|---|
+| PATCH | `/api/admin/users/:id` | `isActive: true` reactiva la cuenta —y, si era un docente pendiente, equivale a aprobarlo—. `isActive: false` o un cambio de contraseña **suben `tokenVersion`**: las sesiones abiertas dejan de renovarse. El administrador no puede desactivarse a sí mismo |
+| DELETE | `/api/admin/users/:id` | Desactiva y sube `tokenVersion` |
+| GET | `/api/admin/teachers/pending` | Lista por `pendienteAprobacion`, no por "docente inactivo": un docente desactivado ya no aparece como pendiente |
+| DELETE | `/api/admin/teachers/:id/reject` | Sólo sobre una solicitud pendiente. Antes podía borrar a un docente desactivado, con todo lo que había publicado |
+| GET | `/api/admin/payments?limit=50` | **Nuevo.** Las últimas cuotas cargadas, con alumno, estado (la pendiente vencida se informa como `VENCIDO`) y tutor responsable |
+| POST | `/api/admin/payments` | Además de crear la cuota, **avisa a todos los tutores del alumno** con cuenta activa, en la misma transacción, y responde `avisados`. Rechaza a un destinatario que no es estudiante |
 
 ---
 

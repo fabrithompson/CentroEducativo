@@ -39,8 +39,20 @@ espacios. Tres cosas a tener en cuenta:
 
 Las cuentas de estudiante y de tutor quedan activas al instante.
 
+### Moverse por el panel
+
+- El **logo** de arriba a la izquierda vuelve siempre a la página de inicio.
+- Si **recargás la página**, el panel vuelve a la sección en la que estabas. La
+  dirección del navegador la muestra al final (por ejemplo `#m-alumnos`), así
+  que también podés guardarla como favorito o abrir una sección en otra pestaña.
+- Las **ventanas** —editar, dar de baja, confirmar— se cierran con la cruz, con
+  el botón *Cancelar*, con la tecla Escape o tocando afuera de la ventana.
+- Las notificaciones de la campanita llevan a la sección que corresponde: "Nueva
+  cuota" abre el estado de cuenta.
+
 > **Si no podés entrar**, leé el mensaje que aparece: dice el motivo exacto
-> —contraseña incorrecta, usuario inexistente, cuenta pendiente de aprobación—.
+> —contraseña incorrecta, usuario inexistente, cuenta pendiente de aprobación o
+> cuenta deshabilitada por administración—.
 > Después de varios intentos fallidos el sistema te hace esperar unos minutos;
 > es una protección contra quien prueba contraseñas al azar.
 
@@ -69,6 +81,10 @@ orden:
 niega a dar de baja un nivel que todavía tiene cursos activos, o un curso que
 todavía tiene alumnos activos, y te dice cuántos son. Reubicalos primero.
 
+**Reactivar.** Lo que se dio de baja muestra el botón *Reactivar* en su fila. Se
+reactiva de arriba hacia abajo: un curso vuelve si su nivel está activo, y una
+materia si su curso lo está. Si no, el sistema te dice qué reactivar primero.
+
 Tampoco te deja bajar el cupo de un curso por debajo de la cantidad de alumnos
 que ya tiene inscriptos.
 
@@ -81,18 +97,25 @@ Menú **Alumnos** → botón **Nuevo alumno**.
   al tipear.
 - El **DNI no se puede repetir**. Si ya existe, el sistema te dice con qué
   legajo choca, así podés fijarte si es la misma persona cargada dos veces.
-- El **curso es obligatorio** y la lista muestra cuántos lugares quedan
-  (por ejemplo `3° grado "A" — 24/30`). Si el curso está lleno, el alta se
-  rechaza.
+- El **curso es obligatorio** y la lista muestra cuántos lugares están
+  ocupados (por ejemplo `3° grado "A" — 24/30`). Sólo cuentan los alumnos
+  activos: un egresado o un alumno dado de baja no ocupa lugar. Si el curso está
+  lleno, el alta se rechaza.
 
 Para **modificar**, botón *Editar* en la fila. El DNI no se puede cambiar desde
 ahí: si está mal cargado, avisá antes de tocarlo, porque hay notas, cuotas y
 asistencias colgando de ese alumno.
 
 Para **dar de baja**, botón *Dar de baja*, y elegí el motivo: `INACTIVO`,
-`EGRESADO` o `SUSPENDIDO`. La baja **también da de baja sus inscripciones a
-deportes, transporte y comedor**; si no, seguiría ocupando cupo y generando
-cargos todos los meses.
+`EGRESADO` o `SUSPENDIDO`. La ventana te muestra qué va a pasar antes de
+confirmar. La baja **también da de baja sus inscripciones a deportes, transporte
+y comedor**; si no, seguiría ocupando cupo y generando cargos todos los meses.
+
+Para **reactivarlo**, elegí en el filtro *Estado* la opción que corresponda
+(*Inactivos*, *Egresados* o *Suspendidos*), buscá y tocá *Reactivar*. Vuelve a su
+mismo curso, si tiene lugar; si no, cambialo de curso desde *Editar*. Las
+inscripciones a deportes, transporte y comedor no vuelven solas: hay que
+cargarlas de nuevo.
 
 ### 2.3 Dar de alta un profesor y asignarle materias
 
@@ -103,8 +126,11 @@ cargo y podés sumarle materias de la lista de las que todavía no tienen
 profesor. Asignar una materia ya dice el curso, porque cada materia pertenece a
 un curso: no hace falta cargar las dos cosas por separado.
 
-La baja de un profesor **se niega si es responsable de algún deporte activo**.
-Primero hay que reasignar ese deporte.
+La baja de un profesor puede ser por **licencia** —conserva sus materias— o
+**inactivo** —sus materias quedan libres para asignarlas a otro—. La baja como
+inactivo **se niega si es responsable de algún deporte activo**: primero hay que
+reasignar ese deporte. *Reactivar* lo vuelve a activo; si estaba inactivo, las
+materias hay que asignárselas de nuevo.
 
 ### 2.4 Aprobar docentes
 
@@ -115,7 +141,17 @@ notificación y recién ahí pueden entrar.
 Si alguien se registró por error o no corresponde, *Rechazar* elimina la
 solicitud.
 
-### 2.5 Vincular una familia con sus hijos
+Un docente que administración **desactivó** no aparece acá: no es una solicitud
+nueva. Se reactiva desde **Usuarios**.
+
+### 2.5 Usuarios: desactivar y reactivar cuentas
+
+Menú **Usuarios**. *Desactivar* impide que la persona entre y **cierra las
+sesiones que tenga abiertas**, también en el teléfono. Sus datos se conservan. En
+la misma fila aparece después *Reactivar*, que le devuelve el acceso con su
+usuario y contraseña de siempre. No podés desactivar tu propia cuenta.
+
+### 2.6 Vincular una familia con sus hijos
 
 Menú **Vínculos Padre-Hijo**. **Este vínculo lo crea únicamente
 administración.** Un tutor no puede agregarse hijos por su cuenta, ni sabiendo
@@ -124,7 +160,7 @@ el DNI: es lo que garantiza que cada familia vea sólo lo suyo.
 Mientras no exista el vínculo, el tutor entra y ve su panel vacío. Si una
 familia reclama eso, lo que falta es el vínculo, no la cuenta.
 
-### 2.6 Cuotas y comprobantes
+### 2.7 Cuotas y comprobantes
 
 Las cuotas mensuales se generan solas, con la cuota base del nivel más lo que
 cada alumno tenga contratado: comedor, transporte según recorrido y deportes.
@@ -133,12 +169,18 @@ cada alumno tenga contratado: comedor, transporte según recorrido y deportes.
 administración lo valida. Hasta que alguien lo valide, la cuota queda *en
 revisión*, no *pagada*.
 
+**Cargar una cuota a mano.** Menú **Cargar Cuota**: alumno, concepto, monto y
+vencimiento. Al guardarla, **los tutores vinculados al alumno reciben un aviso**
+en la campanita, y la cuota aparece primera, resaltada, en la tabla **Cuotas
+cargadas**, que muestra las últimas 50 con su estado y su tutor responsable. Si
+el alumno no tiene tutores vinculados, el mensaje lo dice: nadie recibió aviso.
+
 Además el sistema manda dos correos por mes, sin que nadie los dispare:
 
 - El **último día hábil del mes**, la factura con el detalle.
 - El **día 20**, un recordatorio a quien todavía deba algo.
 
-### 2.7 Reportes
+### 2.8 Reportes
 
 Menú **Reportes**. Seis reportes con filtros por fecha, curso, nivel, recorrido,
 deporte, materia y docente, y **botón de exportar a CSV** en cada uno, para
@@ -147,7 +189,7 @@ seguir el trabajo en una planilla.
 El de **alumnos por materia** muestra también las materias **sin ningún
 inscripto**, que suelen ser las que más interesa ver.
 
-### 2.8 Carnet digital
+### 2.9 Carnet digital
 
 Menú **Escanear carnet**. Abre la cámara para leer el código QR del carnet que
 el alumno o el tutor muestran desde el teléfono. El código cambia cada pocos
@@ -194,8 +236,8 @@ resolver desde tu cuenta.
 ### En la aplicación del teléfono
 
 Además de lo anterior, la aplicación tiene el **carnet digital con código QR**
-para el ingreso, y el **seguimiento del transporte** durante el recorrido
-contratado.
+para el ingreso. El **seguimiento del transporte** en el teléfono todavía no está
+disponible: está planificado para noviembre (ver `docs/plan_de_trabajo_mobile.md`).
 
 ### Pagar una cuota
 
@@ -221,6 +263,7 @@ Estudio**, **Anuncios**, **Mensajes** y **Foros**.
 | Lo que pasa | Qué suele ser |
 |---|---|
 | No puedo entrar y dice que la cuenta está pendiente | Te registraste como docente. Administración tiene que aprobarla |
+| No puedo entrar y dice que la cuenta está deshabilitada | Administración la desactivó. Pedí que la reactiven desde Usuarios |
 | Dice "Ya existe una cuenta con ese DNI" | Esa persona ya está cargada. Buscala antes de crearla de nuevo |
 | Me pide esperar para volver a intentar | Demasiados intentos fallidos seguidos. Esperá unos minutos |
 | Cambié la contraseña y se me cerró la sesión | Es a propósito: cambiarla cierra las sesiones abiertas, también en el teléfono. Entrá de nuevo con la nueva |
@@ -236,7 +279,8 @@ Estudio**, **Anuncios**, **Mensajes** y **Foros**.
 
 **Nada se borra.** Las bajas son lógicas: el alumno, el curso o la materia
 dejan de estar activos pero siguen en el historial, porque tienen notas,
-asistencias y facturas asociadas.
+asistencias y facturas asociadas. Por eso todo lo que se da de baja se puede
+reactivar.
 
 **Las reglas las hace cumplir el sistema, no la pantalla.** El máximo de dos
 deportes, el cupo del curso, el DNI sin repetir y que un tutor sólo vea a sus

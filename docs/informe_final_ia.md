@@ -5,7 +5,7 @@
 **Carrera:** Tecnicatura Universitaria en Programación — TUP 2026
 **Proyecto:** Sistema integral del Centro Educativo "TRANSFORMAR PARA EDUCAR"
 **Equipo:** **Naft** — Nahuel Alem · Fabricio Ceniquel Thompson
-**Herramienta de IA utilizada:** Claude Code — modelo Opus 5
+**Herramienta de IA utilizada:** Claude Code — modelo Opus 5 (intervenciones 1 a 34) y Opus 5.5 (desde la 35)
 **Fecha de cierre del informe:** 21 de septiembre de 2026
 
 ---
@@ -17,9 +17,9 @@ desarrollo del Trabajo Práctico Integrador, sobre un sistema compuesto por tres
 aplicaciones —portal web institucional, sistema de gestión y aplicación móvil—
 que comparten un backend y una base de datos únicos.
 
-El trabajo se organizó en **34 intervenciones asistidas por IA**, todas
+El trabajo se organizó en **35 intervenciones asistidas por IA**, todas
 registradas en `docs/bitacora_ia.md`. El producto resultante comprende 39
-modelos de datos, 140 endpoints REST, 11 migraciones y 358 pruebas automatizadas,
+modelos de datos, 140 endpoints REST, 12 migraciones y 358 pruebas automatizadas,
 **validadas contra una instancia real de PostgreSQL 15**.
 
 La tesis central del informe es la siguiente: **la inteligencia artificial
@@ -391,16 +391,17 @@ sistema le rechazaría después.
 
 ### Síntesis cuantitativa
 
-*(Recontada el 21/09/2026 sobre el repositorio, no sobre la memoria del equipo.
-Los recuentos de líneas y archivos incluyen los archivos de prueba.)*
+*(Recontada el 21/09/2026 sobre el repositorio, no sobre la memoria del equipo;
+intervenciones y migraciones actualizadas al 29/09/2026. Los recuentos de líneas
+y archivos incluyen los archivos de prueba.)*
 
 | Métrica | Valor |
 |---|---|
-| Intervenciones registradas | 34 |
+| Intervenciones registradas | 35 |
 | Modelos de datos | 39 |
 | Enumeraciones | 25 |
 | Endpoints REST | 140 |
-| Migraciones | 11, aplicadas y verificadas contra la base de producción |
+| Migraciones | 12, aplicadas en producción (la 12.ª, del 29/09, por el pre-deploy) |
 | Funciones y disparadores en PostgreSQL | 7 y 6 (verificados en ejecución) |
 | Restricciones `CHECK` | 12 |
 | Pruebas automatizadas | 358 (271 backend, 70 móvil, 17 sobre el motor) |
@@ -1006,8 +1007,8 @@ restantes conservan algún valor.
 ## Conclusión general
 
 El uso de inteligencia artificial en este Trabajo Práctico Integrador nos
-permitió construir, en treinta y cuatro intervenciones, un sistema de tres
-aplicaciones con 39 modelos de datos, 140 endpoints, 11 migraciones y 358
+permitió construir, en treinta y cinco intervenciones, un sistema de tres
+aplicaciones con 39 modelos de datos, 140 endpoints, 12 migraciones y 358
 pruebas automatizadas.
 Ese volumen no habría sido alcanzable con desarrollo tradicional en el tiempo
 disponible.
@@ -1092,8 +1093,10 @@ está justamente en la precisión con que se enuncian sus límites.
 
 | Anexo | Documento | Contenido |
 |---|---|---|
-| A | `docs/bitacora_ia.md` | Bitácora completa: 34 intervenciones con prompts y comandos |
+| A | `docs/bitacora_ia.md` | Bitácora completa: 35 intervenciones con prompts y comandos |
 | B | `docs/plan_de_trabajo.md` | Cronograma, hitos y matriz de riesgos |
+| B.1 | `docs/plan_de_trabajo_mobile.md` | Plan de trabajo de la aplicación móvil |
+| B.2 | `docs/patrones_de_diseno.md` | Patrones de diseño, con archivo y línea |
 | C | `docs/informe_auditoria.md` | Estado del repositorio al 15/09/2026 |
 | D | `docs/modelo_de_datos.md` | Modelo de datos y trazabilidad de las 8 reglas críticas |
 | E | `docs/api_rest.md` | Servicios, controladores y matriz de autorización |

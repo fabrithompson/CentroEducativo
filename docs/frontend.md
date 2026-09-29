@@ -81,6 +81,34 @@ También trae `render()`, que muestra el estado de carga y **captura el error**.
 Evita el patrón de dejar un "Cargando…" colgado para siempre cuando la petición
 falla, que es lo que hacen las vistas viejas.
 
+### Diálogos (29/09/2026)
+
+Todos los modales de los cuatro paneles usan el mismo formato —el de "Editar
+usuario": cabecera con degradé, ícono, título y subtítulo; etiquetas con ícono;
+pie con *Cancelar* y la acción principal— y el mismo comportamiento, que vive en
+`campus.js`:
+
+| Función | Qué hace |
+|---|---|
+| `abrirDialogo(dlg, { foco })` / `cerrarDialogo(dlg)` | Abren y cierran un `<dialog>` nativo: queda en la capa superior, se cierra con Escape y **al tocar afuera** —salvo que el arrastre haya empezado adentro, para no perder lo escrito al seleccionar texto—, enfoca el primer campo y devuelve el foco a quien lo abrió |
+| `uxConfirm`, `uxPrompt`, `uxAlert` | Reemplazan a `confirm`, `prompt` y `alert` del navegador. Devuelven una promesa. `uxConfirm` acepta `consecuencias`, que se listan antes de confirmar |
+| `uxBaja({ opciones, consecuencias, pedirMotivo })` | El modal de baja: elige el estado de baja, muestra qué va a pasar y, si hace falta, pide un motivo obligatorio |
+
+Las vistas arman su diálogo con `plantillaDialogo()` y `pieDialogo()` de `ui.js`.
+Un detalle que costó encontrar: el reset global `* { margin: 0 }` anulaba el
+`margin: auto` con el que el navegador centra un `<dialog>`, y por eso los modales
+aparecían pegados arriba a la izquierda. `.dialogo` lo restituye.
+
+### Navegación de los paneles (29/09/2026)
+
+La sección visible queda en el hash de la dirección (`panel_admin.html#m-alumnos`).
+`switchView` lo actualiza con `history.replaceState` —"atrás" sale del panel en
+lugar de recorrer cada sección— y `window.restaurarVista()`, al final de la carga
+de cada panel, vuelve a esa sección con su cargador. También reacciona a
+`hashchange`, que es lo que usa el enlace de una notificación dentro del mismo
+panel. Los enlaces del menú reciben un `href` con su sección, así que se llega a
+ellos con Tab y se pueden abrir en otra pestaña.
+
 ---
 
 ## 3. Portal público

@@ -2,7 +2,8 @@
 
 **Proyecto:** Centro Educativo "TRANSFORMAR PARA EDUCAR"
 **Paquete:** `mobile/` (workspace pnpm)
-**Fecha:** 16/09/2026
+**Fecha:** 16/09/2026 · actualizado el 29/09/2026
+**Plan de lo que falta:** `docs/plan_de_trabajo_mobile.md`
 
 ---
 
@@ -10,7 +11,7 @@
 
 | Elemento | Elección |
 |---|---|
-| Framework | **Expo SDK 57** + React Native 0.87 |
+| Framework | **Expo SDK 57** (`~57.0.23`) + React Native 0.86.3 · React 19.2.3 |
 | Lenguaje | TypeScript estricto, con `noUncheckedIndexedAccess` |
 | Almacenamiento de sesión | `expo-secure-store` |
 | Cámara y archivos | `expo-image-picker`, `expo-document-picker` |
@@ -19,7 +20,7 @@
 Expo era la recomendación de la auditoría (decisión #1): comparte TypeScript con
 el resto del monorepo y produce un build instalable para la defensa.
 
-**Sobre la navegación:** son tres pantallas y un flujo lineal. React Navigation
+**Sobre la navegación:** son cinco pantallas con una barra inferior. React Navigation
 arrastra `react-native-gesture-handler`, `reanimated` y `screens`, todas con
 código nativo. Para este alcance no se justifica. Si el flujo crece, migrar es
 un cambio acotado a `App.tsx`.
@@ -42,11 +43,13 @@ mobile/
     dominio/
       pagos.ts                  Selección de ítems y clasificación   ← testeado
       formato.ts                Importes, fechas, horarios           ← testeado
+      totp.ts                   Código del carnet (HMAC-SHA256)      ← testeado
     pantallas/
       Ingreso.tsx
       Dashboard.tsx
       Finanzas.tsx
       PagoTransferencia.tsx
+      Carnet.tsx                QR rotativo y últimos accesos
     ui/
       tema.ts                   Tokens visuales
       componentes.tsx           Tarjeta, Estado, Botón, Progreso…
@@ -205,13 +208,15 @@ En un teléfono, TalkBack y VoiceOver son el modo normal de uso para mucha gente
 
 ## 8. Configuración
 
-La URL de la API sale de `app.json` → `extra.apiUrl`. El valor por defecto es
-**`http://10.0.2.2:4000`**: en el emulador de Android `localhost` es el propio
-emulador, no la máquina de desarrollo, y `10.0.2.2` es como el emulador ve al
-host.
+La URL de la API sale de `app.json` → `extra.apiUrl`, que apunta al backend de
+producción (`https://backend-production-7a0d.up.railway.app`): la app abierta con
+Expo Go en un teléfono funciona sin levantar nada en la computadora.
 
-**En un dispositivo real hay que poner la IP de la red local** (por ejemplo
-`http://192.168.0.15:4000`) y levantar el backend escuchando en `0.0.0.0`.
+**Para desarrollar contra el backend local** hay que cambiar ese valor. En el
+emulador de Android `localhost` es el propio emulador: se usa
+`http://10.0.2.2:4000`, que es como el emulador ve a la máquina. En un teléfono
+real, la IP de la red local (por ejemplo `http://192.168.0.15:4000`), con el
+backend escuchando en `0.0.0.0`.
 
 ```bash
 pnpm --filter mobile start     # o: pnpm mobile:dev
@@ -228,10 +233,12 @@ pnpm --filter mobile typecheck
 | Typecheck contra los tipos reales de React Native y Expo | ✅ `tsc --noEmit` sin errores |
 | Cálculo de monto y selección de ítems | ✅ **27 tests** |
 | Formato de importes, fechas y vencimientos | ✅ **19 tests** |
+| Código TOTP del carnet contra `node:crypto` | ✅ **24 tests** |
 | Validación del comprobante | ✅ incluida arriba |
 | Clasificación en solapas | ✅ incluida arriba |
-| Suite del paquete móvil | ✅ **46 tests en verde** |
-| Suite del monorepo | ✅ **230 tests** (184 backend + 46 móvil) |
+| Suite del paquete móvil | ✅ **70 tests en verde**, todos de dominio |
+| Cliente HTTP (`api/client.ts`) | ❌ **Sin pruebas automáticas** |
+| Suite del monorepo | ✅ **341 tests** (271 backend + 70 móvil) |
 | Render en emulador o dispositivo | ❌ **No verificado** |
 | Llamadas contra el backend en ejecución | ❌ **No verificado** |
 | Subida real de un comprobante | ❌ **No verificado** |
@@ -255,8 +262,14 @@ emulador.
 |---|---|
 | Probar en emulador Android y en un dispositivo real | Lo primero al retomar |
 | Verificar el `multipart` de RN contra multer | Es donde suelen aparecer sorpresas |
-| Notificaciones push | La consigna las pide para el QR; no están en este alcance |
-| QR dinámico de transporte y comedor | Valor agregado, Sprint 4 |
+| Rastreo del transporte (RF-08) | El backend está listo (`GET /api/transporte/seguimiento/:alumnoId`); falta la pantalla y un simulador de posiciones |
+| Materias y profesores del hijo (RF-03) | `GET /api/padres/mis-hijos/:id` ya los devuelve; falta mostrarlos |
+| Notificaciones push | La consigna las pide para el QR; en Android requieren un build de desarrollo, no Expo Go |
 | Íconos e imagen de splash | `app.json` tiene los colores; faltan los assets |
 | Pantalla de calificaciones | El endpoint existe y está tipado; falta la pantalla |
+| Pruebas del cliente HTTP | Refresco único, oyentes de sesión caída y errores, con un `fetch` simulado |
 | Modo oscuro | El tema está en tokens; falta la variante |
+
+El orden y los responsables de cada pendiente están en
+`docs/plan_de_trabajo_mobile.md`. El carnet digital con QR dinámico, que figuraba
+acá como pendiente, ya está construido (`pantallas/Carnet.tsx`).
