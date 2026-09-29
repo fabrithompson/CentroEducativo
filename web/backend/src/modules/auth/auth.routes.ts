@@ -9,8 +9,8 @@ import { requireAuth, signAccessToken, signRefreshToken, verifyRefreshToken } fr
 import { rateLimit } from '../shared/rateLimit';
 import { env } from '../../config/env';
 import { passwordSchema } from './politicaPassword';
+import { COOKIE_VIEJA, cookieDeCuenta, cookiesDeCuentas, elegirCookieRefresco } from './cookiesRefresco';
 
-const REFRESH_COOKIE = 'et_refresh';
 const refreshCookieOpts = {
   httpOnly: true,
   sameSite: 'lax' as const,
@@ -199,7 +199,9 @@ router.post(
         role: user.role,
       });
       const refresh = signRefreshToken({ id: user.id, v: user.tokenVersion });
-      res.cookie(REFRESH_COOKIE, refresh, refreshCookieOpts);
+      // Una cookie por cuenta: ingresar con otra cuenta en otra pestaña ya no
+      // pisa la sesión de esta (ver cookiesRefresco.ts).
+      res.cookie(cookieDeCuenta(user.id), refresh, refreshCookieOpts);
 
       res.json({
         exito: true,
@@ -217,15 +219,28 @@ router.post(
   },
 );
 
+/** La web manda qué cuenta es la pestaña; la app móvil, no. */
+const cuentaSchema = z.object({ usuarioId: z.coerce.number().int().positive().optional() });
+
 router.post('/refresh', async (req, res, next) => {
   try {
-    const token = req.cookies?.[REFRESH_COOKIE];
-    if (!token) throw HttpError.unauthorized('No hay refresh token.');
+    const { usuarioId } = cuentaSchema.parse(req.body ?? {});
+    const elegida = elegirCookieRefresco(req.cookies ?? {}, usuarioId);
+    if (!elegida) {
+      throw HttpError.unauthorized(
+        usuarioId ? 'No hay una sesión abierta de esa cuenta en este navegador.' : 'No hay refresh token.',
+      );
+    }
     let payload;
     try {
-      payload = verifyRefreshToken(token);
+      payload = verifyRefreshToken(elegida.token);
     } catch {
       throw HttpError.unauthorized('Refresh token inválido o expirado.');
+    }
+    // La pestaña nunca pasa a ser otra cuenta: si el token no es de la cuenta
+    // que dice ser, no se renueva.
+    if (usuarioId && payload.id !== usuarioId) {
+      throw HttpError.unauthorized('La sesión guardada en este navegador es de otra cuenta.');
     }
     const user = await prisma.user.findUnique({ where: { id: payload.id } });
     if (!user || !user.isActive) throw HttpError.unauthorized('Cuenta deshabilitada.');
@@ -241,7 +256,10 @@ router.post('/refresh', async (req, res, next) => {
 
     const access = signAccessToken({ id: user.id, usuario: user.usuario, role: user.role });
     const newRefresh = signRefreshToken({ id: user.id, v: user.tokenVersion });
-    res.cookie(REFRESH_COOKIE, newRefresh, refreshCookieOpts);
+    res.cookie(cookieDeCuenta(user.id), newRefresh, refreshCookieOpts);
+    // Una sesión de antes de las cookies por cuenta se migra en su primera
+    // renovación.
+    if (elegida.nombre === COOKIE_VIEJA) res.clearCookie(COOKIE_VIEJA, { path: '/api/auth' });
 
     res.json({
       exito: true,
@@ -257,8 +275,33 @@ router.post('/refresh', async (req, res, next) => {
   }
 });
 
-router.post('/logout', (_req, res) => {
-  res.clearCookie(REFRESH_COOKIE, { path: '/api/auth' });
+/**
+ * Cierra la sesión de una cuenta: la de la pestaña que lo pide, sin tocar las
+ * de otras pestañas. Sin cuenta indicada (la app móvil) se cierran todas.
+ */
+router.post('/logout', (req, res) => {
+  const cuenta = cuentaSchema.safeParse(req.body ?? {});
+  const usuarioId = cuenta.success ? cuenta.data.usuarioId : undefined;
+  const cookies = (req.cookies ?? {}) as Record<string, unknown>;
+
+  if (usuarioId) {
+    res.clearCookie(cookieDeCuenta(usuarioId), { path: '/api/auth' });
+    // La cookie vieja, sólo si era de esta cuenta o ya no sirve.
+    const vieja = cookies[COOKIE_VIEJA];
+    if (typeof vieja === 'string' && vieja) {
+      let deEstaCuenta = true;
+      try {
+        deEstaCuenta = verifyRefreshToken(vieja).id === usuarioId;
+      } catch {
+        /* vencida o inválida: se borra */
+      }
+      if (deEstaCuenta) res.clearCookie(COOKIE_VIEJA, { path: '/api/auth' });
+    }
+  } else {
+    for (const nombre of [...cookiesDeCuentas(cookies), COOKIE_VIEJA]) {
+      res.clearCookie(nombre, { path: '/api/auth' });
+    }
+  }
   res.json({ exito: true });
 });
 

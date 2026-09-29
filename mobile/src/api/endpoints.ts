@@ -211,7 +211,9 @@ export const api = {
     login: (usuario: string, password: string) =>
       http.postSinAuth<Sesion>('/auth/login', { usuario, password }),
 
-    logout: () => http.post<{ exito: boolean }>('/auth/logout'),
+    /** Con el id se borra sólo la cookie de esa cuenta; sin él, todas. */
+    logout: (usuarioId?: number) =>
+      http.post<{ exito: boolean }>('/auth/logout', usuarioId ? { usuarioId } : undefined),
 
     olvideMiClave: (email: string) =>
       http.postSinAuth<{ exito: boolean; mensaje: string }>('/auth/forgot-password', { email }),

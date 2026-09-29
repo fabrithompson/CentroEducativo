@@ -38,14 +38,23 @@ let refrescando = null;
  * promesa: si cinco widgets reciben 401 a la vez, se refresca una sola vez.
  */
 async function refrescar() {
+  // En los paneles la renovación la hace js/sesion.js, compartida con
+  // campus.js: dice qué cuenta es la pestaña y nunca la cambia por otra.
+  if (typeof window.renovarSesion === 'function') return window.renovarSesion();
+
   if (refrescando) return refrescando;
 
-  refrescando = fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include' })
+  const actual = typeof window.usuarioSesion === 'function' ? window.usuarioSesion() : null;
+  refrescando = fetch(`${BASE}/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(actual ? { usuarioId: actual.id } : {}),
+  })
     .then((r) => r.json())
     .then((data) => {
-      if (data?.exito && data.usuario?.token) {
+      if (data?.exito && data.usuario?.token && (!actual || data.usuario.id === actual.id)) {
         sessionStorage.setItem('token', data.usuario.token);
-        localStorage.setItem('usuarioActual', JSON.stringify(data.usuario));
         return true;
       }
       return false;

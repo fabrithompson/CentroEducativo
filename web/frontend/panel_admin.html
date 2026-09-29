@@ -432,12 +432,15 @@
 
     <script src="toast.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="js/sesion.js"></script>
     <script src="campus.js"></script>
     <script>
         const ROLE_LABEL = { ESTUDIANTE: 'Estudiante', DOCENTE: 'Docente', PADRE: 'Padre', ADMIN: 'Admin' };
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const user = JSON.parse(localStorage.getItem('usuarioActual') || 'null');
+        document.addEventListener('DOMContentLoaded', async () => {
+            // La cuenta de esta pestaña (ver js/sesion.js): otra pestaña puede
+            // tener abierta otra cuenta sin afectar a esta.
+            const user = await window.sesionDelPanel();
             if (!user || user.tipo !== 'admin') { window.location.href = 'index.html'; return; }
             document.getElementById('userNameDisplay').textContent = user.nombre;
             cargarStats();
@@ -1262,10 +1265,7 @@
         }
 
         function logout() {
-            fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
-            localStorage.removeItem('usuarioActual');
-            sessionStorage.removeItem('token');
-            window.location.href = 'index.html';
+            window.cerrarSesion();
         }
     </script>
 

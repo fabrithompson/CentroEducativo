@@ -115,11 +115,19 @@ async function refrescarToken(): Promise<boolean> {
 
   refrescando = (async () => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/refresh`, { method: 'POST' });
+      // El backend guarda una cookie de refresco por cuenta. Decir cuál es la
+      // de esta sesión evita que, si alguna vez hubiera otra, se renueve como
+      // otra persona.
+      const actual = await leerUsuario();
+      const res = await fetch(`${API_URL}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(actual ? { usuarioId: actual.id } : {}),
+      });
       if (!res.ok) return false;
 
       const data = (await res.json()) as { exito?: boolean; usuario?: UsuarioSesion };
-      if (data?.exito && data.usuario?.token) {
+      if (data?.exito && data.usuario?.token && (!actual || data.usuario.id === actual.id)) {
         await guardarSesion(data.usuario);
         return true;
       }

@@ -16,22 +16,10 @@
         return { 'Authorization': 'Bearer ' + token() };
     };
 
-    let refreshing = null;
-    async function tryRefresh() {
-        if (refreshing) return refreshing;
-        refreshing = fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
-            .then(r => r.json())
-            .then(data => {
-                if (data.exito && data.usuario && data.usuario.token) {
-                    sessionStorage.setItem('token', data.usuario.token);
-                    localStorage.setItem('usuarioActual', JSON.stringify(data.usuario));
-                    return true;
-                }
-                return false;
-            })
-            .catch(() => false)
-            .finally(() => { setTimeout(() => refreshing = null, 0); });
-        return refreshing;
+    // La renovación vive en js/sesion.js: manda qué cuenta es la pestaña y
+    // la comparten campus.js y js/api.js, así no se renueva dos veces a la vez.
+    function tryRefresh() {
+        return window.renovarSesion();
     }
 
     async function authedFetch(url, init) {
@@ -770,7 +758,7 @@
         if (!det) return;
         const data = await window.apiGet('/api/forum/' + id);
         if (!data.exito) { window.toastError && window.toastError(data.mensaje || 'Error'); return; }
-        const me = JSON.parse(localStorage.getItem('usuarioActual') || 'null');
+        const me = window.usuarioSesion();
         const puedoPin = me && (me.tipo === 'docente' || me.tipo === 'admin');
         if (lista) lista.style.display = 'none';
         det.innerHTML = `

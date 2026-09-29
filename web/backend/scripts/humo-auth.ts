@@ -35,7 +35,8 @@ function afirmar(condicion: boolean, titulo: string, detalle?: unknown) {
 function cookieDe(res: Response): string | null {
   const bruto = res.headers.getSetCookie?.() ?? [];
   for (const c of bruto) {
-    if (c.startsWith('et_refresh=')) return c.split(';')[0]!;
+    // Una cookie por cuenta: `et_refresh_<id>`.
+    if (c.startsWith('et_refresh')) return c.split(';')[0]!;
   }
   return null;
 }
@@ -205,6 +206,83 @@ async function main() {
       password: 'claveBuena1',
     });
     afirmar(ingresoNuevo.status === 200, 'y la cuenta recién creada puede entrar');
+
+    // ------------------------------------------------------------------
+    console.log('\n=== Dos cuentas en el mismo navegador ===');
+    // Con una sola cookie, la segunda cuenta pisaba a la primera: a los 15
+    // minutos la pestaña del administrador renovaba como docente.
+    const entrar = async (usuario: string) => {
+      const r = await pedir('POST', '/api/auth/login', { usuario, password: '123456' });
+      const c = (await r.json()) as Record<string, any>;
+      return { id: c.usuario.id as number, cookie: cookieDe(r)! };
+    };
+    const renovarCon = (cookie: string, usuarioId?: number) =>
+      fetch(base + '/api/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify(usuarioId ? { usuarioId } : {}),
+      });
+
+    const cuentaA = await entrar('fabriynahuel');
+    const cuentaB = await entrar('mlopez');
+    afirmar(
+      cuentaA.cookie.startsWith(`et_refresh_${cuentaA.id}=`) && cuentaB.cookie.startsWith(`et_refresh_${cuentaB.id}=`),
+      'cada cuenta recibe su propia cookie de refresco',
+      [cuentaA.cookie.split('=')[0], cuentaB.cookie.split('=')[0]],
+    );
+    const tarro = `${cuentaA.cookie}; ${cuentaB.cookie}`;
+
+    const comoA = await renovarCon(tarro, cuentaA.id);
+    const cuerpoComoA = (await comoA.json()) as Record<string, any>;
+    afirmar(
+      comoA.status === 200 && cuerpoComoA.usuario?.id === cuentaA.id,
+      'REGLA: la pestaña del administrador renueva como administrador aunque después haya entrado un docente',
+      cuerpoComoA.usuario,
+    );
+    const comoB = await renovarCon(tarro, cuentaB.id);
+    afirmar(comoB.status === 200 && ((await comoB.json()) as Record<string, any>).usuario?.id === cuentaB.id, 'y la del docente, como docente');
+
+    const sinDecir = await renovarCon(tarro);
+    afirmar(sinDecir.status === 401, 'sin decir qué cuenta y con dos abiertas, no se adivina');
+
+    const salirA = await fetch(base + '/api/auth/logout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: tarro },
+      body: JSON.stringify({ usuarioId: cuentaA.id }),
+    });
+    const borradas = (salirA.headers.getSetCookie?.() ?? [])
+      .filter((c) => /Expires=Thu, 01 Jan 1970/i.test(c))
+      .map((c) => c.split('=')[0]);
+    afirmar(
+      borradas.includes(`et_refresh_${cuentaA.id}`) && !borradas.includes(`et_refresh_${cuentaB.id}`),
+      'REGLA: cerrar la sesión del administrador borra sólo su cookie',
+      borradas,
+    );
+
+    // Lo que queda en el navegador después de ese logout: la cookie de B.
+    const soloB = cuentaB.cookie;
+    afirmar((await renovarCon(soloB, cuentaB.id)).status === 200, 'el docente sigue renovando después del logout del administrador');
+    afirmar(
+      (await renovarCon(soloB, cuentaA.id)).status === 401,
+      'REGLA: la cookie del docente no sirve para renovar al administrador',
+    );
+    const movil = await renovarCon(soloB);
+    afirmar(
+      movil.status === 200 && ((await movil.json()) as Record<string, any>).usuario?.id === cuentaB.id,
+      'sin id y con una sola cuenta —la app móvil— se renueva igual',
+    );
+
+    // Una sesión abierta antes del cambio tiene la cookie única de antes.
+    const cookieVieja = 'et_refresh=' + cuentaA.cookie.split('=').slice(1).join('=');
+    const migrada = await renovarCon(cookieVieja, cuentaA.id);
+    const setCookies = migrada.headers.getSetCookie?.() ?? [];
+    afirmar(
+      migrada.status === 200 &&
+        setCookies.some((c) => c.startsWith(`et_refresh_${cuentaA.id}=`)) &&
+        setCookies.some((c) => c.startsWith('et_refresh=;') && /Expires=Thu, 01 Jan 1970/i.test(c)),
+      'una sesión con la cookie de antes renueva y se migra a la cookie de su cuenta',
+      setCookies.map((c) => c.split(';')[0]!.slice(0, 20)),
+    );
   } finally {
     server?.close();
     await pg.stop();

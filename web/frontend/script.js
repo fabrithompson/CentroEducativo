@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function checkUserStatus() {
-    const user = JSON.parse(localStorage.getItem('usuarioActual'));
+    const user = window.usuarioSesion();
     const userMenu = document.getElementById('userMenu');
     const loginLink = document.getElementById('loginLink');
     const userName = document.getElementById('userName');
@@ -227,15 +227,16 @@ function checkUserStatus() {
 }
 
 function logout() {
-    localStorage.removeItem('usuarioActual');
-    window.location.href = 'index.html';
+    window.cerrarSesion();
 }
 
 // Enrutador de Paneles por Rol
 function showUserPanel() {
-    const user = JSON.parse(localStorage.getItem('usuarioActual'));
+    const user = window.usuarioSesion();
     if (!user) {
-        openLoginModal();
+        // Una pestaña nueva no tiene sesión propia: si en el navegador hay una
+        // sola cuenta abierta, se recupera; si no, se pide ingresar.
+        window.renovarSesion().then((ok) => (ok ? showUserPanel() : openLoginModal()));
         return;
     }
 
@@ -286,8 +287,7 @@ if (loginForm) {
             .then(response => response.json())
             .then(data => {
                 if (data.exito) {
-                    sessionStorage.setItem('token', data.usuario.token);
-                    localStorage.setItem('usuarioActual', JSON.stringify(data.usuario));
+                    window.guardarSesion(data.usuario);
                     closeModal();
                     this.reset();
                     showUserPanel();
@@ -565,7 +565,7 @@ if (formCalificaciones) {
         e.preventDefault();
         
         const token = sessionStorage.getItem('token');
-        const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual'));
+        const usuarioActual = window.usuarioSesion();
 
         const datosNota = {
             estudiante_id: document.getElementById('notaAlumno').value,
@@ -603,7 +603,7 @@ if (formCalificaciones) {
 // B) Panel Estudiante/Padre: Leer Notas
 function renderizarBoletin() {
     const token = sessionStorage.getItem('token');
-    const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual'));
+    const usuarioActual = window.usuarioSesion();
     
     if (!usuarioActual) return;
     
@@ -669,18 +669,14 @@ function resetearTemporizador() {
 
 function cerrarSesionPorInactividad() {
     // Verificamos si el usuario realmente tiene una sesión iniciada
-    if (sessionStorage.getItem('token') || localStorage.getItem('usuarioActual')) {
+    if (sessionStorage.getItem('token') || window.usuarioSesion()) {
         if (typeof toastWarning === 'function') {
             toastWarning('Tu sesión caducó por 30 minutos de inactividad. Por tu seguridad, vuelve a iniciar sesión.', 5000);
         }
 
-        // Destruimos las credenciales
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('usuarioActual');
-        localStorage.removeItem('usuarioActual');
-
-        // Demoramos la redirección para que se vea el toast
-        setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+        // Se cierra también en el servidor: si sólo se borraba lo local, la
+        // cookie de refresco seguía viva y la sesión se podía recuperar.
+        setTimeout(() => { window.cerrarSesion(); }, 2000);
     }
 }
 

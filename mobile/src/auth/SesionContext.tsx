@@ -60,6 +60,13 @@ export function ProveedorSesion({ children }: { children: React.ReactNode }) {
 
     // La app es de tutores. Si entra un docente o un alumno, no tiene qué ver acá.
     if (respuesta.usuario.tipo !== 'padre') {
+      // El login ya dejó una cookie de refresco para esa cuenta: se cierra en
+      // el servidor también, para no dejarla viva siete días en el teléfono.
+      try {
+        await api.auth.logout(respuesta.usuario.id);
+      } catch {
+        /* sin conexión: la cookie vence sola */
+      }
       await borrarSesion();
       throw new Error(
         'Esta aplicación es para madres, padres y tutores. Si sos docente o estudiante, ingresá por el campus web.',
@@ -78,13 +85,13 @@ export function ProveedorSesion({ children }: { children: React.ReactNode }) {
     // Se intenta avisar al servidor para que limpie la cookie de refresh, pero
     // si falla igual se cierra la sesión local: el usuario pidió salir.
     try {
-      await api.auth.logout();
+      await api.auth.logout(usuario?.id);
     } catch {
       /* sin conexión: se cierra igual */
     }
     await borrarSesion();
     setUsuario(null);
-  }, []);
+  }, [usuario]);
 
   const valor = useMemo<Sesion>(
     () => ({ usuario, cargandoSesion, ingresar, salir }),

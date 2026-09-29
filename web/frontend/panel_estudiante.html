@@ -196,10 +196,13 @@
 
     <script src="toast.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="js/sesion.js"></script>
     <script src="campus.js"></script>
     <script>
-        const ME = JSON.parse(localStorage.getItem('usuarioActual') || 'null');
-        document.addEventListener('DOMContentLoaded', () => {
+        // La cuenta de esta pestaña (ver js/sesion.js). Se confirma al cargar.
+        let ME = window.usuarioSesion();
+        document.addEventListener('DOMContentLoaded', async () => {
+            ME = await window.sesionDelPanel();
             if (!ME || ME.tipo !== 'estudiante') { window.location.href = 'index.html'; return; }
             document.getElementById('userNameDisplay').textContent = ME.nombre;
             renderizarBoletin();
@@ -224,7 +227,7 @@
             const tbody = document.querySelector('#boletinEstudiante tbody');
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">Cargando calificaciones...</td></tr>';
 
-            const user = JSON.parse(localStorage.getItem('usuarioActual'));
+            const user = ME;
             const token = sessionStorage.getItem('token');
             if (!user || !token) return;
 
@@ -513,7 +516,7 @@
             }
         }
 
-        function logout() { localStorage.removeItem('usuarioActual'); sessionStorage.removeItem('token'); window.location.href = 'index.html'; }
+        function logout() { window.cerrarSesion(); }
     </script>
 </body>
 </html>

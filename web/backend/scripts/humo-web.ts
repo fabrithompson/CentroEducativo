@@ -420,7 +420,9 @@ async function main() {
     const activosHoy = (await comoAdmin('GET', '/api/alumnos?estado=ACTIVO&pageSize=100')).cuerpo.items as Cuerpo[];
     let conComedor: Cuerpo | undefined;
     for (const a of activosHoy) {
-      if ((await comoAdmin('GET', `/api/servicios/alumno/${a.id}`)).cuerpo.comedor) { conComedor = a; break; }
+      // Una baja deja la inscripción en BAJA, y más arriba se dio de baja a un alumno.
+      const comedorDelMes = (await comoAdmin('GET', `/api/servicios/alumno/${a.id}`)).cuerpo.comedor;
+      if (comedorDelMes?.estado === 'ACTIVA') { conComedor = a; break; }
     }
     afirmar(Boolean(conComedor), 'el seed inscribe el comedor del mes en curso (antes quedaba fijo en septiembre)');
 
