@@ -186,6 +186,15 @@ export async function actualizarProfesor(
     }
   }
 
+  // Pasar a INACTIVO desde la edición tiene las mismas condiciones y efectos
+  // que la baja: no si tiene deportes a cargo, y sus materias quedan libres.
+  if (input.estado === EstadoProfesor.INACTIVO && profesor.estado !== EstadoProfesor.INACTIVO) {
+    const { estado, ...resto } = input;
+    await darDeBajaProfesor(prisma, id, estado);
+    if (Object.keys(resto).length === 0) return prisma.profesor.findUniqueOrThrow({ where: { id } });
+    return prisma.profesor.update({ where: { id }, data: resto });
+  }
+
   return prisma.profesor.update({ where: { id }, data: input });
 }
 

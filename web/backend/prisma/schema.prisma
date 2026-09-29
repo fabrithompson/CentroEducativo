@@ -165,6 +165,11 @@ model User {
   /// quienes lo tengan cargado; al resto se los contacta por correo.
   telefono  String?
   isActive  Boolean  @default(true)
+  /// Docente que se registró solo y espera que un administrador lo apruebe.
+  /// Antes se deducía de `role = DOCENTE && !isActive`: un docente que el
+  /// administrador desactivaba aparecía entre los pendientes, y "Rechazar" lo
+  /// borraba con sus anuncios, mensajes y actividades.
+  pendienteAprobacion Boolean @default(false)
   /// Versión de los tokens de refresco. El refresh token la lleva adentro y
   /// `/api/auth/refresh` la contrasta: al incrementarla, todos los tokens
   /// emitidos antes dejan de servir. Es lo que hace que cambiar la contraseña

@@ -235,7 +235,7 @@ adminRouter.get('/moderation/counts', async (_req, res, next) => {
       prisma.inscription.count({ where: { status: ModerationStatus.PENDIENTE } }),
       prisma.opinionPublica.count({ where: { status: ModerationStatus.PENDIENTE } }),
       prisma.employmentApplication.count({ where: { status: ModerationStatus.PENDIENTE } }),
-      prisma.user.count({ where: { role: Role.DOCENTE, isActive: false } }),
+      prisma.user.count({ where: { role: Role.DOCENTE, pendienteAprobacion: true } }),
     ]);
     res.json({
       exito: true,

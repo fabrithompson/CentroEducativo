@@ -94,7 +94,10 @@ function filaAcciones(a) {
                      data-nombre="${esc(`${a.apellido}, ${a.nombres}`)}">
                <i class="fas fa-user-slash" aria-hidden="true"></i> Dar de baja
              </button>`
-          : ''
+          : `<button type="button" class="btn btn--chico btn--ok" data-reactivar="${a.id}"
+                     data-nombre="${esc(`${a.apellido}, ${a.nombres}`)}">
+               <i class="fas fa-rotate-left" aria-hidden="true"></i> Reactivar
+             </button>`
       }
     </div>`;
 }
@@ -336,6 +339,30 @@ async function darDeBaja(id, nombre) {
   }
 }
 
+// Vuelve a ACTIVO en el mismo curso. El servidor controla que el curso siga
+// activo y tenga lugar; si no, el mensaje lo dice y se lo cambia de curso
+// desde Editar.
+async function reactivar(id, nombre) {
+  const ok = await window.uxConfirm('Vuelve a figurar como alumno activo de su curso.', {
+    title: 'Reactivar alumno',
+    subtitle: nombre,
+    okLabel: 'Reactivar',
+    consecuencias: [
+      'Tiene que haber lugar en el curso, y el curso tiene que seguir activo.',
+      'Las inscripciones a deportes, transporte y comedor no vuelven solas: hay que cargarlas de nuevo.',
+    ],
+  });
+  if (!ok) return;
+
+  try {
+    await api.alumnos.actualizar(id, { estado: 'ACTIVO' });
+    avisar('Alumno reactivado.', 'ok');
+    await dibujar();
+  } catch (err) {
+    avisar(err?.message || 'No se pudo reactivar al alumno.', 'error');
+  }
+}
+
 // ==================================================================
 // Armado
 // ==================================================================
@@ -354,6 +381,9 @@ function cablearFilas() {
   });
   nodo.querySelectorAll('[data-baja]').forEach((b) => {
     b.addEventListener('click', () => darDeBaja(Number(b.dataset.baja), b.dataset.nombre));
+  });
+  nodo.querySelectorAll('[data-reactivar]').forEach((b) => {
+    b.addEventListener('click', () => reactivar(Number(b.dataset.reactivar), b.dataset.nombre));
   });
 }
 

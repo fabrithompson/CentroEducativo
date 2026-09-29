@@ -115,6 +115,38 @@ export async function obtenerAlumno(prisma: PrismaClient, id: number) {
  * si dos altas concurrentes leyeran el mismo máximo, generarían legajos
  * repetidos y la restricción única haría fallar a una de las dos.
  */
+/**
+ * Entrar a un curso —por alta, cambio de curso o reactivación— pide que esté
+ * activo y tenga lugar. El cupo lo ocupan los alumnos activos: un egresado o
+ * un inactivo no, y contarlos dejaba cursos "llenos" que no lo estaban.
+ * `excluir` es el propio alumno, que no se cuenta a sí mismo.
+ */
+async function validarLugarEnCurso(tx: Prisma.TransactionClient, cursoId: number, excluir?: number) {
+  const curso = await tx.curso.findUnique({ where: { id: cursoId } });
+  if (!curso) throw HttpError.notFound('El curso indicado no existe.');
+  if (!curso.activo) throw HttpError.conflict('El curso indicado no está activo.');
+
+  const ocupados = await tx.alumno.count({
+    where: { cursoId, estado: EstadoAlumno.ACTIVO, ...(excluir ? { NOT: { id: excluir } } : {}) },
+  });
+  if (ocupados >= curso.cupoMaximo) {
+    throw HttpError.conflict(
+      `${curso.nombre} "${curso.division}" no tiene cupo (${ocupados}/${curso.cupoMaximo}).`,
+    );
+  }
+}
+
+/**
+ * Al pasar a un estado de baja se liberan sus inscripciones a deportes y
+ * servicios: de lo contrario seguiría ocupando cupo y generando cargos.
+ */
+async function liberarInscripciones(tx: Prisma.TransactionClient, alumnoId: number) {
+  const baja = { estado: 'BAJA' as const, fechaBaja: new Date() };
+  await tx.inscripcionDeporte.updateMany({ where: { alumnoId, estado: 'ACTIVA' }, data: baja });
+  await tx.inscripcionTransporte.updateMany({ where: { alumnoId, estado: 'ACTIVA' }, data: baja });
+  await tx.inscripcionComedor.updateMany({ where: { alumnoId, estado: 'ACTIVA' }, data: baja });
+}
+
 async function proximoLegajo(tx: Prisma.TransactionClient): Promise<string> {
   const ultimo = await tx.alumno.findFirst({
     where: { legajo: { startsWith: 'A-' } },
@@ -153,18 +185,7 @@ export async function crearAlumno(prisma: PrismaClient, input: CrearAlumnoInput)
         );
       }
 
-      const curso = await tx.curso.findUnique({
-        where: { id: input.cursoId },
-        include: { nivel: true, _count: { select: { alumnos: true } } },
-      });
-      if (!curso) throw HttpError.notFound('El curso indicado no existe.');
-      if (!curso.activo) throw HttpError.conflict('El curso indicado no está activo.');
-
-      if (curso._count.alumnos >= curso.cupoMaximo) {
-        throw HttpError.conflict(
-          `${curso.nombre} "${curso.division}" no tiene cupo (${curso._count.alumnos}/${curso.cupoMaximo}).`,
-        );
-      }
+      await validarLugarEnCurso(tx, input.cursoId);
 
       if (input.userId) {
         const user = await tx.user.findUnique({ where: { id: input.userId } });
@@ -209,40 +230,58 @@ export async function actualizarAlumno(
   id: number,
   input: ActualizarAlumnoInput,
 ) {
-  const alumno = await prisma.alumno.findUnique({ where: { id } });
-  if (!alumno) throw HttpError.notFound('El alumno no existe.');
+  return prisma.$transaction(
+    async (tx) => {
+      const alumno = await tx.alumno.findUnique({ where: { id } });
+      if (!alumno) throw HttpError.notFound('El alumno no existe.');
 
-  if (input.cursoId && input.cursoId !== alumno.cursoId) {
-    const curso = await prisma.curso.findUnique({ where: { id: input.cursoId } });
-    if (!curso) throw HttpError.notFound('El curso indicado no existe.');
-    if (!curso.activo) throw HttpError.conflict('El curso indicado no está activo.');
-  }
+      const cursoId = input.cursoId ?? alumno.cursoId;
+      const estado = input.estado ?? alumno.estado;
+      const cambiaDeCurso = cursoId !== alumno.cursoId;
+      const seReactiva = estado === EstadoAlumno.ACTIVO && alumno.estado !== EstadoAlumno.ACTIVO;
 
-  if (input.userId) {
-    const yaVinculado = await prisma.alumno.findUnique({ where: { userId: input.userId } });
-    if (yaVinculado && yaVinculado.id !== id) {
-      throw HttpError.conflict('Ese usuario ya está vinculado a otro alumno.');
-    }
-  }
+      if (estado === EstadoAlumno.ACTIVO && (cambiaDeCurso || seReactiva)) {
+        await validarLugarEnCurso(tx, cursoId, id);
+      } else if (cambiaDeCurso) {
+        const curso = await tx.curso.findUnique({ where: { id: cursoId } });
+        if (!curso) throw HttpError.notFound('El curso indicado no existe.');
+        if (!curso.activo) throw HttpError.conflict('El curso indicado no está activo.');
+      }
 
-  return prisma.alumno.update({
-    where: { id },
-    data: {
-      apellido: input.apellido,
-      nombres: input.nombres,
-      fechaNacimiento: input.fechaNacimiento,
-      domicilio: input.domicilio,
-      localidad: input.localidad,
-      provincia: input.provincia,
-      telefono: input.telefono,
-      email: input.email,
-      cursoId: input.cursoId,
-      estado: input.estado,
-      observaciones: input.observaciones,
-      userId: input.userId,
+      if (input.userId) {
+        const yaVinculado = await tx.alumno.findUnique({ where: { userId: input.userId } });
+        if (yaVinculado && yaVinculado.id !== id) {
+          throw HttpError.conflict('Ese usuario ya está vinculado a otro alumno.');
+        }
+      }
+
+      // Pasar a un estado de baja desde la edición tiene el mismo efecto que
+      // la baja.
+      if (estado !== EstadoAlumno.ACTIVO && alumno.estado === EstadoAlumno.ACTIVO) {
+        await liberarInscripciones(tx, id);
+      }
+
+      return tx.alumno.update({
+        where: { id },
+        data: {
+          apellido: input.apellido,
+          nombres: input.nombres,
+          fechaNacimiento: input.fechaNacimiento,
+          domicilio: input.domicilio,
+          localidad: input.localidad,
+          provincia: input.provincia,
+          telefono: input.telefono,
+          email: input.email,
+          cursoId: input.cursoId,
+          estado: input.estado,
+          observaciones: input.observaciones,
+          userId: input.userId,
+        },
+        include: { curso: { include: { nivel: true } } },
+      });
     },
-    include: { curso: { include: { nivel: true } } },
-  });
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
 }
 
 /**
@@ -264,21 +303,7 @@ export async function darDeBajaAlumno(
   }
 
   return prisma.$transaction(async (tx) => {
-    // Al darlo de baja se liberan sus inscripciones a deportes y servicios: de
-    // lo contrario seguiría ocupando cupo y generando cargos.
-    await tx.inscripcionDeporte.updateMany({
-      where: { alumnoId: id, estado: 'ACTIVA' },
-      data: { estado: 'BAJA', fechaBaja: new Date() },
-    });
-    await tx.inscripcionTransporte.updateMany({
-      where: { alumnoId: id, estado: 'ACTIVA' },
-      data: { estado: 'BAJA', fechaBaja: new Date() },
-    });
-    await tx.inscripcionComedor.updateMany({
-      where: { alumnoId: id, estado: 'ACTIVA' },
-      data: { estado: 'BAJA', fechaBaja: new Date() },
-    });
-
+    await liberarInscripciones(tx, id);
     return tx.alumno.update({ where: { id }, data: { estado } });
   });
 }

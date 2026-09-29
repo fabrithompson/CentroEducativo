@@ -437,7 +437,7 @@
 
             const icono = opts.icono || ICONOS_UX[opts.variante] || ICONOS_UX.question;
             const consecuencias = opts.consecuencias && opts.consecuencias.length
-                ? '<div class="modal-consecuencias"><strong>Qué pasa si confirmás:</strong><ul>' +
+                ? '<div class="modal-consecuencias' + (opts.peligro ? '' : ' modal-consecuencias--neutra') + '"><strong>Qué pasa si confirmás:</strong><ul>' +
                   opts.consecuencias.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul></div>'
                 : '';
 

@@ -92,7 +92,7 @@ router.get('/users', async (req, res, next) => {
       orderBy: [{ role: 'asc' }, { nombre: 'asc' }],
       select: {
         id: true, usuario: true, email: true, dni: true, nombre: true,
-        role: true, curso: true, isActive: true, createdAt: true,
+        role: true, curso: true, isActive: true, pendienteAprobacion: true, createdAt: true,
       },
     });
     res.json({ exito: true, usuarios: users });
@@ -149,6 +149,9 @@ router.patch('/users/:id', async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const data = updateUserSchema.parse(req.body);
+    if (id === req.authUser!.id && data.isActive === false) {
+      throw HttpError.badRequest('No podés desactivar tu propia cuenta.');
+    }
 
     // Verificar colisiones en campos únicos
     if (data.usuario || data.email || data.dni) {
@@ -179,7 +182,14 @@ router.patch('/users/:id', async (req, res, next) => {
     if (data.role !== undefined) patch.role = data.role as Role;
     if (data.curso !== undefined) patch.curso = data.curso;
     if (data.isActive !== undefined) patch.isActive = data.isActive;
+    // Reactivar a un docente que esperaba aprobación equivale a aprobarlo.
+    if (data.isActive === true) patch.pendienteAprobacion = false;
     if (data.password !== undefined) patch.password = await bcrypt.hash(data.password, 10);
+    // Desactivar o cambiar la contraseña cierra las sesiones abiertas: el
+    // refresh token que ya tenían deja de validar (ver `tokenVersion`).
+    if (data.isActive === false || data.password !== undefined) {
+      patch.tokenVersion = { increment: 1 };
+    }
 
     // Si dejó de ser estudiante, limpiar curso
     if (data.role && data.role !== 'ESTUDIANTE' && patch.curso === undefined) {
@@ -189,7 +199,10 @@ router.patch('/users/:id', async (req, res, next) => {
     const user = await prisma.user.update({
       where: { id },
       data: patch,
-      select: { id: true, usuario: true, nombre: true, role: true, dni: true, email: true, curso: true, isActive: true },
+      select: {
+        id: true, usuario: true, nombre: true, role: true, dni: true, email: true, curso: true,
+        isActive: true, pendienteAprobacion: true,
+      },
     });
     res.json({ exito: true, usuario: user });
   } catch (err) { next(err); }
@@ -199,7 +212,9 @@ router.delete('/users/:id', async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (id === req.authUser!.id) throw HttpError.badRequest('No podés borrar tu propia cuenta.');
-    await prisma.user.update({ where: { id }, data: { isActive: false } });
+    // Sin subir `tokenVersion`, la sesión abierta seguía renovándose una
+    // semana más con su refresh token.
+    await prisma.user.update({ where: { id }, data: { isActive: false, tokenVersion: { increment: 1 } } });
     res.json({ exito: true, mensaje: 'Usuario desactivado.' });
   } catch (err) { next(err); }
 });
@@ -317,7 +332,7 @@ router.post('/payments', async (req, res, next) => {
 router.get('/teachers/pending', async (_req, res, next) => {
   try {
     const pendientes = await prisma.user.findMany({
-      where: { role: Role.DOCENTE, isActive: false },
+      where: { role: Role.DOCENTE, pendienteAprobacion: true },
       orderBy: { createdAt: 'asc' },
       select: {
         id: true, usuario: true, email: true, dni: true, nombre: true,
@@ -334,10 +349,10 @@ router.post('/teachers/:id/approve', async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) throw HttpError.notFound('Docente no encontrado.');
     if (user.role !== Role.DOCENTE) throw HttpError.badRequest('El usuario no es docente.');
-    if (user.isActive) throw HttpError.badRequest('El docente ya fue aprobado.');
+    if (!user.pendienteAprobacion) throw HttpError.badRequest('El docente no tiene una solicitud pendiente.');
     const aprobado = await prisma.user.update({
       where: { id },
-      data: { isActive: true },
+      data: { isActive: true, pendienteAprobacion: false },
       select: { id: true, usuario: true, nombre: true, email: true, dni: true, isActive: true },
     });
     await prisma.notification.create({
@@ -357,7 +372,12 @@ router.delete('/teachers/:id/reject', async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) throw HttpError.notFound('Docente no encontrado.');
     if (user.role !== Role.DOCENTE) throw HttpError.badRequest('El usuario no es docente.');
-    if (user.isActive) throw HttpError.badRequest('No se puede rechazar un docente ya aprobado.');
+    // Rechazar borra la cuenta, y el borrado arrastra lo que haya publicado:
+    // vale sólo para una solicitud que nunca se aprobó. A un docente
+    // desactivado se lo reactiva desde Usuarios.
+    if (!user.pendienteAprobacion) {
+      throw HttpError.badRequest('Sólo se puede rechazar una solicitud pendiente de aprobación.');
+    }
     await prisma.user.delete({ where: { id } });
     res.json({ exito: true, mensaje: 'Solicitud de docente rechazada.' });
   } catch (err) { next(err); }

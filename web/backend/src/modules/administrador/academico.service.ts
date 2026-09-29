@@ -71,10 +71,25 @@ export async function crearNivel(prisma: PrismaClient, input: AltaNivel) {
   });
 }
 
-export async function actualizarNivel(prisma: PrismaClient, id: number, input: Partial<AltaNivel>) {
+/** Un nivel con cursos activos no se da de baja. */
+async function verificarBajaNivel(tx: Prisma.TransactionClient, id: number) {
+  const cursosActivos = await tx.curso.count({ where: { nivelId: id, activo: true } });
+  if (cursosActivos > 0) {
+    throw HttpError.conflict(
+      `El nivel todavía tiene ${cursosActivos} curso(s) activo(s). Dalos de baja primero.`,
+    );
+  }
+}
+
+/** `activo` permite reactivar; la baja por acá pide lo mismo que la baja. */
+type Edicion<T> = Partial<T> & { activo?: boolean };
+
+export async function actualizarNivel(prisma: PrismaClient, id: number, input: Edicion<AltaNivel>) {
   return prisma.$transaction(async (tx) => {
     const nivel = await tx.nivelEducativo.findUnique({ where: { id } });
     if (!nivel) throw HttpError.notFound('No se encontró el nivel.');
+
+    if (input.activo === false && nivel.activo) await verificarBajaNivel(tx, id);
 
     if (input.nombre && input.nombre !== nivel.nombre) {
       const otro = await tx.nivelEducativo.findUnique({ where: { nombre: input.nombre } });
@@ -96,12 +111,7 @@ export async function darDeBajaNivel(prisma: PrismaClient, id: number) {
     const nivel = await tx.nivelEducativo.findUnique({ where: { id } });
     if (!nivel) throw HttpError.notFound('No se encontró el nivel.');
 
-    const cursosActivos = await tx.curso.count({ where: { nivelId: id, activo: true } });
-    if (cursosActivos > 0) {
-      throw HttpError.conflict(
-        `El nivel todavía tiene ${cursosActivos} curso(s) activo(s). Dalos de baja primero.`,
-      );
-    }
+    await verificarBajaNivel(tx, id);
 
     return tx.nivelEducativo.update({
       where: { id },
@@ -124,7 +134,8 @@ const seleccionCurso = {
   cupoMaximo: true,
   activo: true,
   nivel: { select: { id: true, nombre: true, orden: true } },
-  _count: { select: { alumnos: true, materias: true } },
+  // El cupo lo ocupan los alumnos activos (ver `validarLugarEnCurso`).
+  _count: { select: { alumnos: { where: { estado: EstadoAlumno.ACTIVO } }, materias: true } },
 } satisfies Prisma.CursoSelect;
 
 export interface FiltrosCurso {
@@ -194,10 +205,36 @@ export async function crearCurso(prisma: PrismaClient, input: AltaCurso) {
   });
 }
 
-export async function actualizarCurso(prisma: PrismaClient, id: number, input: Partial<AltaCurso>) {
+/** Un curso con alumnos activos no se da de baja. */
+async function verificarBajaCurso(tx: Prisma.TransactionClient, id: number) {
+  const alumnosActivos = await tx.alumno.count({
+    where: { cursoId: id, estado: EstadoAlumno.ACTIVO },
+  });
+  if (alumnosActivos > 0) {
+    throw HttpError.conflict(
+      `El curso todavía tiene ${alumnosActivos} alumno(s) activo(s). Reubicalos o dalos de baja primero.`,
+    );
+  }
+}
+
+export async function actualizarCurso(prisma: PrismaClient, id: number, input: Edicion<AltaCurso>) {
   return prisma.$transaction(async (tx) => {
     const curso = await tx.curso.findUnique({ where: { id } });
     if (!curso) throw HttpError.notFound('No se encontró el curso.');
+
+    if (input.activo === false && curso.activo) await verificarBajaCurso(tx, id);
+
+    // Un curso activo tiene que colgar de un nivel activo: es lo que exige el
+    // alta, y lo que se vuelve a exigir al reactivarlo o moverlo de nivel.
+    const quedaActivo = input.activo ?? curso.activo;
+    const nivelId = input.nivelId ?? curso.nivelId;
+    if (quedaActivo && (nivelId !== curso.nivelId || !curso.activo)) {
+      const nivel = await tx.nivelEducativo.findUnique({ where: { id: nivelId } });
+      if (!nivel) throw HttpError.badRequest('El nivel indicado no existe.');
+      if (!nivel.activo) {
+        throw HttpError.conflict(`El nivel ${nivel.nombre} está dado de baja: reactivalo primero.`);
+      }
+    }
 
     // Bajar el cupo por debajo de la matrícula ya inscripta dejaría al curso en
     // un estado que el propio alta de alumnos considera inválido.
@@ -221,14 +258,7 @@ export async function darDeBajaCurso(prisma: PrismaClient, id: number) {
     const curso = await tx.curso.findUnique({ where: { id } });
     if (!curso) throw HttpError.notFound('No se encontró el curso.');
 
-    const alumnosActivos = await tx.alumno.count({
-      where: { cursoId: id, estado: EstadoAlumno.ACTIVO },
-    });
-    if (alumnosActivos > 0) {
-      throw HttpError.conflict(
-        `El curso todavía tiene ${alumnosActivos} alumno(s) activo(s). Reubicalos o dalos de baja primero.`,
-      );
-    }
+    await verificarBajaCurso(tx, id);
 
     return tx.curso.update({ where: { id }, data: { activo: false }, select: seleccionCurso });
   });
@@ -334,11 +364,24 @@ export async function crearMateria(prisma: PrismaClient, input: AltaMateria) {
 export async function actualizarMateria(
   prisma: PrismaClient,
   id: number,
-  input: Partial<AltaMateria>,
+  input: Edicion<AltaMateria>,
 ) {
   return prisma.$transaction(async (tx) => {
     const materia = await tx.materia.findUnique({ where: { id } });
     if (!materia) throw HttpError.notFound('No se encontró la materia.');
+
+    // Una materia activa cuelga de un curso activo, igual que en el alta.
+    const quedaActiva = input.activo ?? materia.activo;
+    const cursoId = input.cursoId ?? materia.cursoId;
+    if (quedaActiva && (cursoId !== materia.cursoId || !materia.activo)) {
+      const curso = await tx.curso.findUnique({ where: { id: cursoId } });
+      if (!curso) throw HttpError.badRequest('El curso indicado no existe.');
+      if (!curso.activo) {
+        throw HttpError.conflict(
+          `El curso ${curso.nombre} "${curso.division}" está dado de baja: reactivalo primero.`,
+        );
+      }
+    }
 
     if (input.nombre && input.nombre !== materia.nombre) {
       const otra = await tx.materia.findUnique({

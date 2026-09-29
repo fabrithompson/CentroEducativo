@@ -79,7 +79,9 @@ function filaAcciones(p) {
           ? `<button type="button" class="btn btn--chico btn--peligro" data-baja="${p.id}" data-nombre="${nombre}">
                <i class="fas fa-user-slash" aria-hidden="true"></i> Dar de baja
              </button>`
-          : ''
+          : `<button type="button" class="btn btn--chico btn--ok" data-reactivar="${p.id}" data-nombre="${nombre}">
+               <i class="fas fa-rotate-left" aria-hidden="true"></i> Reactivar
+             </button>`
       }
     </div>`;
 }
@@ -272,6 +274,26 @@ async function darDeBaja(id, nombre) {
   }
 }
 
+async function reactivar(id, nombre) {
+  const ok = await window.uxConfirm('Vuelve a estar activo y se le pueden asignar materias.', {
+    title: 'Reactivar profesor',
+    subtitle: nombre,
+    okLabel: 'Reactivar',
+    consecuencias: [
+      'Si estaba inactivo, sus materias anteriores ya se liberaron: hay que asignárselas de nuevo desde "Materias".',
+    ],
+  });
+  if (!ok) return;
+
+  try {
+    await api.profesores.actualizar(id, { estado: 'ACTIVO' });
+    avisar('Profesor reactivado.', 'ok');
+    await dibujar();
+  } catch (err) {
+    avisar(err?.message || 'No se pudo reactivar al profesor.', 'error');
+  }
+}
+
 // ==================================================================
 // Materias a cargo — el corazón de RF-04
 // ==================================================================
@@ -421,6 +443,9 @@ async function dibujar() {
   });
   nodo.querySelectorAll('[data-baja]').forEach((b) => {
     b.addEventListener('click', () => darDeBaja(Number(b.dataset.baja), b.dataset.nombre));
+  });
+  nodo.querySelectorAll('[data-reactivar]').forEach((b) => {
+    b.addEventListener('click', () => reactivar(Number(b.dataset.reactivar), b.dataset.nombre));
   });
 }
 

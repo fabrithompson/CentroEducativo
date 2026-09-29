@@ -36,6 +36,10 @@
         .btn-danger { background: #ef4444; color: #fff; border: none; padding: 5px 11px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
         .btn-secondary { background: #64748b; color: #fff; border: none; padding: 5px 11px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
 
+        .btn-reactivar { background: #047857; color: #fff; border: none; padding: 5px 11px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
+        .btn-reactivar:hover { background: #065f46; }
+        .fila-inactiva td:not(:last-child) { color: #64748b; }
+
         /* Recuadros del dashboard: los que tienen sección son botones. */
         .tarjeta-dato { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; font: inherit; color: inherit; background: var(--fondo); border: 1px solid var(--borde); border-radius: 10px; padding: 18px; }
         .tarjeta-dato__titulo { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; color: var(--etiqueta); }
@@ -513,7 +517,7 @@
             tbody.innerHTML = data.usuarios.length === 0
                 ? '<tr><td colspan="9" style="text-align:center; color:#64748b;">Sin resultados.</td></tr>'
                 : data.usuarios.map(u => `
-                    <tr style="${u.isActive ? '' : 'opacity:0.55;'}">
+                    <tr class="${u.isActive ? '' : 'fila-inactiva'}">
                         <td>${u.id}</td>
                         <td><b>${window.escapeHtml(u.usuario)}</b></td>
                         <td>${window.escapeHtml(u.nombre)}</td>
@@ -521,15 +525,29 @@
                         <td>${u.dni}</td>
                         <td>${window.escapeHtml(u.email)}</td>
                         <td>${window.escapeHtml(u.curso || '—')}</td>
-                        <td>${u.isActive ? '<span style="color:#10b981;">Activo</span>' : '<span style="color:#ef4444;">Inactivo</span>'}</td>
+                        <td>${estadoUsuario(u)}</td>
                         <td>
                             <button class="btn-secondary" onclick="editarUsuario(${u.id})">Editar</button>
-                            <button class="btn-danger" onclick="desactivarUsuario(${u.id})" ${u.isActive ? '' : 'disabled style="opacity:0.5;"'}>Desactivar</button>
+                            ${botonEstadoUsuario(u)}
                         </td>
                     </tr>
                 `).join('');
             // tambien refresca selects que dependen de usuarios
             llenarSelectsConUsuarios();
+        }
+
+        function estadoUsuario(u) {
+            if (u.isActive) return '<span style="color:#047857; font-weight:600;">Activo</span>';
+            if (u.pendienteAprobacion) return '<span style="color:#b45309; font-weight:600;">Pendiente de aprobación</span>';
+            return '<span style="color:#dc2626; font-weight:600;">Inactivo</span>';
+        }
+
+        // Un docente que espera aprobación se aprueba (le llega el aviso); un
+        // usuario desactivado se reactiva.
+        function botonEstadoUsuario(u) {
+            if (u.isActive) return `<button class="btn-danger" onclick="desactivarUsuario(${u.id})">Desactivar</button>`;
+            if (u.pendienteAprobacion) return `<button class="btn-reactivar" onclick="aprobarDocente(${u.id})"><i class="fas fa-check" aria-hidden="true"></i> Aprobar</button>`;
+            return `<button class="btn-reactivar" onclick="reactivarUsuario(${u.id})"><i class="fas fa-rotate-left" aria-hidden="true"></i> Reactivar</button>`;
         }
 
         function llenarSelectsConUsuarios() {
@@ -650,15 +668,35 @@
         async function desactivarUsuario(id) {
             const u = _usuariosCache.find(x => x.id === id);
             const nombre = u ? u.nombre : 'este usuario';
-            const ok = await window.uxConfirm(`¿Desactivar a ${nombre}? No va a poder iniciar sesión hasta que lo reactives.`, {
+            const ok = await window.uxConfirm(`Vas a desactivar la cuenta de ${nombre}.`, {
                 title: 'Desactivar usuario',
+                subtitle: nombre,
                 danger: true,
                 okLabel: 'Desactivar',
+                consecuencias: [
+                    'No va a poder iniciar sesión.',
+                    'Las sesiones que tenga abiertas se cierran.',
+                    'Sus datos se conservan: se puede reactivar desde esta misma lista.',
+                ],
             });
             if (!ok) return;
             const r = await window.apiDelete('/api/admin/users/' + id);
             if (r.exito) { toastSuccess('Usuario desactivado.'); cargarUsuarios(); }
             else toastError(r.mensaje || 'Error.');
+        }
+
+        async function reactivarUsuario(id) {
+            const u = _usuariosCache.find(x => x.id === id);
+            const nombre = u ? u.nombre : 'este usuario';
+            const ok = await window.uxConfirm(`${nombre} va a poder volver a iniciar sesión con su usuario y contraseña de siempre.`, {
+                title: 'Reactivar usuario',
+                subtitle: nombre,
+                okLabel: 'Reactivar',
+            });
+            if (!ok) return;
+            const r = await window.apiPatch('/api/admin/users/' + id, { isActive: true });
+            if (r.exito) { toastSuccess('Usuario reactivado.'); cargarUsuarios(); }
+            else toastError(r.mensaje || 'No se pudo reactivar.');
         }
 
         /* ============================================================
@@ -727,13 +765,20 @@
             if (r.exito) {
                 toastSuccess('Docente aprobado: ' + r.docente.nombre);
                 cargarDocentesPendientes();
+                // También se aprueba desde Usuarios.
+                if (document.getElementById('usuarios').classList.contains('active')) cargarUsuarios();
             } else {
                 toastError(r.mensaje || 'No se pudo aprobar.');
             }
         }
 
         async function rechazarDocente(id) {
-            const ok = await window.uxConfirm('¿Rechazar y eliminar esta solicitud? La acción es irreversible.', { title: 'Rechazar docente', danger: true, okLabel: 'Rechazar' });
+            const ok = await window.uxConfirm('Vas a rechazar esta solicitud de cuenta docente.', {
+                title: 'Rechazar docente',
+                danger: true,
+                okLabel: 'Rechazar',
+                consecuencias: ['Se borra la solicitud y la cuenta. No se puede deshacer.'],
+            });
             if (!ok) return;
             const r = await window.apiDelete('/api/admin/teachers/' + id + '/reject');
             if (r.exito) {

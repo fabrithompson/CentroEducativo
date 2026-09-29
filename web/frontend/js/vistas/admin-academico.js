@@ -71,7 +71,9 @@ function botonesFila(id, activo) {
           ? `<button type="button" class="btn btn--chico btn--peligro" data-baja="${id}">
                <i class="fas fa-ban" aria-hidden="true"></i> Dar de baja
              </button>`
-          : ''
+          : `<button type="button" class="btn btn--chico btn--ok" data-reactivar="${id}">
+               <i class="fas fa-rotate-left" aria-hidden="true"></i> Reactivar
+             </button>`
       }
     </div>`;
 }
@@ -451,6 +453,29 @@ async function darDeBaja(id) {
   }
 }
 
+// Un curso se reactiva con su nivel activo, y una materia con su curso
+// activo; si no, el servidor dice qué hay que reactivar primero.
+const REACTIVAR_TEXTOS = {
+  niveles: { titulo: 'Reactivar el nivel', mensaje: 'Vuelve a ofrecerse para cursos nuevos.' },
+  cursos: { titulo: 'Reactivar el curso', mensaje: 'Vuelve a admitir alumnos y materias. Su nivel tiene que estar activo.' },
+  materias: { titulo: 'Reactivar la materia', mensaje: 'Vuelve a figurar en su curso. El curso tiene que estar activo.' },
+};
+
+async function reactivar(id) {
+  const textos = REACTIVAR_TEXTOS[solapa];
+  const ok = await window.uxConfirm(textos.mensaje, { title: textos.titulo, okLabel: 'Reactivar' });
+  if (!ok) return;
+
+  try {
+    await EDICION[solapa](id, { activo: true });
+    avisar('Reactivado.', 'ok');
+    await refrescarCatalogos();
+    await pintar();
+  } catch (err) {
+    avisar(err?.message || 'No se pudo reactivar.', 'error');
+  }
+}
+
 // ==================================================================
 // Armado
 // ==================================================================
@@ -494,6 +519,9 @@ async function pintar() {
   });
   panel.querySelectorAll('[data-baja]').forEach((b) => {
     b.addEventListener('click', () => darDeBaja(Number(b.dataset.baja)));
+  });
+  panel.querySelectorAll('[data-reactivar]').forEach((b) => {
+    b.addEventListener('click', () => reactivar(Number(b.dataset.reactivar)));
   });
 }
 

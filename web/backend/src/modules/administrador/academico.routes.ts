@@ -41,6 +41,9 @@ const router = Router();
 
 const idParam = z.object({ id: z.coerce.number().int().positive() });
 
+/** Los PATCH aceptan `activo`: con `true` reactivan lo que se dio de baja. */
+const edicion = { activo: z.boolean().optional() };
+
 /** `?activo=false` tiene que llegar como booleano, no como la cadena "false". */
 const booleanoQuery = z
   .enum(['true', 'false'])
@@ -85,7 +88,7 @@ router.post('/niveles', ...soloAdmin, async (req, res, next) => {
 router.patch('/niveles/:id', ...soloAdmin, async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
-    const nivel = await actualizarNivel(prisma, id, nivelSchema.partial().parse(req.body));
+    const nivel = await actualizarNivel(prisma, id, nivelSchema.partial().extend(edicion).parse(req.body));
     res.json({ exito: true, mensaje: 'Nivel actualizado.', nivel });
   } catch (err) {
     next(err);
@@ -144,7 +147,7 @@ router.post('/cursos', ...soloAdmin, async (req, res, next) => {
 router.patch('/cursos/:id', ...soloAdmin, async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
-    const curso = await actualizarCurso(prisma, id, cursoSchema.partial().parse(req.body));
+    const curso = await actualizarCurso(prisma, id, cursoSchema.partial().extend(edicion).parse(req.body));
     res.json({ exito: true, mensaje: 'Curso actualizado.', curso });
   } catch (err) {
     next(err);
@@ -202,7 +205,7 @@ router.post('/materias', ...soloAdmin, async (req, res, next) => {
 router.patch('/materias/:id', ...soloAdmin, async (req, res, next) => {
   try {
     const { id } = idParam.parse(req.params);
-    const materia = await actualizarMateria(prisma, id, materiaSchema.partial().parse(req.body));
+    const materia = await actualizarMateria(prisma, id, materiaSchema.partial().extend(edicion).parse(req.body));
     res.json({ exito: true, mensaje: 'Materia actualizada.', materia });
   } catch (err) {
     next(err);

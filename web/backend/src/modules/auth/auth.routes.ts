@@ -130,6 +130,7 @@ router.post(
           nombre: data.nombre,
           curso: data.tipo === 'estudiante' ? data.curso ?? null : null,
           isActive: !pendingApproval,
+          pendienteAprobacion: pendingApproval,
         },
       });
 
@@ -181,10 +182,10 @@ router.post(
         throw HttpError.unauthorized('El usuario no existe.');
       }
       if (!user.isActive) {
-        if (user.role === Role.DOCENTE) {
+        if (user.pendienteAprobacion) {
           throw HttpError.unauthorized('Tu cuenta de docente está pendiente de aprobación por un administrador.');
         }
-        throw HttpError.unauthorized('La cuenta está deshabilitada.');
+        throw HttpError.unauthorized('La cuenta está deshabilitada. Consultá con la administración.');
       }
 
       const ok = await bcrypt.compare(password, user.password);
