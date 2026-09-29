@@ -283,7 +283,9 @@
     // replaceState y no pushState: "atrás" sale del panel en lugar de
     // recorrer cada sección visitada.
     window.recordarVista = function (id) {
-        if (!id || location.hash === '#' + id) return;
+        if (!id) return;
+        document.dispatchEvent(new CustomEvent('vista-cambiada', { detail: { id } }));
+        if (location.hash === '#' + id) return;
         history.replaceState(history.state, '', '#' + id);
     };
 

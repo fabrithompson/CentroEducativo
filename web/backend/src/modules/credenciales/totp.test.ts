@@ -18,6 +18,9 @@ import {
   generarCodigo,
   generarSecreto,
   leerContenidoQR,
+  normalizarCodigoManual,
+  normalizarLegajo,
+  ventanaDeCodigo,
   verificarCodigo,
 } from './totp.ts';
 
@@ -205,4 +208,48 @@ test('el lector tolera espacios alrededor', () => {
     contador: 58_000_000,
     codigo: '00000042',
   });
+});
+
+// ==================================================================
+// Entrada manual: legajo y código, sin contador
+// ==================================================================
+
+test('a mano: el código de la ventana actual se acepta y devuelve esa ventana', () => {
+  const codigo = generarCodigo(SECRETO, CONTADOR);
+  const r = ventanaDeCodigo(SECRETO, codigo, AHORA);
+  assert.equal(r.valido, true);
+  assert.equal(r.contadorUsado, CONTADOR);
+});
+
+test('a mano: se tolera la ventana anterior, la del código que el operador leyó recién', () => {
+  const codigo = generarCodigo(SECRETO, CONTADOR - 1);
+  const r = ventanaDeCodigo(SECRETO, codigo, AHORA);
+  assert.equal(r.valido, true);
+  assert.equal(r.contadorUsado, CONTADOR - 1, 'la ventana guardada es la del código, para frenar su repetición');
+});
+
+test('REGLA: a mano, un código de dos ventanas atrás se rechaza', () => {
+  assert.equal(ventanaDeCodigo(SECRETO, generarCodigo(SECRETO, CONTADOR - 2), AHORA).valido, false);
+});
+
+test('REGLA: a mano, el código de otra credencial no sirve', () => {
+  const otro = generarSecreto();
+  assert.equal(ventanaDeCodigo(SECRETO, generarCodigo(otro, CONTADOR), AHORA).valido, false);
+});
+
+test('el código se acepta como lo muestra el carnet, partido en dos', () => {
+  assert.equal(normalizarCodigoManual('1234 5678'), '12345678');
+  assert.equal(normalizarCodigoManual(' 12345678 '), '12345678');
+  assert.equal(normalizarCodigoManual('1234-5678'), '12345678');
+  assert.equal(normalizarCodigoManual('1234567'), null);
+  assert.equal(normalizarCodigoManual('12a45678'), null);
+});
+
+test('el legajo se acepta como lo tipee el operador', () => {
+  assert.equal(normalizarLegajo('A-0012'), 'A-0012');
+  assert.equal(normalizarLegajo('a-0012'), 'A-0012');
+  assert.equal(normalizarLegajo('A0012'), 'A-0012');
+  assert.equal(normalizarLegajo('12'), 'A-0012');
+  assert.equal(normalizarLegajo(' 7 '), 'A-0007');
+  assert.equal(normalizarLegajo('P-0003'), 'P-0003', 'lo que no es un legajo de alumno pasa tal cual y no encuentra nada');
 });

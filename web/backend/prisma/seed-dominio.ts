@@ -711,37 +711,41 @@ export async function seedDominio(prisma: PrismaClient): Promise<void> {
     }
   }
 
-  // ---------- Inscripciones a transporte y comedor (mes en curso) ----------
-  const MES_ACTUAL = 9;
-
-  for (const t of INSCRIPCIONES_TRANSPORTE) {
-    const alumno = alumnos.get(t.legajo);
-    const recorrido = recorridos.get(t.recorrido);
-    if (!alumno || !recorrido) continue;
-
-    await prisma.inscripcionTransporte.upsert({
-      where: { alumnoId_anio_mes: { alumnoId: alumno.id, anio: CICLO, mes: MES_ACTUAL } },
-      update: { recorridoId: recorrido.id, turno: t.turno },
-      create: {
-        alumnoId: alumno.id,
-        recorridoId: recorrido.id,
-        anio: CICLO,
-        mes: MES_ACTUAL,
-        turno: t.turno,
-      },
-    });
+  // ---------- Inscripciones a transporte y comedor ----------
+  // Septiembre es el mes de las facturas de demostración. Pero el escáner del
+  // carnet controla el servicio del mes **en curso**: con septiembre fijo, desde
+  // octubre todo escaneo decía "no tiene el servicio contratado". Se inscribe
+  // también el mes corriente, si es otro.
+  const hoy = new Date();
+  const periodos = [{ anio: CICLO, mes: 9 }];
+  if (hoy.getFullYear() !== CICLO || hoy.getMonth() + 1 !== 9) {
+    periodos.push({ anio: hoy.getFullYear(), mes: hoy.getMonth() + 1 });
   }
 
-  for (const c of INSCRIPCIONES_COMEDOR) {
-    const alumno = alumnos.get(c.legajo);
-    const comedor = comedores.get(c.plan);
-    if (!alumno || !comedor) continue;
+  for (const { anio, mes } of periodos) {
+    for (const t of INSCRIPCIONES_TRANSPORTE) {
+      const alumno = alumnos.get(t.legajo);
+      const recorrido = recorridos.get(t.recorrido);
+      if (!alumno || !recorrido) continue;
 
-    await prisma.inscripcionComedor.upsert({
-      where: { alumnoId_anio_mes: { alumnoId: alumno.id, anio: CICLO, mes: MES_ACTUAL } },
-      update: { comedorId: comedor.id },
-      create: { alumnoId: alumno.id, comedorId: comedor.id, anio: CICLO, mes: MES_ACTUAL },
-    });
+      await prisma.inscripcionTransporte.upsert({
+        where: { alumnoId_anio_mes: { alumnoId: alumno.id, anio, mes } },
+        update: { recorridoId: recorrido.id, turno: t.turno },
+        create: { alumnoId: alumno.id, recorridoId: recorrido.id, anio, mes, turno: t.turno },
+      });
+    }
+
+    for (const c of INSCRIPCIONES_COMEDOR) {
+      const alumno = alumnos.get(c.legajo);
+      const comedor = comedores.get(c.plan);
+      if (!alumno || !comedor) continue;
+
+      await prisma.inscripcionComedor.upsert({
+        where: { alumnoId_anio_mes: { alumnoId: alumno.id, anio, mes } },
+        update: { comedorId: comedor.id },
+        create: { alumnoId: alumno.id, comedorId: comedor.id, anio, mes },
+      });
+    }
   }
 
   // ---------- Facturación ----------

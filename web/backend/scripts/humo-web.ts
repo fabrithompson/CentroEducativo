@@ -413,6 +413,39 @@ async function main() {
     const borradaNota = await pedir('DELETE', `/api/grades/${idNota}`, { token: lopezOtraVez.token });
     const tras = (await pedir('GET', '/api/grades/mine', { token: lopezOtraVez.token })).cuerpo.notas as Cuerpo[];
     afirmar(borradaNota.status === 200 && !tras.some((n) => n.id === idNota), 'quien la cargó la borra');
+
+    // ------------------------------------------------------------------
+    console.log('\n=== Escáner: entrada manual por legajo y código ===');
+    const { generarCodigo, contadorPara } = await import('../src/modules/credenciales/totp.ts');
+    const activosHoy = (await comoAdmin('GET', '/api/alumnos?estado=ACTIVO&pageSize=100')).cuerpo.items as Cuerpo[];
+    let conComedor: Cuerpo | undefined;
+    for (const a of activosHoy) {
+      if ((await comoAdmin('GET', `/api/servicios/alumno/${a.id}`)).cuerpo.comedor) { conComedor = a; break; }
+    }
+    afirmar(Boolean(conComedor), 'el seed inscribe el comedor del mes en curso (antes quedaba fijo en septiembre)');
+
+    const cred = (await comoAdmin('GET', `/api/credenciales/alumno/${conComedor!.id}`)).cuerpo.credencial as Cuerpo;
+    const ventana = contadorPara(Date.now());
+    const codigoCarnet = generarCodigo(cred.secreto, ventana);
+    const manual = (legajo: string, codigo: string) =>
+      comoAdmin('POST', '/api/accesos/escanear', { legajo, codigo, punto: 'COMEDOR' });
+
+    const conEspacio = await manual(String(Number(conComedor!.legajo.slice(2))), codigoCarnet.slice(0, 4) + ' ' + codigoCarnet.slice(4));
+    afirmar(
+      conEspacio.cuerpo.permitido === true,
+      'a mano, con el legajo corto y el código partido en dos como lo muestra el carnet, se autoriza',
+      conEspacio.cuerpo,
+    );
+    const repetido = await manual(conComedor!.legajo, codigoCarnet);
+    afirmar(repetido.cuerpo.resultado === 'DENEGADO_CODIGO_REUTILIZADO', 'REGLA: el mismo código a mano no se usa dos veces', repetido.cuerpo);
+    const equivocado = await manual(conComedor!.legajo, '00000000');
+    afirmar(equivocado.cuerpo.resultado === 'DENEGADO_CODIGO_INVALIDO', 'un código equivocado se rechaza');
+    const sinCarnet = await manual('A-9999', codigoCarnet);
+    afirmar(
+      sinCarnet.cuerpo.permitido === false && /A-9999/.test(sinCarnet.cuerpo.detalle ?? ''),
+      'un legajo sin carnet se rechaza diciendo cuál se buscó',
+      sinCarnet.cuerpo,
+    );
   } finally {
     server?.close();
     // Sin esto, apagar PostgreSQL con conexiones abiertas en el pool llena la

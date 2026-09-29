@@ -98,6 +98,51 @@ export function verificarCodigo(
   return { valido: false, contadorUsado: null, desfasaje: null };
 }
 
+/**
+ * Busca la ventana de un código tipeado a mano.
+ *
+ * En la entrada manual el operador tipea sólo los 8 dígitos que muestra el
+ * carnet: el contador no está a la vista. Se prueban la ventana actual y las de
+ * tolerancia. Acertar sigue exigiendo el secreto de la credencial —es decir,
+ * tener el carnet delante—, y la repetición la sigue frenando la restricción
+ * única (credencial, punto, contador) con la ventana que coincidió.
+ */
+export function ventanaDeCodigo(
+  secretoHex: string,
+  codigo: string,
+  momentoMs: number = Date.now(),
+): ResultadoVerificacion {
+  const actual = contadorPara(momentoMs);
+
+  for (let desfasaje = -TOLERANCIA_VENTANAS; desfasaje <= TOLERANCIA_VENTANAS; desfasaje++) {
+    const contador = actual + desfasaje;
+    if (compararCodigos(generarCodigo(secretoHex, contador), codigo)) {
+      return { valido: true, contadorUsado: contador, desfasaje };
+    }
+  }
+
+  return { valido: false, contadorUsado: null, desfasaje: null };
+}
+
+/**
+ * El carnet muestra el código partido en dos ("1234 5678") para leerlo mejor,
+ * y así lo tipea el operador. Devuelve los 8 dígitos, o `null`.
+ */
+export function normalizarCodigoManual(texto: string): string | null {
+  const limpio = texto.replace(/[\s-]/g, '');
+  return new RegExp(`^\\d{${DIGITOS}}$`).test(limpio) ? limpio : null;
+}
+
+/**
+ * Acepta el legajo como lo tipee el operador: "A-0012", "a-0012", "A0012" o
+ * sólo "12". Devuelve el formato con que se guarda (`A-0012`).
+ */
+export function normalizarLegajo(texto: string): string {
+  const limpio = texto.trim().toUpperCase().replace(/\s/g, '');
+  const m = /^(?:A-?)?(\d{1,6})$/.exec(limpio);
+  return m ? `A-${m[1]!.padStart(4, '0')}` : limpio;
+}
+
 export interface ContenidoQR {
   credencialId: number;
   contador: number;

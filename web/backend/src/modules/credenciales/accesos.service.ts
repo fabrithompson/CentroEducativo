@@ -20,11 +20,17 @@ import { PuntoControl, ResultadoAcceso, type Prisma, type PrismaClient } from '@
 import { HttpError } from '../../utils/httpError';
 import { logger } from '../../utils/logger';
 import { registrarEnvio } from '../facturacion/mailer.facturacion';
-import { leerContenidoQR, verificarCodigo } from './totp';
+import { leerContenidoQR, normalizarCodigoManual, normalizarLegajo, ventanaDeCodigo, verificarCodigo } from './totp';
 
 export interface EntradaEscaneo {
   /** Contenido crudo del QR. */
-  qr: string;
+  qr?: string;
+  /**
+   * Entrada manual: el legajo y los 8 dígitos que muestra el carnet. Se usa
+   * cuando la cámara no lee (pantalla rayada, sol de frente).
+   */
+  legajo?: string;
+  codigo?: string;
   punto: PuntoControl;
   /** Obligatorio en TRANSPORTE: en qué recorrido está el lector. */
   recorridoId?: number;
@@ -113,36 +119,70 @@ export async function validarEscaneo(
   };
 
   // --- 1. Formato ---
-  const contenido = leerContenidoQR(entrada.qr);
-  if (!contenido) {
-    return registrar(
-      prisma,
-      { ...base, resultado: ResultadoAcceso.DENEGADO_CODIGO_INVALIDO, motivo: 'QR con formato desconocido' },
-      null,
-      'El código escaneado no es una credencial del colegio.',
-    );
+  // Del QR salen la credencial, el contador y el código. A mano llegan el
+  // legajo y el código: el contador no está a la vista en el carnet.
+  const esManual = !entrada.qr;
+  let credencialId: number | null = null;
+  let contadorDeclarado: number | null = null;
+  let codigo: string;
+  let legajo: string | null = null;
+
+  if (!esManual) {
+    const contenido = leerContenidoQR(entrada.qr!);
+    if (!contenido) {
+      return registrar(
+        prisma,
+        { ...base, resultado: ResultadoAcceso.DENEGADO_CODIGO_INVALIDO, motivo: 'QR con formato desconocido' },
+        null,
+        'El código escaneado no es una credencial del colegio.',
+      );
+    }
+    credencialId = contenido.credencialId;
+    contadorDeclarado = contenido.contador;
+    codigo = contenido.codigo;
+  } else {
+    const normalizado = normalizarCodigoManual(entrada.codigo ?? '');
+    if (!normalizado || !entrada.legajo?.trim()) {
+      return registrar(
+        prisma,
+        { ...base, resultado: ResultadoAcceso.DENEGADO_CODIGO_INVALIDO, motivo: 'Entrada manual incompleta' },
+        null,
+        'Tipeá el legajo y los 8 dígitos que muestra el carnet.',
+      );
+    }
+    codigo = normalizado;
+    legajo = normalizarLegajo(entrada.legajo);
   }
 
   // --- 2. Credencial ---
-  const credencial = await prisma.credencialDigital.findUnique({
-    where: { id: contenido.credencialId },
-    include: {
-      alumno: {
-        include: {
-          curso: { include: { nivel: true } },
-          tutores: { include: { tutor: { select: { id: true, nombre: true, email: true } } } },
-        },
+  const incluir = {
+    alumno: {
+      include: {
+        curso: { include: { nivel: true } },
+        tutores: { include: { tutor: { select: { id: true, nombre: true, email: true } } } },
       },
     },
-  });
+  } satisfies Prisma.CredencialDigitalInclude;
+
+  const credencial = credencialId !== null
+    ? await prisma.credencialDigital.findUnique({ where: { id: credencialId }, include: incluir })
+    : await prisma.credencialDigital.findFirst({ where: { alumno: { legajo: legajo! } }, include: incluir });
 
   if (!credencial) {
     return registrar(
       prisma,
-      { ...base, resultado: ResultadoAcceso.DENEGADO_CODIGO_INVALIDO, motivo: 'Credencial inexistente' },
+      {
+        ...base,
+        resultado: ResultadoAcceso.DENEGADO_CODIGO_INVALIDO,
+        motivo: esManual ? `Legajo sin credencial: ${legajo}` : 'Credencial inexistente',
+      },
       null,
+      esManual ? `No hay un carnet emitido para el legajo ${legajo}. Revisá el número.` : undefined,
     );
   }
+
+  // En el registro de auditoría queda si el acceso entró a mano.
+  const notaManual = esManual ? 'Entrada manual por legajo' : null;
 
   const a = credencial.alumno;
   const alumnoResumen = {
@@ -183,7 +223,9 @@ export async function validarEscaneo(
   }
 
   // --- 4. Código ---
-  const verificacion = verificarCodigo(credencial.secreto, contenido.codigo, contenido.contador);
+  const verificacion = contadorDeclarado !== null
+    ? verificarCodigo(credencial.secreto, codigo, contadorDeclarado)
+    : ventanaDeCodigo(credencial.secreto, codigo);
   if (!verificacion.valido) {
     return registrar(
       prisma,
@@ -192,10 +234,12 @@ export async function validarEscaneo(
         credencialId: credencial.id,
         alumnoId: a.id,
         resultado: ResultadoAcceso.DENEGADO_CODIGO_INVALIDO,
-        motivo: 'El código no corresponde a la ventana declarada',
+        motivo: esManual ? 'Código manual incorrecto o vencido' : 'El código no corresponde a la ventana declarada',
       },
       alumnoResumen,
-      'El código venció. Pedile al alumno que muestre el carnet de nuevo.',
+      esManual
+        ? 'El código no coincide o ya cambió. Pedile el que muestra el carnet ahora.'
+        : 'El código venció. Pedile al alumno que muestre el carnet de nuevo.',
     );
   }
 
@@ -255,6 +299,7 @@ export async function validarEscaneo(
         contador: verificacion.contadorUsado,
         recorridoId: entrada.recorridoId,
         resultado: ResultadoAcceso.PERMITIDO,
+        motivo: notaManual,
       },
       alumnoResumen,
       `${inscripcion.recorrido.codigo} — ${inscripcion.recorrido.nombre}`,
@@ -303,6 +348,7 @@ export async function validarEscaneo(
       contador: verificacion.contadorUsado,
       comedorId: inscripcion.comedorId,
       resultado: ResultadoAcceso.PERMITIDO,
+      motivo: notaManual,
     },
     alumnoResumen,
     inscripcion.comedor.nombre,

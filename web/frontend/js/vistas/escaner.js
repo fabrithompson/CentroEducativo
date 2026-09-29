@@ -6,12 +6,20 @@
  *
  *  - **La respuesta ocupa toda la pantalla y es verde o roja.** El operador la
  *    lee de reojo; no puede estar buscando un cartelito.
+ *  - **Lee con la cámara en cualquier navegador.** `BarcodeDetector` no existe
+ *    en Chrome ni Edge de escritorio, ni en Firefox, ni en Safari de iPhone:
+ *    antes, en todos ellos la cámara ni se abría. Donde falta, cada cuadro del
+ *    video pasa por jsQR, cargado del CDN con hash de integridad.
  *  - **Entrada manual siempre disponible.** Una pantalla rayada, el sol de
  *    frente o un teléfono sin batería no pueden dejar a un chico afuera del
- *    micro. El operador tipea el código de 8 dígitos.
- *  - **Antirrebote de 2 segundos por código.** La cámara dispara varias veces
- *    sobre el mismo QR; sin esto, el segundo disparo daría "código reutilizado"
- *    y confundiría al operador.
+ *    micro. El operador tipea lo que el carnet muestra a la vista: el legajo y
+ *    el código de 8 dígitos. Antes pedía un "N° de credencial" que el carnet no
+ *    muestra, y armaba el contador con el reloj de la PC.
+ *  - **Un mismo QR se ignora mientras vale (90 segundos).** La cámara lo ve
+ *    muchas veces seguidas; con un antirrebote de 2 segundos, el segundo envío
+ *    pisaba el verde con "Este código ya fue usado".
+ *  - **La cámara se apaga al salir de la sección** o al cambiar de pestaña, no
+ *    sólo al cerrar la página.
  *  - **El punto de control se elige una vez** y queda fijo mientras dure la
  *    jornada.
  */
@@ -20,13 +28,25 @@ import api from '../api.js';
 import { esc, estadoVacio, fechaHora, render, tabla } from '../ui.js';
 
 let configuracion = null;   // { punto, recorridoId, recorridoNombre }
-let lector = null;          // BarcodeDetector
 let stream = null;          // MediaStream de la cámara
-let escaneando = false;
-let ultimoCodigo = { texto: null, momento: 0 };
+// Cada encendido de la cámara abre una sesión y cada apagado la cierra. El
+// bucle de lectura corre mientras su sesión sea la vigente: así un apagado
+// mientras se esperaba el permiso, o un reinicio rápido, no dejan dos bucles
+// ni una cámara encendida sin nadie que la use.
+let sesionCamara = 0;
+const vistos = new Map();   // texto del QR -> momento en que se validó
 const historial = [];
 
-const ANTIRREBOTE_MS = 2000;
+/** Un QR vale su ventana de 30 s más una de tolerancia a cada lado. */
+const VIGENCIA_QR_MS = 90_000;
+const PAUSA_ENTRE_CUADROS_MS = 250;
+
+const JSQR = {
+  url: 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
+  // Si el archivo del CDN cambiara, el navegador se niega a ejecutarlo.
+  integridad: 'sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx',
+};
+let cargaJsQR = null;
 
 // ==================================================================
 // Configuración del punto de control
@@ -115,8 +135,6 @@ async function pantallaConfiguracion(contenedor) {
 // ==================================================================
 
 async function pantallaEscaneo(contenedor) {
-  const soportaCamara = 'BarcodeDetector' in window;
-
   contenedor.innerHTML = `
     <div class="escaner">
       <div class="escaner__barra">
@@ -135,15 +153,9 @@ async function pantallaEscaneo(contenedor) {
 
       <div class="escaner__cuerpo">
         <div class="escaner__camara">
-          ${soportaCamara
-            ? `<video id="video-escaner" playsinline muted
-                      aria-label="Vista de la cámara para escanear el carnet"></video>
-               <div class="escaner__mira" aria-hidden="true"></div>`
-            : `<div class="estado estado--vacio">
-                 <i class="fas fa-keyboard" aria-hidden="true"></i>
-                 <p><strong>Este navegador no puede leer códigos QR.</strong></p>
-                 <p>Usá la entrada manual de abajo, o abrí esta página en Chrome sobre Android.</p>
-               </div>`}
+          <video id="video-escaner" playsinline muted
+                 aria-label="Vista de la cámara para escanear el carnet"></video>
+          <div class="escaner__mira" aria-hidden="true"></div>
         </div>
 
         <div class="escaner__panel">
@@ -151,23 +163,25 @@ async function pantallaEscaneo(contenedor) {
             ${estadoVacio('Acercá el carnet del alumno a la cámara.', 'fa-qrcode')}
           </div>
 
-          <form id="form-manual" class="ficha" style="margin-top:16px">
+          <form id="form-manual" class="ficha" style="margin-top:16px" novalidate>
             <h4 class="ficha__titulo" style="font-size:0.95rem">
               <i class="fas fa-keyboard" aria-hidden="true"></i> Entrada manual
             </h4>
             <p class="ayuda" style="margin-bottom:10px">
-              Si la cámara no engancha, pedile al alumno el número que muestra el carnet.
+              Si la cámara no lee el carnet, pedile al alumno el legajo y el código de 8 dígitos
+              que muestra la pantalla, debajo del QR.
             </p>
             <div class="campo">
-              <label for="manual-credencial">N° de credencial</label>
-              <input type="number" id="manual-credencial" name="credencialId" min="1" required
-                     inputmode="numeric" placeholder="Ej: 12">
+              <label for="manual-legajo">Legajo</label>
+              <input type="text" id="manual-legajo" name="legajo" required maxlength="12"
+                     autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="A-0012">
             </div>
             <div class="campo">
               <label for="manual-codigo">Código de 8 dígitos</label>
-              <input type="text" id="manual-codigo" name="codigo" required
-                     inputmode="numeric" pattern="[0-9]{8}" maxlength="8" placeholder="12345678">
+              <input type="text" id="manual-codigo" name="codigo" required maxlength="9"
+                     inputmode="numeric" autocomplete="off" placeholder="1234 5678">
             </div>
+            <p class="campo__error" id="manual-error" role="alert" hidden></p>
             <button type="submit" class="btn btn--primario" style="margin-top:10px">
               Validar
             </button>
@@ -186,88 +200,217 @@ async function pantallaEscaneo(contenedor) {
   contenedor.querySelector('#form-manual').addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.target;
-    const credencialId = form.credencialId.value;
-    const codigo = form.codigo.value;
+    const error = form.querySelector('#manual-error');
+    const legajo = form.legajo.value.trim();
+    // El carnet muestra el código partido en dos: "1234 5678".
+    const codigo = form.codigo.value.replace(/[\s-]/g, '');
 
-    if (!/^\d{8}$/.test(codigo)) return;
+    if (!legajo || !/^\d{8}$/.test(codigo)) {
+      error.textContent = !legajo
+        ? 'Tipeá el legajo del alumno.'
+        : 'El código tiene 8 dígitos, como lo muestra el carnet.';
+      error.hidden = false;
+      (!legajo ? form.legajo : form.codigo).focus();
+      return;
+    }
+    error.hidden = true;
 
-    // Se rearma el contenido del QR con la ventana actual: el operador sólo
-    // tipea el código, no el contador.
-    const contador = Math.floor(Date.now() / 1000 / 30);
-    await validar(`ETQ1|${credencialId}|${contador}|${codigo}`);
-
-    form.codigo.value = '';
-    form.codigo.focus();
+    // El servidor busca la credencial por legajo y prueba el código contra la
+    // ventana actual y la anterior: el operador no tiene que saber nada más.
+    const boton = form.querySelector('[type="submit"]');
+    boton.disabled = true;
+    try {
+      const r = await validar({ legajo, codigo });
+      if (r && r.permitido) {
+        form.reset();
+        form.legajo.focus();
+      } else {
+        form.codigo.select();
+      }
+    } finally {
+      boton.disabled = false;
+    }
   });
 
   dibujarHistorial();
 
-  if (soportaCamara) await iniciarCamara();
+  await iniciarCamara();
 }
 
 // ==================================================================
 // Cámara
 // ==================================================================
 
+/** Carga jsQR una sola vez. */
+function cargarJsQR() {
+  if (window.jsQR) return Promise.resolve(window.jsQR);
+  if (!cargaJsQR) {
+    cargaJsQR = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = JSQR.url;
+      s.integrity = JSQR.integridad;
+      s.crossOrigin = 'anonymous';
+      s.onload = () => (window.jsQR ? resolve(window.jsQR) : reject(new Error('El lector de QR no quedó disponible.')));
+      s.onerror = () => {
+        cargaJsQR = null;
+        reject(new Error('No se pudo descargar el lector de QR.'));
+      };
+      document.head.appendChild(s);
+    });
+  }
+  return cargaJsQR;
+}
+
+/**
+ * Devuelve `leer(video) -> Promise<string | null>`. `BarcodeDetector` es el
+ * camino rápido donde existe; si no, jsQR sobre un `<canvas>`.
+ */
+async function crearLector() {
+  if ('BarcodeDetector' in window) {
+    try {
+      const formatos = await window.BarcodeDetector.getSupportedFormats?.();
+      if (!formatos || formatos.includes('qr_code')) {
+        const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+        return async (video) => {
+          const codigos = await detector.detect(video);
+          return codigos.length > 0 ? codigos[0].rawValue : null;
+        };
+      }
+    } catch {
+      /* se usa jsQR */
+    }
+  }
+
+  const jsQR = await cargarJsQR();
+  const lienzo = document.createElement('canvas');
+  const ctx = lienzo.getContext('2d', { willReadFrequently: true });
+
+  return async (video) => {
+    const ancho = video.videoWidth;
+    const alto = video.videoHeight;
+    if (!ancho || !alto) return null;
+    // Un QR en una pantalla se lee igual a 640 px, y en una tablet modesta
+    // procesar cada cuadro completo cuesta.
+    const escala = Math.min(1, 640 / Math.max(ancho, alto));
+    lienzo.width = Math.round(ancho * escala);
+    lienzo.height = Math.round(alto * escala);
+    ctx.drawImage(video, 0, 0, lienzo.width, lienzo.height);
+    const imagen = ctx.getImageData(0, 0, lienzo.width, lienzo.height);
+    const r = jsQR(imagen.data, imagen.width, imagen.height, { inversionAttempts: 'dontInvert' });
+    return r ? r.data : null;
+  };
+}
+
+/** Qué decirle al operador según por qué no se abrió la cámara. */
+function motivoCamara(err) {
+  switch (err && err.name) {
+    case 'NotAllowedError':
+    case 'SecurityError':
+      return 'El navegador no tiene permiso para usar la cámara. Habilitalo desde el candado de la barra de direcciones y volvé a entrar a esta sección.';
+    case 'NotReadableError':
+    case 'TrackStartError':
+    case 'AbortError':
+      return 'La cámara está en uso por otra aplicación o pestaña. Cerrala y volvé a entrar a esta sección.';
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+    case 'OverconstrainedError':
+      return 'No se encontró una cámara en este equipo.';
+    default:
+      return 'No se pudo abrir la cámara.';
+  }
+}
+
+function avisoCamara(mensaje) {
+  const caja = document.querySelector('.escaner__camara');
+  if (!caja) return;
+  caja.innerHTML = `
+    <div class="estado estado--vacio">
+      <i class="fas fa-video-slash" aria-hidden="true"></i>
+      <p><strong>${esc(mensaje)}</strong></p>
+      <p>Mientras tanto podés usar la entrada manual.</p>
+    </div>`;
+}
+
+function apagar(s) {
+  for (const pista of s.getTracks()) pista.stop();
+}
+
 async function iniciarCamara() {
   const video = document.getElementById('video-escaner');
   if (!video) return;
+  const sesion = ++sesionCamara;
 
+  if (!navigator.mediaDevices?.getUserMedia) {
+    avisoCamara('La cámara sólo se puede usar en una conexión segura (https).');
+    return;
+  }
+
+  let pedido;
   try {
     // `environment` pide la cámara trasera, que es la que se usa de pie.
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment' },
-    });
+    pedido = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+  } catch (err) {
+    if (sesion === sesionCamara) avisoCamara(motivoCamara(err));
+    console.error('[escaner]', err);
+    return;
+  }
 
+  // Mientras se esperaba el permiso, el operador pudo haber salido de la sección.
+  if (sesion !== sesionCamara) {
+    apagar(pedido);
+    return;
+  }
+  stream = pedido;
+
+  try {
     video.srcObject = stream;
     await video.play();
-
-    lector = new window.BarcodeDetector({ formats: ['qr_code'] });
-    escaneando = true;
-    void bucleEscaneo(video);
+    const leer = await crearLector();
+    if (sesion !== sesionCamara) return;
+    void bucleEscaneo(video, leer, sesion);
   } catch (err) {
-    mostrarResultado({
-      permitido: false,
-      mensaje: 'No pudimos abrir la cámara',
-      detalle:
-        'Revisá que el navegador tenga permiso de cámara. Mientras tanto podés usar la entrada manual.',
-      alumno: null,
-    });
+    // Sin lector la cámara no sirve: se apaga en lugar de quedar encendida.
+    detenerCamara();
+    avisoCamara(err?.message || 'No se pudo iniciar el lector de QR.');
     console.error('[escaner]', err);
   }
 }
 
 function detenerCamara() {
-  escaneando = false;
+  sesionCamara++;
   if (stream) {
-    for (const pista of stream.getTracks()) pista.stop();
+    apagar(stream);
     stream = null;
   }
+  const video = document.getElementById('video-escaner');
+  if (video) video.srcObject = null;
 }
 
-async function bucleEscaneo(video) {
-  while (escaneando) {
+function yaVisto(texto) {
+  const momento = vistos.get(texto);
+  return momento !== undefined && Date.now() - momento < VIGENCIA_QR_MS;
+}
+
+function recordarVisto(texto) {
+  const ahora = Date.now();
+  vistos.set(texto, ahora);
+  for (const [t, m] of vistos) if (ahora - m > VIGENCIA_QR_MS) vistos.delete(t);
+}
+
+async function bucleEscaneo(video, leer, sesion) {
+  while (sesion === sesionCamara) {
     try {
-      const codigos = await lector.detect(video);
-
-      if (codigos.length > 0) {
-        const texto = codigos[0].rawValue;
-        const ahora = Date.now();
-
-        // Antirrebote: la cámara dispara varias veces sobre el mismo QR.
-        const repetido = texto === ultimoCodigo.texto && ahora - ultimoCodigo.momento < ANTIRREBOTE_MS;
-
-        if (!repetido) {
-          ultimoCodigo = { texto, momento: ahora };
-          await validar(texto);
-        }
+      const texto = await leer(video);
+      // El mismo QR se ignora mientras vale: la cámara lo ve muchas veces.
+      if (texto && sesion === sesionCamara && !yaVisto(texto)) {
+        await validar({ qr: texto }, texto);
       }
     } catch (err) {
       console.error('[escaner] error leyendo', err);
     }
 
     // Una pausa corta evita saturar el CPU de una tablet modesta.
-    await new Promise((r) => setTimeout(r, 250));
+    await new Promise((r) => setTimeout(r, PAUSA_ENTRE_CUADROS_MS));
   }
 }
 
@@ -275,14 +418,20 @@ async function bucleEscaneo(video) {
 // Validación
 // ==================================================================
 
-async function validar(qr) {
+/**
+ * `datos` es `{ qr }` o `{ legajo, codigo }`. `textoQR` se recuerda recién
+ * cuando el servidor respondió: si falló la conexión, el mismo QR se puede
+ * volver a leer.
+ */
+async function validar(datos, textoQR) {
   try {
     const r = await api.accesos.escanear({
-      qr,
+      ...datos,
       punto: configuracion.punto,
       recorridoId: configuracion.recorridoId,
       dispositivo: navigator.userAgent.slice(0, 80),
     });
+    if (textoQR) recordarVisto(textoQR);
 
     mostrarResultado(r);
     historial.unshift({ ...r, fecha: new Date().toISOString() });
@@ -291,6 +440,7 @@ async function validar(qr) {
 
     // Un pitido corto ayuda a operar sin mirar la pantalla.
     pitar(r.permitido);
+    return r;
   } catch (err) {
     mostrarResultado({
       permitido: false,
@@ -298,6 +448,7 @@ async function validar(qr) {
       detalle: err?.message ?? 'Revisá la conexión con el servidor.',
       alumno: null,
     });
+    return null;
   }
 }
 
@@ -389,5 +540,24 @@ export async function iniciarEscaner(idContenedor = 'vista-escaner') {
 export function detenerEscaner() {
   detenerCamara();
 }
+
+// Al cambiar de sección se apaga la cámara (campus.js avisa cada cambio). Antes
+// sólo se liberaba al cerrar la página, y quedaba encendida de fondo con el
+// indicador prendido mientras el operador usaba otra parte del panel.
+document.addEventListener('vista-cambiada', (e) => {
+  if (e.detail?.id !== 'escaner') detenerCamara();
+});
+
+// Tampoco tiene sentido filmar con la pestaña oculta. Al volver, si sigue en
+// la pantalla de escaneo, se enciende de nuevo.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    detenerCamara();
+  } else if (document.getElementById('video-escaner') && document.getElementById('escaner')?.classList.contains('active')) {
+    void iniciarCamara();
+  }
+});
+
+window.addEventListener('pagehide', detenerCamara);
 
 export default { iniciarEscaner, detenerEscaner };

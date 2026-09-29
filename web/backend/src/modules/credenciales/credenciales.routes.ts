@@ -175,12 +175,19 @@ credenciales.post(
 // Escaneo
 // ==================================================================
 
-const escanearSchema = z.object({
-  qr: z.string().trim().min(1).max(200),
-  punto: z.nativeEnum(PuntoControl),
-  recorridoId: z.coerce.number().int().positive().optional(),
-  dispositivo: z.string().trim().max(80).optional(),
-});
+const escanearSchema = z
+  .object({
+    qr: z.string().trim().min(1).max(200).optional(),
+    // Entrada manual: lo que el carnet muestra a la vista.
+    legajo: z.string().trim().min(1).max(20).optional(),
+    codigo: z.string().trim().min(1).max(20).optional(),
+    punto: z.nativeEnum(PuntoControl),
+    recorridoId: z.coerce.number().int().positive().optional(),
+    dispositivo: z.string().trim().max(80).optional(),
+  })
+  .refine((v) => v.qr || (v.legajo && v.codigo), {
+    message: 'Mandá el contenido del QR, o el legajo y el código del carnet.',
+  });
 
 /**
  * Valida un escaneo.
@@ -205,6 +212,8 @@ accesos.post(
 
       const resultado = await validarEscaneo(prisma, {
         qr: body.qr,
+        legajo: body.legajo,
+        codigo: body.codigo,
         punto: body.punto,
         recorridoId: body.recorridoId,
         operadorId: req.authUser!.id,
