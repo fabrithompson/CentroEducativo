@@ -99,6 +99,10 @@
 
     window.formatFecha = function (iso) {
         if (!iso) return '—';
+        // Una fecha sin hora ("2026-10-10") se lee como medianoche UTC, que en
+        // Argentina es el día anterior: se arma a mano en lugar de convertirla.
+        const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+        if (soloFecha) return soloFecha[3] + '/' + soloFecha[2] + '/' + soloFecha[1];
         return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
 

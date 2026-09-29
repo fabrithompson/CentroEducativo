@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
-import { Role } from '@prisma/client';
+import { PaymentStatus, Role } from '@prisma/client';
 
 import { prisma } from '../../db/prisma';
 import { HttpError } from '../../utils/httpError';
@@ -298,33 +298,105 @@ router.delete('/links/:id', async (req, res, next) => {
 
 const createPaymentSchema = z.object({
   estudianteId: z.coerce.number().int().positive(),
-  concepto: z.string().min(2),
-  monto: z.coerce.number().positive(),
-  vencimiento: z.string().min(8),
+  concepto: z.string().trim().min(2, 'Indicá el concepto de la cuota.').max(120),
+  monto: z.coerce.number().positive('El monto tiene que ser mayor a cero.'),
+  vencimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha de vencimiento no es válida.'),
+});
+
+const listaCuotasSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+
+/**
+ * Últimas cuotas cargadas, para el historial debajo del formulario. Sin esto,
+ * después de "Cargar cuota" no quedaba rastro visible de lo cargado.
+ */
+router.get('/payments', async (req, res, next) => {
+  try {
+    const { limit } = listaCuotasSchema.parse(req.query);
+    const rows = await prisma.payment.findMany({
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit,
+      include: {
+        estudiante: { select: { id: true, nombre: true, curso: true } },
+        padre: { select: { id: true, nombre: true } },
+      },
+    });
+
+    // Igual que en el estado de cuenta del padre: una cuota pendiente con el
+    // vencimiento cumplido se informa como vencida.
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    res.json({
+      exito: true,
+      cuotas: rows.map((p) => ({
+        id: p.id,
+        concepto: p.concepto,
+        monto: Number(p.monto),
+        vencimiento: p.vencimiento.toISOString().slice(0, 10),
+        status: p.status === PaymentStatus.PENDIENTE && p.vencimiento < hoy ? PaymentStatus.VENCIDO : p.status,
+        pagadoEn: p.pagadoEn ? p.pagadoEn.toISOString().slice(0, 10) : null,
+        cargadaEn: p.createdAt.toISOString(),
+        estudiante: p.estudiante,
+        responsable: p.padre,
+      })),
+    });
+  } catch (err) { next(err); }
 });
 
 router.post('/payments', async (req, res, next) => {
   try {
     const data = createPaymentSchema.parse(req.body);
-    // El responsable de facturación del alumno, si tiene cuenta y vínculo
-    // cargado. Se prefiere el marcado como responsable; si no hay ninguno, el
-    // primero que aparezca. Sin vínculo la cuota queda sin padre asociado, que
-    // es lo que hacía la versión anterior.
-    const vinculo = await prisma.tutorAlumno.findFirst({
+
+    const estudiante = await prisma.user.findUnique({
+      where: { id: data.estudianteId },
+      select: { id: true, nombre: true, role: true },
+    });
+    if (!estudiante || estudiante.role !== Role.ESTUDIANTE) {
+      throw HttpError.badRequest('El alumno indicado no existe.');
+    }
+
+    // Los tutores del alumno, con el responsable de facturación primero. Ese
+    // queda como padre de la cuota —si no hay responsable marcado, el primero
+    // que aparezca—, como hacía la versión anterior. Sin vínculo la cuota
+    // queda sin padre asociado.
+    const vinculos = await prisma.tutorAlumno.findMany({
       where: { alumno: { userId: data.estudianteId } },
       orderBy: { esResponsableFacturacion: 'desc' },
-      select: { tutorId: true },
+      select: { tutorId: true, tutor: { select: { isActive: true } } },
     });
-    const payment = await prisma.payment.create({
-      data: {
-        estudianteId: data.estudianteId,
-        padreId: vinculo?.tutorId ?? null,
-        concepto: data.concepto,
-        monto: data.monto,
-        vencimiento: new Date(data.vencimiento),
-      },
+
+    // Todos los tutores ven la cuota en su estado de cuenta, así que a todos
+    // los que tienen la cuenta activa se les avisa.
+    const avisados = vinculos.filter((v) => v.tutor.isActive).map((v) => v.tutorId);
+    const [anio, mes, dia] = data.vencimiento.split('-');
+    const monto = data.monto.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+
+    const payment = await prisma.$transaction(async (tx) => {
+      const creada = await tx.payment.create({
+        data: {
+          estudianteId: data.estudianteId,
+          padreId: vinculos[0]?.tutorId ?? null,
+          concepto: data.concepto,
+          monto: data.monto,
+          vencimiento: new Date(data.vencimiento),
+        },
+      });
+      if (avisados.length > 0) {
+        await tx.notification.createMany({
+          data: avisados.map((userId) => ({
+            userId,
+            titulo: 'Nueva cuota',
+            contenido: `Se cargó "${data.concepto}" de ${estudiante.nombre}: $${monto}, vence el ${dia}/${mes}/${anio}.`,
+            link: '/panel_padre.html#finanzas',
+          })),
+        });
+      }
+      return creada;
     });
-    res.json({ exito: true, payment });
+
+    res.json({ exito: true, payment, avisados: avisados.length });
   } catch (err) { next(err); }
 });
 

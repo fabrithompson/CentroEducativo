@@ -103,7 +103,7 @@
                 <li><a class="nav-link" onclick="switchView('vinculos', this); cargarLinks();"><i class="fas fa-link"></i> Vínculos Padre-Hijo</a></li>
                 <li><a class="nav-link" onclick="switchView('comprobantes', this); window.abrirComprobantes();"><i class="fas fa-receipt"></i> Comprobantes <span id="badgeComprobantes" class="chat-list-unread" style="display:none;">0</span></a></li>
                 <li><a class="nav-link" onclick="switchView('tareas', this); window.abrirTareas();"><i class="fas fa-clock"></i> Tareas programadas</a></li>
-                <li><a class="nav-link" onclick="switchView('cuotas', this); cargarUsuarios();"><i class="fas fa-money-bill"></i> Cargar Cuota</a></li>
+                <li><a class="nav-link" onclick="switchView('cuotas', this); cargarCuotas();"><i class="fas fa-money-bill"></i> Cargar Cuota</a></li>
                 <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments"></i> Mensajes</a></li>
                 <li><a class="nav-link" onclick="switchView('anuncios', this); cargarAnuncios();"><i class="fas fa-bullhorn"></i> Anuncios</a></li>
             </ul>
@@ -289,19 +289,30 @@
                         <select id="cuotaEst" required class="form-select"></select>
                     </div>
                     <div>
-                        <label style="font-size:0.85rem; font-weight:600;">Concepto</label>
-                        <input type="text" id="cuotaConcepto" required class="form-input" placeholder="Cuota Mensual - Julio">
+                        <label style="font-size:0.85rem; font-weight:600;" for="cuotaConcepto">Concepto</label>
+                        <input type="text" id="cuotaConcepto" required maxlength="120" class="form-input" placeholder="Cuota Mensual - Julio">
                     </div>
                     <div>
-                        <label style="font-size:0.85rem; font-weight:600;">Monto</label>
+                        <label style="font-size:0.85rem; font-weight:600;" for="cuotaMonto">Monto</label>
                         <input type="number" id="cuotaMonto" required min="1" step="0.01" class="form-input" placeholder="45000">
                     </div>
                     <div>
                         <label style="font-size:0.85rem; font-weight:600;" for="cuotaVenc">Vencimiento</label>
                         <input type="date" id="cuotaVenc" required class="form-input">
                     </div>
-                    <button type="submit" class="btn-action" style="grid-column: 1 / -1; justify-self: end;"><i class="fas fa-money-check"></i> Cargar cuota</button>
+                    <p style="grid-column: 1 / -1; margin: 0; font-size: 0.85rem; color: #475569;">
+                        <i class="fas fa-bell" aria-hidden="true"></i> Al cargarla, los tutores vinculados al alumno reciben un aviso en el campus.
+                    </p>
+                    <button type="submit" class="btn-action" id="cuotaGuardar" style="grid-column: 1 / -1; justify-self: end;"><i class="fas fa-money-check"></i> Cargar cuota</button>
                 </form>
+
+                <h4 style="color: #0f172a; font-size: 1.05rem; margin: 30px 0 4px;">Cuotas cargadas</h4>
+                <p style="margin: 0 0 6px; font-size: 0.85rem; color: #475569;">Las últimas 50, de la más reciente a la más antigua.</p>
+                <table class="data-table" id="tablaCuotas">
+                    <caption class="sr-only">Cuotas cargadas, de la más reciente a la más antigua</caption>
+                    <thead><tr><th>Cargada</th><th>Alumno</th><th>Concepto</th><th>Monto</th><th>Vence</th><th>Estado</th><th>Tutor responsable</th></tr></thead>
+                    <tbody><tr><td colspan="7" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
+                </table>
             </section>
 
             <section id="anuncios" class="view-section">
@@ -532,8 +543,6 @@
                         </td>
                     </tr>
                 `).join('');
-            // tambien refresca selects que dependen de usuarios
-            llenarSelectsConUsuarios();
         }
 
         function estadoUsuario(u) {
@@ -550,15 +559,27 @@
             return `<button class="btn-reactivar" onclick="reactivarUsuario(${u.id})"><i class="fas fa-rotate-left" aria-hidden="true"></i> Reactivar</button>`;
         }
 
-        function llenarSelectsConUsuarios() {
-            const padres = _usuariosCache.filter(u => u.role === 'PADRE' && u.isActive);
-            const estudiantes = _usuariosCache.filter(u => u.role === 'ESTUDIANTE' && u.isActive);
+        // Pide la lista completa en lugar de reusar la de la pantalla Usuarios:
+        // esa viene filtrada por lo que se haya buscado ahí, y un filtro que
+        // quedó puesto (por ejemplo, rol Docente) dejaba vacíos estos selects.
+        async function llenarSelectsConUsuarios() {
+            const data = await window.apiGet('/api/admin/users');
+            if (!data.exito) return;
+            const esc = window.escapeHtml;
+            const padres = data.usuarios.filter(u => u.role === 'PADRE' && u.isActive);
+            const estudiantes = data.usuarios.filter(u => u.role === 'ESTUDIANTE' && u.isActive);
             const sp = document.getElementById('vincPadre');
             const sec = document.getElementById('cuotaEst');
-            if (sp) sp.innerHTML = padres.map(p => `<option value="${p.id}">${p.nombre} (DNI ${p.dni})</option>`).join('');
+            if (sp) sp.innerHTML = padres.map(p => `<option value="${p.id}">${esc(p.nombre)} (DNI ${esc(p.dni)})</option>`).join('');
             // La cuota manual sigue yendo por id de usuario: es lo que espera
             // POST /api/admin/payments.
-            if (sec) sec.innerHTML = estudiantes.map(e => `<option value="${e.id}">${e.nombre} — ${e.curso || ''}</option>`).join('');
+            if (sec) {
+                const elegido = sec.value;
+                sec.innerHTML = estudiantes.length === 0
+                    ? '<option value="">No hay estudiantes activos</option>'
+                    : estudiantes.map(e => `<option value="${e.id}">${esc(e.nombre)}${e.curso ? ' — ' + esc(e.curso) : ''}</option>`).join('');
+                if (elegido) sec.value = elegido;
+            }
         }
 
         // El vínculo se carga contra el alumno del padrón, no contra su cuenta
@@ -978,7 +999,7 @@
            VINCULOS
            ============================================================ */
         async function cargarLinks() {
-            await cargarUsuarios();
+            await llenarSelectsConUsuarios();
             await llenarSelectAlumnos();
             const data = await window.apiGet('/api/admin/links');
             const tbody = document.querySelector('#tablaVinculos tbody');
@@ -1032,16 +1053,65 @@
         /* ============================================================
            CUOTAS
            ============================================================ */
+        async function cargarCuotas() {
+            await llenarSelectsConUsuarios();
+            await cargarHistorialCuotas();
+        }
+
+        const ESTADO_CUOTA = {
+            PENDIENTE: ['Pendiente', '#b45309'],
+            VENCIDO: ['Vencida', '#dc2626'],
+            PAGADO: ['Pagada', '#047857'],
+        };
+
+        async function cargarHistorialCuotas(idNueva) {
+            const tbody = document.querySelector('#tablaCuotas tbody');
+            const data = await window.apiGet('/api/admin/payments?limit=50');
+            if (!data.exito) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#dc2626;">No se pudo cargar el historial.</td></tr>';
+                return;
+            }
+            const esc = window.escapeHtml;
+            const pesos = (n) => '$ ' + Number(n).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+            tbody.innerHTML = data.cuotas.length === 0
+                ? '<tr><td colspan="7" style="text-align:center; color:#64748b;">Todavía no se cargó ninguna cuota.</td></tr>'
+                : data.cuotas.map(c => {
+                    const [texto, color] = ESTADO_CUOTA[c.status] || [c.status, '#334155'];
+                    return `
+                    <tr${c.id === idNueva ? ' style="background:#ecfdf5;"' : ''}>
+                        <td>${window.formatFechaHora(c.cargadaEn)}</td>
+                        <td><b>${esc(c.estudiante.nombre)}</b>${c.estudiante.curso ? '<br><small>' + esc(c.estudiante.curso) + '</small>' : ''}</td>
+                        <td>${esc(c.concepto)}</td>
+                        <td style="text-align:right; white-space:nowrap;">${pesos(c.monto)}</td>
+                        <td>${window.formatFecha(c.vencimiento)}</td>
+                        <td><span style="color:${color}; font-weight:600;">${texto}</span></td>
+                        <td>${c.responsable ? esc(c.responsable.nombre) : '<span style="color:#64748b;">Sin tutor vinculado</span>'}</td>
+                    </tr>`;
+                }).join('');
+        }
+
         async function crearCuota(e) {
             e.preventDefault();
-            const r = await window.apiPost('/api/admin/payments', {
-                estudianteId: document.getElementById('cuotaEst').value,
-                concepto: document.getElementById('cuotaConcepto').value,
-                monto: document.getElementById('cuotaMonto').value,
-                vencimiento: document.getElementById('cuotaVenc').value,
-            });
-            if (r.exito) { toastSuccess('Cuota cargada.'); e.target.reset(); }
-            else toastError(r.mensaje || 'Error.');
+            const boton = document.getElementById('cuotaGuardar');
+            boton.disabled = true;
+            try {
+                const r = await window.apiPost('/api/admin/payments', {
+                    estudianteId: document.getElementById('cuotaEst').value,
+                    concepto: document.getElementById('cuotaConcepto').value,
+                    monto: document.getElementById('cuotaMonto').value,
+                    vencimiento: document.getElementById('cuotaVenc').value,
+                });
+                if (!r.exito) { toastError(r.mensaje || 'No se pudo cargar la cuota.'); return; }
+                toastSuccess(r.avisados > 0
+                    ? `Cuota cargada. Se avisó a ${r.avisados === 1 ? 'un tutor' : r.avisados + ' tutores'}.`
+                    : 'Cuota cargada. El alumno no tiene tutores vinculados con cuenta activa: nadie recibió aviso.');
+                const elegido = document.getElementById('cuotaEst').value;
+                e.target.reset();
+                document.getElementById('cuotaEst').value = elegido;
+                await cargarHistorialCuotas(r.payment && r.payment.id);
+            } finally {
+                boton.disabled = false;
+            }
         }
 
         /* ============================================================

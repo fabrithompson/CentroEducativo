@@ -264,6 +264,44 @@ async function main() {
     } else {
       afirmar(false, 'hay un profesor con materias y sin deportes a cargo para probar la baja');
     }
+
+    // ------------------------------------------------------------------
+    console.log('\n=== Cuotas: historial y aviso a la familia ===');
+    const idMedina = await idDe('mmedina');
+    const cuota = await comoAdmin('POST', '/api/admin/payments', {
+      estudianteId: idMedina,
+      concepto: 'Cuota de humo',
+      monto: 12345,
+      vencimiento: '2026-10-10',
+    });
+    afirmar(cuota.status === 200 && cuota.cuerpo.avisados === 1, 'la cuota se carga y avisa a la tutora', cuota.cuerpo);
+
+    const historial = await comoAdmin('GET', '/api/admin/payments?limit=5');
+    const primera = (historial.cuerpo.cuotas as Cuerpo[])[0];
+    afirmar(
+      primera?.id === cuota.cuerpo.payment?.id && primera?.estudiante?.nombre === 'Mateo Medina' && primera?.responsable?.nombre === 'Patricia Medina',
+      'y encabeza el historial de cuotas cargadas, con su tutora responsable',
+      primera,
+    );
+
+    const tutora = await ingresar('pmedina');
+    const avisos = (await pedir('GET', '/api/notifications', { token: tutora.token })).cuerpo.notificaciones as Cuerpo[];
+    const aviso = avisos.find((x) => x.titulo === 'Nueva cuota');
+    afirmar(
+      aviso?.link === '/panel_padre.html#finanzas' && /Cuota de humo/.test(aviso.contenido) && /10\/10\/2026/.test(aviso.contenido),
+      'la tutora recibe el aviso, con enlace a su estado de cuenta',
+      aviso,
+    );
+    const cuenta = (await pedir('GET', '/api/payments', { token: tutora.token })).cuerpo.pagos as Cuerpo[];
+    afirmar(cuenta.some((x) => x.concepto === 'Cuota de humo'), 'y la cuota figura en su estado de cuenta');
+
+    const aDocente = await comoAdmin('POST', '/api/admin/payments', {
+      estudianteId: idLopez,
+      concepto: 'Cuota de humo',
+      monto: 1,
+      vencimiento: '2026-10-10',
+    });
+    afirmar(aDocente.status === 400, 'REGLA: no se le carga una cuota a quien no es estudiante', aDocente.cuerpo);
   } finally {
     server?.close();
     // Sin esto, apagar PostgreSQL con conexiones abiertas en el pool llena la
