@@ -566,14 +566,15 @@ pnpm start     # node dist/index.js
 
 ## 10. Pruebas
 
-**358 pruebas automatizadas**, y corren solas en cada PR
+**382 pruebas automatizadas**, y corren solas en cada PR
 (`.github/workflows/ci.yml`).
 
 | Suite | Cantidad | Comando |
 |---|---|---|
-| Backend | 257 | `pnpm --filter backend test` |
+| Backend | 295 | `pnpm --filter backend test` |
 | Reglas del motor | 17 | incluidas en `test:integracion` |
 | Móvil | 70 | `pnpm --filter mobile test` |
+| Pruebas de humo por HTTP contra PostgreSQL real | 4 recorridos (académico, autenticación con dos cuentas, retención y web) | `pnpm --filter backend test:humo` |
 
 ```bash
 pnpm --filter backend test:integracion

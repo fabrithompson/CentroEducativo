@@ -50,7 +50,9 @@ dos agrupaciones transversales.
 ## 2. Autenticación
 
 JWT con dos tokens, como ya estaba: access token de 15 minutos en el header
-`Authorization: Bearer`, y refresh token de 7 días en cookie `httpOnly`.
+`Authorization: Bearer`, y refresh token de 7 días en cookie `httpOnly`, **una
+por cuenta** (`et_refresh_<id>`): así se pueden tener varias cuentas abiertas a
+la vez en el mismo navegador, una por pestaña.
 
 ### 2.1 Endpoints
 
@@ -58,8 +60,8 @@ JWT con dos tokens, como ya estaba: access token de 15 minutos en el header
 |---|---|---|---|
 | POST | `/api/auth/register` | público | Alta de estudiante, docente o padre |
 | POST | `/api/auth/login` | público | Devuelve access token y setea el refresh |
-| POST | `/api/auth/refresh` | cookie | Renueva el access token |
-| POST | `/api/auth/logout` | público | Limpia la cookie |
+| POST | `/api/auth/refresh` | cookie | Renueva el access token. La web manda `{ usuarioId }` y la renovación se niega si la cookie es de otra cuenta; sin id (la app móvil) usa la única cookie que haya, y con varias no adivina |
+| POST | `/api/auth/logout` | público | Borra la cookie de la cuenta indicada en `{ usuarioId }` sin tocar las de otras pestañas; sin id, todas |
 | GET | `/api/auth/me` | autenticado | Datos de la sesión |
 | **POST** | **`/api/auth/forgot-password`** | público | **Envía el enlace de recuperación** |
 | **POST** | **`/api/auth/reset-password`** | público | **Fija la contraseña nueva con el token** |
@@ -391,6 +393,28 @@ Criterios que hay que conocer para leer bien los números:
 | DELETE | `/api/admin/teachers/:id/reject` | Sólo sobre una solicitud pendiente. Antes podía borrar a un docente desactivado, con todo lo que había publicado |
 | GET | `/api/admin/payments?limit=50` | **Nuevo.** Las últimas cuotas cargadas, con alumno, estado (la pendiente vencida se informa como `VENCIDO`) y tutor responsable |
 | POST | `/api/admin/payments` | Además de crear la cuota, **avisa a todos los tutores del alumno** con cuenta activa, en la misma transacción, y responde `avisados`. Rechaza a un destinatario que no es estudiante |
+
+### 4.9 Anuncios, notas y escáner (29 y 30/09/2026)
+
+| Método | Ruta | Qué cambió |
+|---|---|---|
+| GET | `/api/announcements` | El administrador ve todos (antes sólo los dirigidos a toda la comunidad) y quien publicó un anuncio lo ve siempre. Cada anuncio trae `puedeEditar` |
+| PATCH | `/api/announcements/:id` | **Nuevo.** Título, contenido y destinatarios. Quien lo publicó o un administrador. No vuelve a notificar |
+| DELETE | `/api/announcements/:id` | Mismos permisos que la edición, con errores del formato común |
+| POST | `/api/grades` | Recibe `materiaId`: la materia tiene que ser del docente y el alumno de su curso. Guarda el nombre exacto de la materia y responde el `id`. Texto libre sólo para un administrador |
+| PATCH | `/api/grades/:id` | **Nuevo.** Nota (1 a 10), instancia y fecha. Quien la cargó o un administrador |
+| DELETE | `/api/grades/:id` | **Nuevo.** Mismos permisos |
+| POST | `/api/accesos/escanear` | Además de `qr`, acepta `legajo` y `codigo` para la entrada manual; el registro de auditoría la marca como tal |
+
+### 4.10 Tiempo real
+
+Toda escritura que termina bien (`status < 400`) publica un evento `cambio` por
+Socket.IO, con `{ recurso, accion }` y **sin datos**: cada cliente vuelve a pedir
+lo que le toca por estos mismos endpoints, con su propia autorización. Qué ruta
+publica qué recurso, y para qué roles, está en `modules/shared/eventos.ts`; no
+publican la sesión, los mensajes (tienen su propio evento `new-message`) ni la
+posición del micro. El escaneo del carnet avisa sólo a los tutores del alumno.
+Cada conexión se une a las salas `user:<id>` y `rol:<ROL>`.
 
 ---
 

@@ -297,11 +297,12 @@ hará y si hay algún bloqueo. Lo acordado se refleja en el tablero de Jira.
 
 | Nivel | Alcance | Cantidad |
 |---|---|---|
-| Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 271 |
-| De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **271** |
+| Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 295 |
+| De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **295** |
 | Del motor de base de datos | Verifican que el motor **rechace efectivamente** el tercer deporte, el cruce de horarios, el quinto recorrido, el comprobante sin archivo, el tutor que no es padre y la reutilización de un código QR | **17** |
 | De la aplicación móvil | Selección de ítems a pagar, formato de importes y fechas, y equivalencia de la implementación propia de HMAC-SHA256 contra `node:crypto` en 300 casos aleatorios. Todas de dominio: el cliente HTTP todavía no tiene pruebas (ver `docs/plan_de_trabajo_mobile.md`) | **70** |
-| **Total** | | **358** |
+| **Total** | | **382** |
+| De humo por HTTP | Recorridos completos contra PostgreSQL real: ABM académico, autenticación —incluidas dos cuentas en el mismo navegador—, retención de datos y los circuitos de la web (bajas y reactivaciones, cuotas, anuncios, notas, escáner) | 4 recorridos, fuera del total |
 
 **Entorno de pruebas.** La suite levanta una instancia real de PostgreSQL 15
 mediante `embedded-postgres`, aplica las doce migraciones, carga las semillas y
@@ -377,7 +378,7 @@ produjo código que hubo que corregir o reemplazar.
 | Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 17 734 |
 | Vistas web | 4 paneles (administración, docente, tutor, estudiante) más el portal público |
 | Pantallas móviles | 5 (ingreso, dashboard, finanzas, pago por transferencia, carnet) |
-| Pruebas automatizadas | **358**, todas en verde |
+| Pruebas automatizadas | **382**, todas en verde |
 | Base de datos de verificación | PostgreSQL 15.18 real |
 
 **Verificado desde la versión 2.0 de este documento:**
@@ -428,9 +429,16 @@ acompañan esta versión: `docs/patrones_de_diseno.md` y
 - Al cargar una cuota queda registrada en un historial y se avisa a los tutores
   del alumno.
 - Se quitó la sección duplicada del docente ("Mis Materias Asignadas").
+- Enter envía el mensaje (Shift+Enter hace otra línea) y, en el ingreso, entra
+  al campus: el foco quedaba en el enlace que abría la ventana.
+- Los anuncios se pueden editar, desde administración y desde el panel docente.
+- El docente carga notas en sus materias reales —no en una lista escrita a
+  mano— y puede editarlas y borrarlas. Se quitó la referencia equivocada a RF-8.
+- El escáner de carnet lee con la cámara en cualquier navegador (antes sólo en
+  Chrome de Android) y acepta a mano el legajo y el código que muestra el carnet.
+- Se pueden tener varias cuentas abiertas a la vez, una por pestaña.
+- Anuncios, notas, cuotas y avisos aparecen en tiempo real, sin recargar.
 
-**En curso, en este orden:** Enter para enviar mensajes y para ingresar al
-campus; edición de anuncios; editar y borrar notas desde el panel docente, sin la
-referencia equivocada a RF-8; el escáner de carnet del administrador y del
-docente; varias cuentas abiertas a la vez en el mismo navegador; y actualización
-en tiempo real de anuncios y eventos.
+Los once bloques de trabajo están en `main` con el CI en verde. Cada uno tiene
+su prueba en el navegador y, cuando toca reglas del servidor, su prueba de humo
+contra PostgreSQL real (`pnpm --filter backend test:humo`).

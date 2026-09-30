@@ -213,7 +213,11 @@ secretaría. Es quien primero se entera de que perdió el teléfono.
 ### 4.2 Lector para el personal
 
 `web/frontend/js/vistas/escaner.js`, montado en los paneles de Administración y
-Docentes. Usa la API `BarcodeDetector` del navegador.
+Docentes. Usa la API `BarcodeDetector` del navegador donde existe y, donde no
+—Chrome y Edge de escritorio, Firefox, Safari de iPhone—, pasa cada cuadro del
+video por **jsQR**, cargado de jsDelivr con versión fija y hash de integridad
+(SRI). Hasta el 29/09 sólo usaba `BarcodeDetector`, y en esos navegadores la
+cámara ni se abría.
 
 Decisiones tomadas pensando en cómo se usa realmente —de pie, con una tablet,
 con chicos haciendo fila:
@@ -224,10 +228,18 @@ con chicos haciendo fila:
   sin mirar la pantalla.
 - **Entrada manual siempre disponible.** Una pantalla rayada, el sol de frente o
   un teléfono sin batería no pueden dejar a un chico afuera del micro. El
-  operador tipea el código de 8 dígitos.
-- **Antirrebote de 2 segundos.** La cámara dispara varias veces sobre el mismo
-  QR; sin esto, el segundo disparo daría "código reutilizado" y confundiría al
-  operador.
+  operador tipea lo que el carnet muestra a la vista: el **legajo** (`A-0012`,
+  `a0012` o `12`) y el **código de 8 dígitos**, también partido en dos como
+  aparece en pantalla. El servidor busca la credencial por legajo y prueba la
+  ventana actual y las de tolerancia (`ventanaDeCodigo` en `totp.ts`); el
+  anti-reuso por (credencial, punto, contador) queda igual. Antes pedía un "N° de
+  credencial" que el carnet no muestra y armaba el contador con el reloj de la
+  PC, así que fallaba en cada cambio de ventana.
+- **El mismo QR se ignora mientras vale (90 segundos).** La cámara lo ve muchas
+  veces seguidas; con el antirrebote de 2 segundos que había antes, el segundo
+  envío pisaba el verde con "código reutilizado".
+- **La cámara se apaga al salir de la sección** o con la pestaña oculta, y se
+  distingue permiso denegado, cámara ocupada y equipo sin cámara.
 - **El punto de control se elige una vez** y queda fijo toda la jornada.
 - El endpoint **responde 200 incluso cuando deniega**: un 4xx obligaría al lector
   a distinguir entre "denegado" y "falló la conexión", que para el operador son
@@ -273,20 +285,19 @@ generar credenciales válidas hasta que se revoque.
 | Typecheck backend y móvil | ✅ sin errores |
 | Rutas nuevas protegidas | ✅ **52 rutas** exigen autenticación |
 | Suite completa | ✅ **275 tests** (205 backend + 70 móvil) |
-| Escaneo real con una cámara | ❌ **No verificado** |
+| Escaneo real con una cámara | ⚠️ **Verificado con una cámara simulada** en Chromium: un QR real, con el código calculado como el servidor, leído por jsQR y autorizado. Falta el hardware |
 | Esquema y anti-repetición contra PostgreSQL | ✅ **Verificado: el motor rechaza el código repetido** |
-| Flujo completo de escaneo con datos | ❌ **No verificado** |
+| Flujo completo de escaneo con datos | ✅ **Verificado** por HTTP contra PostgreSQL real (`test:humo:web`) y en el navegador: acceso autorizado, código equivocado, código reutilizado y entrada manual por legajo |
 | Notificación efectivamente recibida | ❌ **No verificado** |
-| `BarcodeDetector` en el navegador del colegio | ❌ **No verificado** |
+| Lectura sin `BarcodeDetector` | ✅ jsQR como respaldo, verificado en Chromium con `BarcodeDetector` quitado |
 
 **Lo más sólido de este módulo** es que la equivalencia entre las dos
 implementaciones criptográficas está demostrada, no supuesta. Es el punto donde
 un error habría sido invisible hasta el día de la prueba en el micro.
 
 **Lo que falta** es todo lo que necesita hardware: que la cámara enganche el QR
-de una pantalla con brillo, que `BarcodeDetector` esté disponible en el
-dispositivo que use el colegio (es API de Chromium; en Safari hay que sumar una
-librería), y que la notificación llegue al teléfono de la madre.
+de una pantalla con brillo en el dispositivo que use el colegio, y que la
+notificación llegue al teléfono de la madre.
 
 ---
 
@@ -295,7 +306,7 @@ librería), y que la notificación llegue al teléfono de la madre.
 | Pendiente | Nota |
 |---|---|
 | Probar el escaneo con cámara real | Lo primero al retomar |
-| Respaldo para Safari / iOS | `BarcodeDetector` es de Chromium |
+| ~~Respaldo para Safari / iOS~~ | Resuelto el 30/09 con jsQR |
 | Notificaciones push | Hoy el aviso es correo + campus; push llega cuando el teléfono está bloqueado |
 | Modo sin conexión en el lector | Encolar escaneos y sincronizar; hoy el lector necesita red |
 | Panel de control de accesos en el backoffice | El endpoint existe; falta la pantalla de historial |

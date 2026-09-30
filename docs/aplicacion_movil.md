@@ -69,10 +69,15 @@ El refresh token nunca toca JavaScript: el backend lo deja en una cookie
 `httpOnly` y en React Native el manejo de cookies lo hace la capa nativa
 (NSURLSession en iOS, OkHttp en Android). Viaja solo.
 
+Desde el 30/09 el backend deja **una cookie por cuenta** (`et_refresh_<id>`),
+para que la web admita varias cuentas abiertas a la vez. La app manda su
+`usuarioId` al renovar y al cerrar sesión, así renueva siempre la suya.
+
 ### Qué más hace la pantalla de ingreso
 
-- **Filtra por rol.** Si entra un docente o un alumno, la app cierra la sesión y
-  lo manda al campus web. Esta app es de tutores.
+- **Filtra por rol.** Si entra un docente o un alumno, la app cierra la sesión
+  —también en el servidor, para no dejar su cookie de refresco viva— y lo manda
+  al campus web. Esta app es de tutores.
 - **Opción de mostrar la contraseña.** En un teclado de teléfono equivocarse es
   la norma; esconderla siempre genera más errores que los que evita.
 - `autoCapitalize="none"` y `autoCorrect={false}` en el usuario: el autocorrector
@@ -238,7 +243,7 @@ pnpm --filter mobile typecheck
 | Clasificación en solapas | ✅ incluida arriba |
 | Suite del paquete móvil | ✅ **70 tests en verde**, todos de dominio |
 | Cliente HTTP (`api/client.ts`) | ❌ **Sin pruebas automáticas** |
-| Suite del monorepo | ✅ **341 tests** (271 backend + 70 móvil) |
+| Suite del monorepo | ✅ **365 tests** (295 backend + 70 móvil) |
 | Render en emulador o dispositivo | ❌ **No verificado** |
 | Llamadas contra el backend en ejecución | ❌ **No verificado** |
 | Subida real de un comprobante | ❌ **No verificado** |

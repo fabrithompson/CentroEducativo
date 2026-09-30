@@ -17,9 +17,9 @@ desarrollo del Trabajo Práctico Integrador, sobre un sistema compuesto por tres
 aplicaciones —portal web institucional, sistema de gestión y aplicación móvil—
 que comparten un backend y una base de datos únicos.
 
-El trabajo se organizó en **35 intervenciones asistidas por IA**, todas
+El trabajo se organizó en **36 intervenciones asistidas por IA**, todas
 registradas en `docs/bitacora_ia.md`. El producto resultante comprende 39
-modelos de datos, 140 endpoints REST, 12 migraciones y 358 pruebas automatizadas,
+modelos de datos, 140 endpoints REST, 12 migraciones y 382 pruebas automatizadas,
 **validadas contra una instancia real de PostgreSQL 15**.
 
 La tesis central del informe es la siguiente: **la inteligencia artificial
@@ -392,20 +392,20 @@ sistema le rechazaría después.
 ### Síntesis cuantitativa
 
 *(Recontada el 21/09/2026 sobre el repositorio, no sobre la memoria del equipo;
-intervenciones y migraciones actualizadas al 29/09/2026. Los recuentos de líneas
-y archivos incluyen los archivos de prueba.)*
+intervenciones, migraciones y pruebas actualizadas al 30/09/2026. Los recuentos
+de líneas y archivos incluyen los archivos de prueba.)*
 
 | Métrica | Valor |
 |---|---|
-| Intervenciones registradas | 35 |
+| Intervenciones registradas | 36 |
 | Modelos de datos | 39 |
 | Enumeraciones | 25 |
 | Endpoints REST | 140 |
 | Migraciones | 12, aplicadas en producción (la 12.ª, del 29/09, por el pre-deploy) |
 | Funciones y disparadores en PostgreSQL | 7 y 6 (verificados en ejecución) |
 | Restricciones `CHECK` | 12 |
-| Pruebas automatizadas | 358 (271 backend, 70 móvil, 17 sobre el motor) |
-| Archivos de prueba | 20 |
+| Pruebas automatizadas | 382 (295 backend, 70 móvil, 17 sobre el motor) |
+| Archivos de prueba | 23 |
 | Líneas de código (backend) | 18 931 en 91 archivos |
 | Líneas de código (frontend) | 12 638 en 22 archivos |
 | Líneas de código (móvil) | 4 452 en 18 archivos |
@@ -702,7 +702,7 @@ escala es cualitativa: **Alto / Medio / Bajo**.
 | 7 | **Integración** | Medio. Los contratos entre componentes se documentan mal y se rompen seguido. | **Alto.** Mantiene coherencia entre capas y clientes. | El mismo endpoint sirve a web y móvil sin variantes; los tipos de Prisma validan cada consulta en compilación. | Ventaja de la IA, potenciada por el tipado estricto. |
 | 8 | **Seguridad** | Medio. Se aplican buenas prácticas conocidas. | **Alto en mecanismos, bajo en criterio.** Implementa correctamente lo que se le pide; no advierte lo que falta. | Implementó TOTP y hash de tokens sin errores; los dos defectos graves del sistema fueron de *autorización*, es decir, de reglas. | La criptografía se delega; la política de acceso, no. |
 | 9 | **Mantenimiento** | Medio. Código escrito por quien lo mantiene, pero poco documentado. | **Alto, si el código se entiende.** Bien estructurado y comentado; peligroso si nadie lo leyó. | Separación en capas, módulos puros sin dependencias, advertencias explícitas sobre parámetros que deben coincidir entre paquetes. | El mantenimiento mejora sólo si la revisión fue real. |
-| 10 | **Calidad general** | Medio. Homogénea y previsible. | **Alto en forma, variable en fondo.** | 358 pruebas, tipado estricto sin errores y ejecución contra PostgreSQL real desde la octava intervención; pero la configuración de despliegue estuvo días sin efecto y ninguna de esas verificaciones lo detectó. | La calidad formal es superior; la funcional se demuestra ejecutando, y el entorno de ejecución también hay que medirlo. |
+| 10 | **Calidad general** | Medio. Homogénea y previsible. | **Alto en forma, variable en fondo.** | 382 pruebas, tipado estricto sin errores y ejecución contra PostgreSQL real desde la octava intervención; pero la configuración de despliegue estuvo días sin efecto y ninguna de esas verificaciones lo detectó. | La calidad formal es superior; la funcional se demuestra ejecutando, y el entorno de ejecución también hay que medirlo. |
 
 ### Lectura global
 
@@ -903,7 +903,7 @@ alguien que las revisó una por una.
 La bitácora, con sus columnas «¿Funcionó?» y «Modificaciones realizadas», es en
 parte un mecanismo de control sobre eso: obliga a declarar qué se revisó
 efectivamente y qué hubo que corregir. Reconocemos que completarla con honestidad
-—admitiendo dieciocho «Parcialmente» y dos «No» sobre treinta y cuatro
+—admitiendo diecinueve «Parcialmente» y dos «No» sobre treinta y seis
 intervenciones— fue incómodo, y que la tentación de uniformar todo en «Sí»
 existió.
 
@@ -979,7 +979,7 @@ el trabajo en torno a esa asimetría —delegar la forma, retener el propósito�
 es una precaución temporal sino el modo correcto de usar la herramienta.
 
 **Segundo: la verificación es la unidad de valor.** El aporte más sólido de este
-proyecto no son las casi 19 000 líneas de backend sino las 358 pruebas, y en
+proyecto no son las casi 19 000 líneas de backend sino las 382 pruebas, y en
 particular aquellas que demuestran algo no obvio: que nuestra implementación
 criptográfica coincide con la de Node en 300 casos aleatorios; que la tarea de
 fin de mes se dispara exactamente doce veces por año; que un tutor sin hijos
@@ -1007,8 +1007,8 @@ restantes conservan algún valor.
 ## Conclusión general
 
 El uso de inteligencia artificial en este Trabajo Práctico Integrador nos
-permitió construir, en treinta y cinco intervenciones, un sistema de tres
-aplicaciones con 39 modelos de datos, 140 endpoints, 12 migraciones y 358
+permitió construir, en treinta y seis intervenciones, un sistema de tres
+aplicaciones con 39 modelos de datos, 140 endpoints, 12 migraciones y 382
 pruebas automatizadas.
 Ese volumen no habría sido alcanzable con desarrollo tradicional en el tiempo
 disponible.
@@ -1093,7 +1093,7 @@ está justamente en la precisión con que se enuncian sus límites.
 
 | Anexo | Documento | Contenido |
 |---|---|---|
-| A | `docs/bitacora_ia.md` | Bitácora completa: 35 intervenciones con prompts y comandos |
+| A | `docs/bitacora_ia.md` | Bitácora completa: 36 intervenciones con prompts y comandos |
 | B | `docs/plan_de_trabajo.md` | Cronograma, hitos y matriz de riesgos |
 | B.1 | `docs/plan_de_trabajo_mobile.md` | Plan de trabajo de la aplicación móvil |
 | B.2 | `docs/patrones_de_diseno.md` | Patrones de diseño, con archivo y línea |

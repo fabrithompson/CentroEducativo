@@ -49,6 +49,17 @@ Las cuentas de estudiante y de tutor quedan activas al instante.
   el botón *Cancelar*, con la tecla Escape o tocando afuera de la ventana.
 - Las notificaciones de la campanita llevan a la sección que corresponde: "Nueva
   cuota" abre el estado de cuenta.
+- **No hace falta recargar.** Un anuncio, una nota, una cuota o un aviso nuevo
+  aparecen solos. Si estás escribiendo algo, la lista espera a que termines para
+  no borrarlo.
+- En **Mensajes**, Enter envía y Shift+Enter pasa a la línea siguiente.
+
+### Varias cuentas a la vez
+
+Cada pestaña del navegador tiene su propia sesión: podés tener administración en
+una y tu cuenta de docente en otra. Cerrar sesión en una no cierra la otra. Si
+abrís una pestaña nueva y hay una sola cuenta abierta, entra directamente; si hay
+varias, te pide que elijas ingresando.
 
 > **Si no podés entrar**, leé el mensaje que aparece: dice el motivo exacto
 > —contraseña incorrecta, usuario inexistente, cuenta pendiente de aprobación o
@@ -191,9 +202,21 @@ inscripto**, que suelen ser las que más interesa ver.
 
 ### 2.9 Carnet digital
 
-Menú **Escanear carnet**. Abre la cámara para leer el código QR del carnet que
-el alumno o el tutor muestran desde el teléfono. El código cambia cada pocos
+Menú **Escanear carnet**. Elegí el punto de control —comedor, o transporte y el
+recorrido— y el sistema abre la cámara para leer el código QR del carnet que el
+alumno o el tutor muestran desde el teléfono. El código cambia cada pocos
 segundos, así que una captura de pantalla vieja no sirve para entrar.
+
+**Si la cámara no lee el carnet**, usá la **entrada manual**: el legajo (alcanza
+con el número, por ejemplo `12`) y el código de 8 dígitos que muestra el carnet
+debajo del QR, con o sin el espacio del medio. Si el navegador no tiene permiso
+para la cámara, o la cámara la está usando otra aplicación, la pantalla lo dice.
+
+### 2.10 Anuncios
+
+Menú **Anuncios**: publicar para toda la comunidad, sólo estudiantes, sólo
+docentes o sólo familias. Cada anuncio se puede **editar** —título, texto y
+destinatarios— o **borrar**. Corregir un anuncio no vuelve a mandar el aviso.
 
 ---
 
@@ -202,12 +225,12 @@ segundos, así que una captura de pantalla vieja no sirve para entrar.
 | Menú | Para qué |
 |---|---|
 | **Mis cursos y materias** | Las materias a tu cargo y, al elegir una, el listado completo de alumnos de ese curso |
-| **Cargar Calificaciones** | Nota por alumno, materia e instancia de evaluación |
+| **Cargar Calificaciones** | Elegís una de tus materias y un alumno de ese curso, la instancia y la nota. Las últimas que cargaste se pueden **editar** o **borrar** desde la tabla de abajo |
 | **Asistencia Diaria** | Presente, ausente, tarde o justificado, por fecha |
 | **Actividades** y **Planes de Estudio** | Material y consignas para tus cursos |
-| **Comunicados** | Avisos a las familias |
-| **Mensajes** | Conversaciones con tutores |
-| **Escanear carnet** | Control de acceso, igual que administración |
+| **Comunicados** | Avisos a las familias. Los tuyos se pueden editar y borrar |
+| **Mensajes** | Conversaciones con tutores. Enter envía |
+| **Escanear carnet** | Control de acceso, igual que administración (ver 2.9) |
 
 Si entrás y no ves ninguna materia, es que administración todavía no te asignó
 ninguna. La pantalla te lo dice con esas palabras.

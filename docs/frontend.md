@@ -43,7 +43,8 @@ frontend/
       admin-comprobantes.js Panel de admin — cola de comprobantes de transferencia
       admin-tareas.js     Panel de admin — estado y disparo de las tareas programadas
       reportes.js         Panel de admin — 5 reportes con filtros
-      escaner.js          Panel de admin — lectura del carnet con QR
+      escaner.js          Paneles de admin y docente — lectura del carnet con QR
+    sesion.js           La sesión de cada pestaña (script clásico, lo cargan todas las páginas)
       docente-cursos.js   Panel del docente — materias y alumnos
       padre-hijos.js      Panel del tutor — ficha, deportes, servicios, cuenta
   css/
@@ -108,6 +109,36 @@ de cada panel, vuelve a esa sección con su cargador. También reacciona a
 `hashchange`, que es lo que usa el enlace de una notificación dentro del mismo
 panel. Los enlaces del menú reciben un `href` con su sección, así que se llega a
 ellos con Tab y se pueden abrir en otra pestaña.
+
+### Sesión por pestaña (30/09/2026)
+
+`js/sesion.js` guarda la cuenta de cada pestaña en `sessionStorage` —antes iba en
+`localStorage`, compartido por todas, y con el access token adentro—. Así se
+puede tener el panel de administración en una pestaña y el de un docente en
+otra. Expone `usuarioSesion()`, `renovarSesion()` —una sola renovación para
+`campus.js` y `js/api.js`, que dice qué cuenta es la pestaña y nunca la cambia
+por otra—, `sesionDelPanel()` para el control de acceso de cada panel, y
+`cerrarSesion()`, que avisa al servidor para borrar la cookie de esa cuenta. Una
+pestaña nueva recupera la sesión si hay una sola cuenta abierta; si hay varias,
+pide ingresar. Una sesión guardada por la versión anterior se migra sola.
+
+### Tiempo real (30/09/2026)
+
+`campus.js` recibe el evento `cambio` de Socket.IO (ver `docs/api_rest.md` §4.10),
+refresca la campanita y lo anuncia como `cambio-remoto`. Cada panel declara con
+`window.alCambiarRemoto({ recurso: [{ seccion, contenedor, recargar }] })` qué
+vuelve a pedir. Tres reglas: se recarga sólo lo que está a la vista; nunca debajo
+de un diálogo abierto ni sobre un campo con algo escrito —esa recarga espera—; y
+la pestaña que hizo el cambio no se recarga dos veces. El socket lee el token
+vigente en cada reconexión: antes lo capturaba una vez y, al vencer, el tiempo
+real se cortaba sin aviso.
+
+### Teclado (29/09/2026)
+
+En los mensajes, Enter envía y Shift+Enter agrega una línea (un `keydown`
+delegado en `campus.js`, que respeta la composición de acentos). En el portal,
+abrir el ingreso o el registro lleva el foco al primer campo, Tab no se escapa a
+la página de atrás, y Escape o tocar afuera cierran la ventana.
 
 ---
 
