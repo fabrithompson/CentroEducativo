@@ -384,6 +384,15 @@
             window.restaurarVista();
         });
 
+        // Tiempo real: qué se recarga cuando otro cambia algo (campus.js). La
+        // asistencia no: es la planilla que el propio docente está llenando.
+        window.alCambiarRemoto({
+            anuncios: [{ seccion: 'comunicados', contenedor: 'listaComunicados', recargar: cargarComunicados }],
+            calificaciones: [{ seccion: 'calificaciones', contenedor: 'tablaNotasHistorial', recargar: () => cargarHistorialNotas() }],
+            actividades: [{ seccion: 'actividades', contenedor: 'listaActividades', recargar: cargarActividades }],
+            planes: [{ seccion: 'planes', contenedor: 'listaPlanes', recargar: cargarPlanes }],
+        });
+
         function switchView(viewId, element) {
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));

@@ -86,6 +86,10 @@ async function pedir(metodo, ruta, { body, query, esFormData = false } = {}) {
   const headers = {};
   if (!esFormData) headers['Content-Type'] = 'application/json';
 
+  // Para que el aviso en tiempo real de un cambio propio no recargue esta
+  // misma pestaña (ver campus.js).
+  if (metodo !== 'GET' && typeof window.marcarEscritura === 'function') window.marcarEscritura();
+
   const tk = token();
   if (tk) headers.Authorization = `Bearer ${tk}`;
 

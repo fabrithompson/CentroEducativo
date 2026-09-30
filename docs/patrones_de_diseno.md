@@ -175,7 +175,7 @@ el transporte de correo y el servidor de Socket.IO.
 |---|---|---|
 | Cliente de base de datos | `web/backend/src/db/prisma.ts:8-16` | Un pool de conexiones por proceso. Se guarda además en `global.__prisma` para que el recargado en caliente de desarrollo no abra un pool nuevo en cada cambio |
 | Transporte de correo | `web/backend/src/services/mailer.ts:5` y `:15-29` | Se crea en el primer envío y se reutiliza |
-| Servidor de Socket.IO | `web/backend/src/sockets/io.ts:12-15` | `emitToUser` necesita llegar al mismo servidor al que se conectaron los clientes |
+| Servidor de Socket.IO | `web/backend/src/sockets/io.ts:13` y `:16-17` | `emitToUser` y el reenvío de los cambios en tiempo real tienen que llegar al mismo servidor al que se conectaron los clientes |
 | Proveedor de mensajería | `web/backend/src/modules/avisos/proveedores.ts:196` y `:205-206` | Se elige una vez, al primer aviso |
 
 `web/backend/src/db/prisma.ts:8-16`:
@@ -201,19 +201,57 @@ lenguaje, con la misma garantía y sin el código extra.
 
 ## 5. Observer
 
-El patrón aparece en tres lugares. En los tres, quien publica no conoce a quienes
+El patrón aparece en cuatro lugares. En todos, quien publica no conoce a quienes
 escuchan: sólo avisa que algo pasó.
 
-### 5.1 Mensajería en tiempo real
+### 5.1 Cambios en tiempo real
+
+Un anuncio, una nota, una cuota o una solicitud nueva aparecen en los paneles de
+quienes les corresponde sin recargar la página. Es el caso más completo del
+patrón: un sujeto en el servidor, un oyente que lo reenvía por Socket.IO y, en
+cada panel, suscriptores que deciden qué volver a pedir.
+
+| Pieza | Dónde |
+|---|---|
+| Sujeto | `web/backend/src/modules/shared/eventos.ts:56-64` — un `EventEmitter` con `publicarCambio(cambio)` y `alCambiar(oyente)`, que devuelve la función para darse de baja |
+| Qué se publica | `eventos.ts:81-141` — tabla prefijo de ruta → recurso y audiencia (roles), con las exclusiones: la sesión, los mensajes —tienen su propio evento— y lo de alta frecuencia, como la posición del micro |
+| Quién publica | `web/backend/src/routes/index.ts:64-72` — un middleware que, cuando una escritura termina bien, publica su cambio. Ninguna ruta sabe que existe el tiempo real. Además, `credenciales/accesos.service.ts:445` publica sólo a los tutores del alumno que se escaneó |
+| Oyente en el servidor | `web/backend/src/sockets/io.ts:45` se suscribe al bus, y `:54-68` reenvía cada cambio a las salas `rol:<ROL>` y `user:<id>` (cada conexión se une a las dos, `:35` y `:38`) |
+| Suscriptor en el cliente | `web/frontend/campus.js:741` recibe `cambio`, refresca la campanita y lo anuncia como evento del DOM |
+| Reacción de cada panel | `window.alCambiarRemoto({...})` — `panel_admin.html:458`, `panel_docente.html:389`, `panel_estudiante.html:220`, `panel_padre.html:209`. Cada panel dice qué recarga por recurso; `campus.js:758` agrupa los avisos, recarga sólo lo visible y espera si hay un formulario con algo escrito |
+
+```mermaid
+sequenceDiagram
+    participant A as Administrador
+    participant R as routes/index.ts (middleware)
+    participant B as eventos.ts (bus)
+    participant IO as sockets/io.ts
+    participant C as campus.js de cada estudiante
+    participant P as Panel del estudiante
+
+    A->>R: POST /api/announcements
+    R->>R: la ruta de anuncios responde 200
+    R->>B: publicarCambio({ recurso: 'anuncios', roles })
+    B-->>IO: oyente: reenviarCambio()
+    IO-->>C: 'cambio' a la sala rol:ESTUDIANTE
+    C->>P: evento 'cambio-remoto'
+    P->>P: GET /api/announcements y redibuja la lista
+```
+
+**El evento no lleva datos**, sólo "cambió X": cada cliente vuelve a pedir lo
+que le toca por los endpoints de siempre, con su propia autorización. Así el
+tiempo real no puede mostrarle a nadie algo que la API no le mostraría.
+
+### 5.2 Mensajería
 
 Cuando alguien envía un mensaje, el destinatario lo ve sin recargar la página.
 
 | Pieza | Dónde |
 |---|---|
 | Sujeto que publica | `web/backend/src/modules/comunicacion/mensajes.routes.ts:167` — `emitToUser(receiverId, 'new-message', …)` |
-| Canal | `web/backend/src/sockets/io.ts:33` (cada conexión se une a la sala `user:<id>`) y `:39-42` (`emitToUser` publica en esa sala) |
-| Suscriptor | `web/frontend/campus.js:654-657`, compartido por los cuatro paneles: refresca la campanita y avisa al panel |
-| Reacción de cada panel | `window.onIncomingMessage` — `panel_admin.html:447`, `panel_docente.html:405`, `panel_estudiante.html:208`, `panel_padre.html:197` |
+| Canal | `web/backend/src/sockets/io.ts:35` (cada conexión se une a la sala `user:<id>`) y `:70-73` (`emitToUser` publica en esa sala) |
+| Suscriptor | `web/frontend/campus.js:735-738`, compartido por los cuatro paneles: refresca la campanita y avisa al panel |
+| Reacción de cada panel | `window.onIncomingMessage` — `panel_admin.html:450`, `panel_docente.html:380`, `panel_estudiante.html:211`, `panel_padre.html:199` |
 
 ```mermaid
 sequenceDiagram
@@ -235,7 +273,7 @@ sequenceDiagram
 La ruta de mensajes no sabe qué panel tiene abierto el destinatario, ni si tiene
 alguno: publica en su sala y sigue. Cada panel decide qué hacer con el evento.
 
-### 5.2 App móvil: la sesión que se cae
+### 5.3 App móvil: la sesión que se cae
 
 El cliente HTTP de la app detecta que la sesión venció y no se pudo renovar. Esa
 condición le importa a la interfaz —hay que volver a la pantalla de ingreso—,
@@ -243,24 +281,18 @@ pero el cliente HTTP no sabe nada de React.
 
 | Pieza | Dónde |
 |---|---|
-| Registro de oyentes | `mobile/src/api/client.ts:141-149` — `alCaerLaSesion(oyente)` agrega el oyente y devuelve la función para darlo de baja |
-| Notificación | `mobile/src/api/client.ts:214` — si el refresco falla, avisa a cada oyente |
+| Registro de oyentes | `mobile/src/api/client.ts:149-157` — `alCaerLaSesion(oyente)` agrega el oyente y devuelve la función para darlo de baja |
+| Notificación | `mobile/src/api/client.ts:222` — si el refresco falla, avisa a cada oyente |
 | Suscriptor | `mobile/src/auth/SesionContext.tsx:56` — se suscribe al montar y se da de baja al desmontar: `useEffect(() => alCaerLaSesion(() => setUsuario(null)), [])` |
 
 Así no queda una pantalla mostrando datos de una sesión que ya no existe.
 
-### 5.3 Observador del DOM
+### 5.4 Observador del DOM
 
-`web/frontend/campus.js:628` usa `MutationObserver`, la implementación del patrón
+`web/frontend/campus.js:681` usa `MutationObserver`, la implementación del patrón
 que trae el navegador, para que cualquier `<textarea>` que aparezca después de
 cargar la página —un formulario que dibuja una vista— crezca con el texto sin
 que cada vista tenga que acordarse de activarlo.
-
-> **Próxima extensión.** La revisión de la cátedra pidió que los anuncios y los
-> demás eventos se actualicen en tiempo real. Se resuelve extendiendo este mismo
-> Observer: un bus de eventos en el servidor que, después de cada escritura
-> exitosa, publica "cambió X" en salas por rol, y cada panel vuelve a pedir lo que
-> cambió. Este apartado se actualiza cuando esté integrado.
 
 ---
 
@@ -279,7 +311,7 @@ Prisma como capa única de acceso"; esto lo precisa.
 no importan la base de datos: la reciben como primer parámetro.
 
 ```ts
-// web/backend/src/modules/alumnos/alumnos.service.ts:178
+// web/backend/src/modules/alumnos/alumnos.service.ts:181
 export async function crearAlumno(prisma: PrismaClient, input: CrearAlumnoInput) { … }
 ```
 
@@ -295,7 +327,7 @@ base de datos (`web/backend/src/modules/shared/authz.test.ts:4-5` y `:22-40`).
    nada: Prisma ya es la abstracción sobre la base.
 2. **Las operaciones reales cruzan varios modelos en una transacción.** Dar de
    baja a un alumno actualiza sus inscripciones a deportes, transporte y comedor
-   y el propio alumno, todo o nada (`darDeBajaAlumno`, `alumnos.service.ts:293`).
+   y el propio alumno, todo o nada (`darDeBajaAlumno`, `alumnos.service.ts:296`).
    Con un repositorio por entidad haría falta además una *unidad de trabajo* para
    compartir la transacción entre ellos. Prisma la da con `$transaction`.
 3. **Las reglas críticas están en el motor, no en la capa de acceso.** El máximo
@@ -314,7 +346,7 @@ reciben `prisma`.
 | Patrón | Dónde | Qué resuelve |
 |---|---|---|
 | **Cadena de responsabilidad** (middleware) | `web/backend/src/app.ts:27-74`: compresión, `helmet`, `cors`, JSON, cookies, registro, `/api`, 404 y manejador de errores. En cada ruta: `requireAuth` (`middleware/auth.ts:35`) → `requireRole` (`:52`) → `rateLimit` (`modules/shared/rateLimit.ts:43`) → controlador | Cada eslabón decide si pasa la petición al siguiente (`next()`) o la corta con un error. La autenticación y el rol no se repiten dentro de cada ruta |
-| **Fachada** | Web: `web/frontend/js/api.js:134-264`. Móvil: `mobile/src/api/endpoints.ts:209-307` | Las vistas llaman `api.alumnos.listar(filtros)` y no ven `fetch`, el encabezado de autorización, la renovación del token (`api.js:40`) ni la forma de los errores (`api.js:63`) |
+| **Fachada** | Web: `web/frontend/js/api.js:147-277`. Móvil: `mobile/src/api/endpoints.ts:209-309` | Las vistas llaman `api.alumnos.listar(filtros)` y no ven `fetch`, el encabezado de autorización, la renovación del token (`api.js:40`) ni la forma de los errores (`api.js:72`) |
 | **Método fábrica** | `HttpError.badRequest`, `unauthorized`, `forbidden`, `notFound`, `conflict` — `web/backend/src/utils/httpError.ts:12-35`. `createApp()` — `app.ts:13` | Cada error nace con su código HTTP correcto: no hay un 404 escrito como 400 a mano. `createApp()` arma la misma aplicación para el servidor, las pruebas y el entorno de QA |
 | **Adaptador** | `ProveedorTwilio.enviar` — `modules/avisos/proveedores.ts:153-190` | Traduce la API de Twilio —formulario codificado, autenticación Basic, su propio cuerpo de error— a la interfaz `ResultadoEnvio` que espera el sistema |
 | **Método plantilla** (tarea idempotente) | `abrirEjecucion` y `cerrarEjecucion` — `modules/scheduler/jobs.ts:59-121`, más `@@unique([tarea, anio, mes])` en `EjecucionTarea` (`schema.prisma:289`) | Las dos tareas programadas (`:147` facturación, `:345` recordatorio) corren dentro del mismo esqueleto: si ya hay una corrida completada para el período, no repiten los correos |
@@ -329,5 +361,5 @@ reciben `prisma`.
 | MVC | ✅ Repartido entre clientes (vista) y API (controlador y modelo), en tres capas | Apartado 2 |
 | Strategy | ✅ Proveedor de mensajería intercambiable, y transporte de correo | `modules/avisos/proveedores.ts:40-229` |
 | Singleton | ✅ Cliente de base de datos, correo, Socket.IO y proveedor de mensajería | `db/prisma.ts:8-16` |
-| Observer | ✅ Mensajería en tiempo real, sesión caída en la app móvil y observador del DOM | `sockets/io.ts`, `mobile/src/api/client.ts:141-149` |
-| Repository | ⚠️ Cubierto por Prisma Client e inyección de dependencias, **sin clases repositorio propias**; los motivos están en el apartado 6 | `alumnos.service.ts:178` |
+| Observer | ✅ Cambios en tiempo real (bus de eventos en el servidor más Socket.IO), mensajería, sesión caída en la app móvil y observador del DOM | `modules/shared/eventos.ts`, `sockets/io.ts`, `mobile/src/api/client.ts:149-157` |
+| Repository | ⚠️ Cubierto por Prisma Client e inyección de dependencias, **sin clases repositorio propias**; los motivos están en el apartado 6 | `alumnos.service.ts:181` |

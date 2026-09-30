@@ -5,6 +5,11 @@
 (function () {
     function token() { return sessionStorage.getItem('token'); }
 
+    // Última escritura de esta pestaña. El aviso en tiempo real de un cambio
+    // propio no hace falta en la pestaña que lo hizo: ya se actualizó sola.
+    let ultimaEscritura = 0;
+    window.marcarEscritura = function () { ultimaEscritura = Date.now(); };
+
     window.authHeaders = function () {
         return {
             'Content-Type': 'application/json',
@@ -24,6 +29,7 @@
 
     async function authedFetch(url, init) {
         const opts = Object.assign({ credentials: 'include' }, init || {});
+        if (opts.method && opts.method !== 'GET') window.marcarEscritura();
         opts.headers = Object.assign({}, opts.headers || {});
         const tk = token();
         if (tk) opts.headers['Authorization'] = 'Bearer ' + tk;
@@ -703,22 +709,103 @@
        Socket.io para tiempo real (chat + bell)
        ============================================================ */
     let _socket = null;
+    let ultimoReintentoSocket = 0;
+
     window.connectSocket = function () {
-        const tk = token();
-        if (!tk) return;
-        if (_socket && _socket.connected) return _socket;
+        if (!token()) return;
+        if (_socket) return _socket;
         if (typeof io === 'undefined') {
             console.warn('socket.io client no cargado');
             return;
         }
-        _socket = io({ auth: { token: tk } });
+        // `auth` como función: cada reconexión lee el token vigente. Con el
+        // token fijo, al vencer (a los 15 minutos) toda reconexión fallaba y el
+        // tiempo real moría en silencio.
+        _socket = io({ auth: (cb) => cb({ token: token() }) });
         _socket.on('connect', () => console.debug('socket connected'));
         _socket.on('disconnect', () => console.debug('socket disconnected'));
+        // Si el servidor rechaza el token, no reintenta solo: se renueva la
+        // sesión y se reconecta, a lo sumo una vez cada 30 segundos.
+        _socket.on('connect_error', async (err) => {
+            if (!/token/i.test((err && err.message) || '')) return;
+            if (Date.now() - ultimoReintentoSocket < 30000) return;
+            ultimoReintentoSocket = Date.now();
+            if (await window.renovarSesion()) _socket.connect();
+        });
         _socket.on('new-message', (msg) => {
             window.refreshBell && window.refreshBell();
             if (typeof window.onIncomingMessage === 'function') window.onIncomingMessage(msg);
         });
+        // "Cambió X" (ver backend, shared/eventos.ts). Sin datos: cada panel
+        // vuelve a pedir lo que le toca.
+        _socket.on('cambio', (c) => {
+            if (c && c.propio && Date.now() - ultimaEscritura < 3000) return;
+            window.refreshBell && window.refreshBell();
+            document.dispatchEvent(new CustomEvent('cambio-remoto', { detail: c }));
+        });
         return _socket;
+    };
+
+    /**
+     * Cada panel declara qué recarga cuando otro cambia algo:
+     * `{ recurso: [{ seccion, contenedor, recargar }] }`.
+     *
+     * Los avisos se agrupan durante 300 ms. Se recarga sólo lo que está a la
+     * vista —una sección oculta se carga al entrar—, y nunca debajo de un
+     * diálogo abierto ni sobre un campo con algo escrito: esa recarga se
+     * reintenta más tarde, para no borrarle a nadie lo que estaba cargando.
+     */
+    window.alCambiarRemoto = function (mapa) {
+        let pendientes = new Set();
+        let reloj = null;
+
+        function tieneEdicion(nodo) {
+            if (!nodo) return false;
+            const activo = document.activeElement;
+            if (activo && nodo.contains(activo) && /^(INPUT|TEXTAREA|SELECT)$/.test(activo.tagName)) return true;
+            return Array.prototype.some.call(nodo.querySelectorAll('input, textarea'), (el) => {
+                if (el.type === 'checkbox' || el.type === 'radio') return el.checked !== el.defaultChecked;
+                if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return false;
+                return el.value !== el.defaultValue;
+            });
+        }
+
+        function procesar() {
+            reloj = null;
+            if (document.querySelector('dialog[open]')) {
+                reloj = setTimeout(procesar, 1000);
+                return;
+            }
+            const recursos = pendientes;
+            pendientes = new Set();
+            const hechas = new Set();
+            for (const r of recursos) {
+                for (const tarea of (mapa[r] || [])) {
+                    if (hechas.has(tarea)) continue;
+                    const seccion = tarea.seccion ? document.getElementById(tarea.seccion) : null;
+                    if (tarea.seccion && !(seccion && seccion.classList.contains('active'))) continue;
+                    const contenedor = tarea.contenedor ? document.getElementById(tarea.contenedor) : seccion;
+                    if (tieneEdicion(contenedor)) {
+                        pendientes.add(r);
+                        continue;
+                    }
+                    hechas.add(tarea);
+                    try {
+                        Promise.resolve(tarea.recargar()).catch((e) => console.error('[tiempo real]', e));
+                    } catch (e) {
+                        console.error('[tiempo real]', e);
+                    }
+                }
+            }
+            if (pendientes.size > 0) reloj = setTimeout(procesar, 2000);
+        }
+
+        document.addEventListener('cambio-remoto', (e) => {
+            if (!e.detail || !e.detail.recurso) return;
+            pendientes.add(e.detail.recurso);
+            if (reloj) clearTimeout(reloj);
+            reloj = setTimeout(procesar, 300);
+        });
     };
 
     /* ============================================================

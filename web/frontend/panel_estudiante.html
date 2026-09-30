@@ -215,6 +215,16 @@
             window.restaurarVista();
         });
 
+        // Tiempo real: qué se recarga cuando otro cambia algo (campus.js). Las
+        // actividades esperan si hay una entrega a medio escribir.
+        window.alCambiarRemoto({
+            anuncios: [{ seccion: 'anuncios', contenedor: 'listaAnunciosEst', recargar: cargarAnuncios }],
+            calificaciones: [{ seccion: 'boletin', recargar: renderizarBoletin }],
+            asistencia: [{ seccion: 'asistencias', contenedor: 'tablaAsistenciasEst', recargar: cargarMisAsistencias }],
+            actividades: [{ seccion: 'actividades', contenedor: 'listaActividadesEst', recargar: cargarActividades }],
+            planes: [{ seccion: 'planes', contenedor: 'listaPlanesEst', recargar: cargarPlanes }],
+        });
+
         function switchView(viewId, element) {
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));

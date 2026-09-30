@@ -454,6 +454,41 @@
             window.restaurarVista();
         });
 
+        // Tiempo real: qué se recarga cuando otro cambia algo (campus.js).
+        window.alCambiarRemoto({
+            anuncios: [
+                { seccion: 'anuncios', contenedor: 'listaAnuncios', recargar: cargarAnuncios },
+                { seccion: 'dashboard', recargar: cargarStats },
+            ],
+            usuarios: [
+                { seccion: 'usuarios', contenedor: 'tablaUsuarios', recargar: cargarUsuarios },
+                { seccion: 'docentes', contenedor: 'tablaDocentesPend', recargar: cargarDocentesPendientes },
+                { seccion: 'dashboard', recargar: cargarStats },
+                { recargar: refrescarBadgePendientes },
+            ],
+            docentes: [
+                { seccion: 'docentes', contenedor: 'tablaDocentesPend', recargar: cargarDocentesPendientes },
+                { seccion: 'usuarios', contenedor: 'tablaUsuarios', recargar: cargarUsuarios },
+                { recargar: refrescarBadgePendientes },
+            ],
+            moderacion: [
+                { recargar: refrescarBadgePendientes },
+                { seccion: 'inscripciones', contenedor: 'tablaInsc', recargar: cargarInscripciones },
+                { seccion: 'opiniones', contenedor: 'tablaOp', recargar: cargarOpiniones },
+                { seccion: 'empleo', contenedor: 'tablaEmp', recargar: cargarPostulaciones },
+            ],
+            cuotas: [
+                { seccion: 'cuotas', contenedor: 'tablaCuotas', recargar: () => cargarHistorialCuotas() },
+                { seccion: 'dashboard', recargar: cargarStats },
+            ],
+            comprobantes: [
+                { recargar: () => window.refrescarBadgeComprobantes && window.refrescarBadgeComprobantes() },
+                { seccion: 'comprobantes', contenedor: 'vista-comprobantes', recargar: () => window.abrirComprobantes() },
+            ],
+            calificaciones: [{ seccion: 'dashboard', recargar: cargarStats }],
+            vinculos: [{ seccion: 'vinculos', contenedor: 'tablaVinculos', recargar: cargarLinks }],
+        });
+
         function switchView(viewId, element) {
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
@@ -1295,18 +1330,21 @@
 
   // Contador en el menú: si hay comprobantes esperando, la cuota le figura a
   // la familia como "en revisión" y el recordatorio del día 20 la sigue
-  // contando como deuda. Conviene que se vea sin entrar a la pantalla.
-  api.facturacion
-    .pendientes()
-    .then((r) => {
-      const badge = document.getElementById('badgeComprobantes');
-      if (!badge || !r.cantidad) return;
-      badge.textContent = String(r.cantidad);
-      badge.style.display = '';
-    })
-    .catch(() => {
-      /* el contador es informativo: si falla, la pantalla sigue andando */
-    });
+  // contando como deuda. Conviene que se vea sin entrar a la pantalla. Se
+  // vuelve a contar cuando llega un comprobante nuevo (tiempo real).
+  window.refrescarBadgeComprobantes = () =>
+    api.facturacion
+      .pendientes()
+      .then((r) => {
+        const badge = document.getElementById('badgeComprobantes');
+        if (!badge) return;
+        badge.textContent = String(r.cantidad || 0);
+        badge.style.display = r.cantidad ? '' : 'none';
+      })
+      .catch(() => {
+        /* el contador es informativo: si falla, la pantalla sigue andando */
+      });
+  window.refrescarBadgeComprobantes();
 </script>
 
 <script type="module">

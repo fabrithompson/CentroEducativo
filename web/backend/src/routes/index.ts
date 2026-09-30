@@ -53,7 +53,23 @@ import { foroRouter } from '../modules/comunicacion/foro.routes';
 import { mensajesRouter } from '../modules/comunicacion/mensajes.routes';
 import { notificacionesRouter } from '../modules/comunicacion/notificaciones.routes';
 
+// --- Tiempo real ---
+import { cambioDeRuta, publicarCambio } from '../modules/shared/eventos';
+
 const router = Router();
+
+// Tiempo real (patrón Observer, ver shared/eventos.ts): cada escritura que
+// termina bien publica "cambió X" para quien corresponda. Va antes de los
+// routers para verlas todas, y publica recién cuando la respuesta salió.
+router.use((req, res, next) => {
+  const cambio = cambioDeRuta(req.method, req.path);
+  if (cambio) {
+    res.on('finish', () => {
+      if (res.statusCode < 400) publicarCambio({ ...cambio, autorId: req.authUser?.id });
+    });
+  }
+  next();
+});
 
 router.get('/', (_req, res) => {
   res.json({

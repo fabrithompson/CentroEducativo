@@ -21,6 +21,7 @@ import { HttpError } from '../../utils/httpError';
 import { logger } from '../../utils/logger';
 import { registrarEnvio } from '../facturacion/mailer.facturacion';
 import { leerContenidoQR, normalizarCodigoManual, normalizarLegajo, ventanaDeCodigo, verificarCodigo } from './totp';
+import { publicarCambio } from '../shared/eventos';
 
 export interface EntradaEscaneo {
   /** Contenido crudo del QR. */
@@ -438,6 +439,14 @@ async function notificarTutores(
         data: { notificado: true },
       });
     }
+
+    // La campanita de los tutores se actualiza en el momento. Sólo a ellos:
+    // el escaneo no se publica por ruta, que avisaría a todas las familias.
+    publicarCambio({
+      recurso: 'accesos',
+      accion: 'crear',
+      usuarios: alumno.tutores.map(({ tutor }) => tutor.id),
+    });
   } catch (err) {
     // Que falle el aviso no invalida el acceso: el chico ya subió al micro.
     logger.error('[accesos] no se pudo notificar a los tutores', err);
