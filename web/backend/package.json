@@ -26,6 +26,7 @@
     "db:test:up": "tsx scripts/db-test.ts up",
     "db:test:down": "tsx scripts/db-test.ts down",
     "test:integracion": "tsx scripts/test-integracion.ts",
+    "test:e2e": "tsx scripts/test-e2e.ts",
     "test:humo": "tsx scripts/humo-academico.ts && tsx scripts/humo-auth.ts && tsx scripts/humo-retencion.ts && tsx scripts/humo-web.ts",
     "test:humo:academico": "tsx scripts/humo-academico.ts",
     "test:humo:auth": "tsx scripts/humo-auth.ts",
@@ -63,8 +64,10 @@
     "@types/node": "^22.10.5",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^6.4.17",
+    "@types/selenium-webdriver": "^4.35.7",
     "embedded-postgres": "15.18.0-beta.17",
     "prisma": "^6.1.0",
+    "selenium-webdriver": "^4.51.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   },
