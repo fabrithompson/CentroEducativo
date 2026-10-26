@@ -9,7 +9,25 @@ const dots = document.querySelectorAll('.dot');
 const totalSlides = slides ? slides.length : 0;
 
 if (totalSlides > 0) {
+    // Las diapositivas 2 a 5 traen su foto en `data-fondo` y no en el estilo:
+    // se piden recién cuando la página terminó de cargar, para no competir
+    // con la primera, que es la única visible. La primera rotación es a los
+    // 5 s, así que llegan antes de mostrarse. Si alguien toca un punto del
+    // slider antes de eso, `showSlide` las pide en ese momento.
+    function cargarFondosDiferidos() {
+        slides.forEach(s => {
+            if (s.dataset.fondo) {
+                s.style.backgroundImage = `url('${s.dataset.fondo}')`;
+                delete s.dataset.fondo;
+            }
+        });
+    }
+
+    if (document.readyState === 'complete') cargarFondosDiferidos();
+    else window.addEventListener('load', cargarFondosDiferidos);
+
     function showSlide(n) {
+        cargarFondosDiferidos();
         slides.forEach(s => s.classList.remove('active'));
         dots.forEach(d => d.classList.remove('active'));
 

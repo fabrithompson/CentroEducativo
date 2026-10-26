@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Centro Educativo - Inicio</title>
+    <meta name="description" content="Centro Educativo «Educar para Transformar», Resistencia, Chaco. Nivel Inicial, Primario y Secundario: inscripciones, servicios, galería y campus virtual para familias, docentes y estudiantes.">
 
     <!-- La galería trae 8 fotos de images.unsplash.com y los iconos vienen de
          cdnjs. Sin esto, el navegador recién resuelve el DNS y negocia el TLS
@@ -12,9 +13,20 @@
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 
+    <!-- La foto de la primera diapositiva es el elemento más grande de la
+         pantalla inicial (el LCP que mide Lighthouse). Como es un fondo CSS,
+         el navegador la descubre tarde; esto la pide de entrada y con
+         prioridad alta. `auto=format` hace que Unsplash la sirva en AVIF o
+         WebP según lo que acepte el navegador: pesa la mitad que el JPEG. -->
+    <link rel="preload" as="image" fetchpriority="high"
+          href="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1600&q=70&auto=format">
+
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="css/componentes.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Los iconos no hacen falta para pintar la primera pantalla: se cargan
+         sin bloquear el render y se aplican cuando llegan. -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
     <script>
         // Aplicar tema guardado antes de pintar para evitar parpadeo
         (function () {
@@ -80,11 +92,15 @@
     <main id="contenido-principal">
     <section id="inicio" class="hero">
         <div class="hero-slider">
-            <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1920&q=80')"></div>
-            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1920&q=80')"></div>
-            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1562774053-701939374585?w=1920&q=80')"></div>
-            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1577896851231-70ef18881754?w=1920&q=80')"></div>
-            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1920&q=80')"></div>
+            <!-- Sólo la primera diapositiva trae su foto en el HTML. Las otras
+                 cuatro la cargan desde script.js cuando la página termina de
+                 cargar: antes se descargaban las cinco de entrada (1,9 MB) y
+                 competían con la única que se ve. -->
+            <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1600&q=70&auto=format')"></div>
+            <div class="slide" data-fondo="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1600&q=70&auto=format"></div>
+            <div class="slide" data-fondo="https://images.unsplash.com/photo-1562774053-701939374585?w=1600&q=70&auto=format"></div>
+            <div class="slide" data-fondo="https://images.unsplash.com/photo-1577896851231-70ef18881754?w=1600&q=70&auto=format"></div>
+            <div class="slide" data-fondo="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1600&q=70&auto=format"></div>
             <div class="hero-content">
                 <h2>Educando para el futuro</h2>
                 <p>Formando personas integrales con valores y conocimientos</p>
@@ -218,7 +234,7 @@
             <ul class="galeria" role="list">
                 <li class="galeria__item">
                     <figure>
-                        <img src="https://images.unsplash.com/photo-1600965962361-9035dbfd1c50?w=800&q=80"
+                        <img src="https://images.unsplash.com/photo-1600965962361-9035dbfd1c50?w=800&q=75&auto=format"
                              alt="Natatorio cubierto con tres andariveles y gradas laterales."
                              loading="lazy" width="800" height="533">
                         <figcaption>
@@ -231,7 +247,7 @@
 
                 <li class="galeria__item">
                     <figure>
-                        <img src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&q=80"
+                        <img src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&q=75&auto=format"
                              alt="Pista de atletismo de superficie sintética roja con marcación de carriles."
                              loading="lazy" width="800" height="533">
                         <figcaption>
@@ -244,7 +260,7 @@
 
                 <li class="galeria__item">
                     <figure>
-                        <img src="https://images.unsplash.com/photo-1577471488278-16eec37ffcc2?w=800&q=80"
+                        <img src="https://images.unsplash.com/photo-1577471488278-16eec37ffcc2?w=800&q=75&auto=format"
                              alt="Cancha de fútbol de césped con arcos reglamentarios."
                              loading="lazy" width="800" height="533">
                         <figcaption>
@@ -257,7 +273,7 @@
 
                 <li class="galeria__item">
                     <figure>
-                        <img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&q=80"
+                        <img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&q=75&auto=format"
                              alt="Polideportivo techado con piso de parquet y aros de básquet."
                              loading="lazy" width="800" height="533">
                         <figcaption>
@@ -269,7 +285,7 @@
 
                 <li class="galeria__item">
                     <figure>
-                        <img src="https://images.unsplash.com/photo-1567521464027-f127ff144326?w=800&q=80"
+                        <img src="https://images.unsplash.com/photo-1567521464027-f127ff144326?w=800&q=75&auto=format"
                              alt="Comedor escolar con mesas largas de madera y ventanales amplios."
                              loading="lazy" width="800" height="533">
                         <figcaption>
@@ -282,7 +298,7 @@
 
                 <li class="galeria__item">
                     <figure>
-                        <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=800&q=80"
+                        <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=800&q=75&auto=format"
                              alt="Laboratorio de ciencias con mesadas, microscopios y material de vidrio."
                              loading="lazy" width="800" height="533">
                         <figcaption>
@@ -295,7 +311,7 @@
 
                 <li class="galeria__item">
                     <figure>
-                        <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800&q=80"
+                        <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800&q=75&auto=format"
                              alt="Biblioteca con estanterías de libros y mesas de lectura."
                              loading="lazy" width="800" height="533">
                         <figcaption>
@@ -308,7 +324,7 @@
 
                 <li class="galeria__item">
                     <figure>
-                        <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80"
+                        <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=75&auto=format"
                              alt="Aula luminosa con bancos individuales y pizarrón."
                              loading="lazy" width="800" height="533">
                         <figcaption>
