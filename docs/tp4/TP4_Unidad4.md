@@ -166,7 +166,29 @@ De los no aplicados (Issues, Wikis y Tablero Kanban), elegimos **Issues** y **Ta
 
 ### 2. Tablero Kanban
 
-{{TABLERO}}
+Tablero **Centro Educativo — Kanban** en GitHub Projects, público y vinculado al repositorio: <https://github.com/users/fabrithompson/projects/1>. Tiene dos vistas: **Kanban** (tablero por columnas) y **Lista** (tabla, para filtrar y ordenar).
+
+| Columna | Qué significa | Regla |
+| --- | --- | --- |
+| Backlog | Detectado, todavía no priorizado | Oportunidades que salen de las métricas o de un defecto |
+| Por hacer | Priorizado para esta iteración | Se elige en la reunión diaria |
+| En curso | Alguien lo está haciendo | **Límite de WIP: 2 tarjetas por persona.** Para tomar una nueva, hay que terminar o soltar otra |
+| En revisión | PR abierto, esperando el CI y la revisión | El PR lleva `Closes #N` |
+| Hecho | Mergeado y desplegado | La tarjeta llega cuando el PR se mergea |
+
+**Flujo de una tarjeta:**
+
+1. Se crea el issue con su plantilla y entra al tablero.
+2. Se prioriza: pasa de *Backlog* a *Por hacer*.
+3. Quien lo toma se lo asigna, lo pasa a *En curso* y abre una rama.
+4. Abre el PR con `Closes #N`: la tarjeta va a *En revisión*.
+5. El CI pasa, se mergea, Railway despliega y el issue se cierra solo: la tarjeta va a *Hecho*.
+
+**Estado al 26/10/2026**: 18 tarjetas, entre los 14 issues y los 4 PR del TP. 12 en *Hecho*, 3 en *En revisión* (el PR de documentación y los dos issues que cierra), 1 en *Por hacer* (activar SonarCloud) y 2 en *Backlog* (las oportunidades detectadas en las métricas: imagen de despliegue y prueba en un Android físico).
+
+**Automatización.** GitHub Projects trae automatizaciones propias: *Item closed* y *Pull request merged* → *Hecho*; *Pull request linked to issue* → *En revisión*; *Item added to project* → *Por hacer*. Se activan desde la interfaz del proyecto (*⋯ → Workflows*): la API de GitHub permite crear el tablero, sus columnas y sus vistas, pero no encender esas reglas. Hasta activarlas, las tarjetas de este TP se movieron con la CLI (`gh project item-edit`). En el repositorio, en cambio, el cierre ya es automático: cada PR con `Closes #N` cerró su issue al mergearse (7 de los 9 issues cerrados).
+
+![Tablero Kanban del proyecto en GitHub Projects, 26/10/2026](capturas/06_tablero_kanban.png)
 
 <!-- salto -->
 
@@ -263,7 +285,8 @@ Antes: línea base hasta el 25/10/2026. Después: mediciones del 26/10/2026, tom
 | Flujo de trabajo | Commits que llegan a `main` sin PR | 52 de 98 (53 %) | 0 de 8 (0 %) | ✅ −53 pp |
 | Flujo de trabajo | Push directo a `main` | Permitido | Bloqueado por la protección de rama | ✅ |
 | Flujo de trabajo | PR que cierran un issue | 0 de 25 | 3 de 3 | ✅ |
-| Flujo de trabajo | Issues registrados / cerrados | 0 / 0 | 14 / 8 (7 los cerró solo el PR al mergearse) | ✅ |
+| Flujo de trabajo | Issues registrados / cerrados | 0 / 0 | 14 / 9 (7 los cerró solo el PR al mergearse) | ✅ |
+| Flujo de trabajo | Tablero con el trabajo en curso | No existía | 18 tarjetas en 5 columnas, con límite de WIP | ✅ |
 | Flujo de trabajo | Tiempo de PR abierto → merge (mediana) | 27 s | 3 min 38 s | ↗ a propósito: ahora se espera el CI antes de mergear; antes se mergeaba sin esperarlo |
 | Flujo de trabajo | PR con revisión de otra persona | 0 de 25 | 0 de 3 | — sin cambio (ver lectura) |
 | Pipeline | Duración del CI en el push a `main` (lo que espera Railway) | 67 s (mediana) | 48 s (mediana de 45, 48 y 51 s) | ✅ −28 % |

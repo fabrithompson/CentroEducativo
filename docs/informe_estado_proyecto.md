@@ -157,7 +157,7 @@ El detalle de los 67 endpoints documentados está en `docs/api_rest.md`.
 | **Pull Requests** | **Sí, con salvedades** | 25 PR mergeados hasta el 25/10, más 3 el 26/10 (28 en total). Ramas por funcionalidad o por persona (`feat/…`, `fix/…`, `fabri`, `facu`, `developer`, `prueba-claude`). **Revisión de otra persona: 0 de 28.** Hasta el 25/10, el 53 % de los commits llegó a `main` sin PR. Desde el 26/10 `main` está protegida: sólo por PR y con los 6 chequeos en verde. |
 | **Issues** | **No → Sí (26/10)** | Hasta el 25/10: 0. Desde el 26/10: 14 issues (#26 a #39), 8 cerrados; etiquetas de tipo, área, prioridad y TP; plantillas en `.github/ISSUE_TEMPLATE/` (historia de usuario, defecto, tarea). |
 | **Wiki** | **No** | Está habilitada en GitHub pero vacía (el repositorio `.wiki.git` no existe). La documentación vive en `docs/`. |
-| **Tablero Kanban** | **No** | No existe en GitHub Projects. El plan de trabajo dice «Jira», pero el equipo confirmó que **nunca se usó**. Pendiente de crear (ver sección 6). |
+| **Tablero Kanban** | **No → Sí (26/10)** | Hasta el 25/10 no existía: el plan de trabajo decía «Jira», pero el equipo confirmó que **nunca se usó**. Desde el 26/10: [GitHub Projects](https://github.com/users/fabrithompson/projects/1), público y vinculado al repositorio, con las columnas Backlog, Por hacer, En curso, En revisión y Hecho, y 18 tarjetas (14 issues y 4 PR). |
 | **ESLint / Prettier** | ESLint sí (26/10); Prettier no | `eslint.config.mjs`; `.vscode/` con corrección al guardar; `.editorconfig`. |
 | **Husky / pre-commit** | **Sí (26/10)** | `.husky/pre-commit` (lint-staged + `git diff --check`), `.husky/commit-msg` (Conventional Commits). |
 | **Tests** | **Sí** | `node --test` + tsx: 295 del backend, 17 de reglas en el motor, 70 de la app móvil, 3 E2E con Selenium y 4 circuitos de humo por HTTP. |
@@ -286,14 +286,14 @@ La HU3 completa, con criterios de aceptación, está redactada en `docs/tp5/TP5_
 
 ## 6. Preguntas para el equipo
 
-1. **Tablero Kanban.** No existe todavía: crear el tablero en GitHub Projects necesita el permiso `project` en la CLI de GitHub. Hay que correr `gh auth refresh -h github.com -s project,read:project`. Sin eso, el tablero —una de las dos mejoras del TP4— no se puede armar desde acá.
+1. **Automatizaciones del tablero.** El tablero ya existe, pero sus reglas automáticas (*Item closed* y *Pull request merged* → *Hecho*; *Pull request linked to issue* → *En revisión*; *Item added to project* → *Por hacer*) se encienden desde la web (*⋯ → Workflows*): la API de GitHub no permite activarlas. Lo tiene que hacer `fabrithompson` con su sesión. Hasta entonces, las tarjetas se mueven a mano o con `gh project item-edit`.
 2. **Capturas que tiene que sacar un integrante con sesión iniciada:**
    - *Insights → Pulse* de GitHub, que sin sesión se ve vacío.
    - La página de despliegues de Railway (<https://railway.com> → proyecto CentroEducativo → servicio backend → *Deployments*).
    - Opcional: *Settings → Branches* en GitHub, mostrando la regla de protección de `main`.
 3. **SonarCloud.** Falta activarlo con la cuenta de GitHub de `fabrithompson` y cargar el secreto `SONAR_TOKEN`. Los pasos están en `docs/tp5/calidad.md`.
 4. **Autoría del caso de prueba (TP5).** Se completó «diseñada por» y «ejecutada por» Fabricio Ceniquel Thompson, el 26/10/2026. La ejecución fue **automatizada** (Selenium en local y en el CI). Si alguno de los dos la corre además a mano, conviene agregarlo con su nombre y fecha.
-5. **TP5 Parte 1.** Uno de los archivos recibidos (`TP Unidad 5- 2026- Parte1.docx`) dice «Rios Lucas, Godoy Marco»: parece de otro equipo. El del equipo es `TPUnidad5 Calidad Software.docx`.
+5. **TP5 Parte 1.** Resuelto: la del equipo es `TP Unidad 5- 2026- Parte1.docx`, con integrantes Fabricio Ceniquel y Nahuel Alem (idéntica a `TPUnidad5 Calidad Software.docx`). Una copia anterior de ese archivo tenía otros nombres y fue reemplazada.
 6. **TP4 Parte 1.** La consigna la pide individual y con fecha 6/10. Las respuestas están en `docs/tp4/TP4_Unidad4.md`: confirmar si todavía se entrega y que cada integrante la adapte.
 7. **Aprobación obligatoria en los PR.** Se dejó en 0 para la entrega. ¿Se pasa a 1 (Nahuel aprueba lo de Fabricio y viceversa) después del 27/10?
 8. **Colaboradores del repositorio.** `LauOporto` y `fbarrabino` tienen acceso, y `Franco Barrabino` aparece con 3 commits. ¿Son docentes de la cátedra? Para el informe no hace falta, pero conviene saberlo antes de exigir revisiones de `CODEOWNERS`.
