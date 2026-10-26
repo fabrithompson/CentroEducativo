@@ -95,7 +95,10 @@ const mediana = (xs) => percentil(xs, 50);
 function dur(seg) {
   if (!Number.isFinite(seg)) return '—';
   if (seg < 90) return `${seg.toFixed(0)} s`;
-  if (seg < 5400) return `${Math.floor(seg / 60)} min ${String(Math.round(seg % 60)).padStart(2, '0')} s`;
+  if (seg < 5400) {
+    const s = Math.round(seg);
+    return `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')} s`;
+  }
   if (seg < 172800) return `${(seg / 3600).toFixed(1)} h`;
   return `${(seg / 86400).toFixed(1)} d`;
 }
@@ -201,9 +204,10 @@ function despliegues() {
     }
   };
 
-  // Desglose de los que efectivamente se construyeron. La espera del CI es el
-  // tiempo entre que Railway recibe el push y programa el build: con
-  // `checkSuites: true` no arranca hasta que el CI termina en verde.
+  // Desglose de los que efectivamente se construyeron. La espera es el tiempo
+  // entre que Railway recibe el push y programa el build: con `checkSuites:
+  // true` no arranca hasta que el CI termina en verde, y si hay otro
+  // despliegue en curso, además espera en cola a que termine.
   const construidos = todos.filter((d) => ['SUCCESS', 'REMOVED', 'FAILED', 'CRASHED'].includes(d.status));
   const desglose = construidos.slice(0, maxDespliegues).map((d) => {
     const build = leerLogs('--build', d.id);
@@ -327,7 +331,7 @@ function informe() {
   p(fila('Builds repetidos sobre el mismo commit', repetidos));
   p();
   if (desglose.length) {
-    p(fila('Commit', 'Fecha', 'Espera del CI', 'Build', 'Arranque', 'Push → responde', 'Imagen'));
+    p(fila('Commit', 'Fecha', 'Espera (CI y cola)', 'Build', 'Arranque', 'Push → responde', 'Imagen'));
     p(fila('---', '---', '---', '---', '---', '---', '---'));
     for (const d of desglose)
       p(fila(d.commit, d.fecha.slice(0, 16).replace('T', ' '), dur(d.esperaCI), dur(d.build), dur(d.arranque), dur(d.total), Number.isFinite(d.imagenMB) ? `${d.imagenMB.toFixed(0)} MB` : '—'));
@@ -339,4 +343,4 @@ function informe() {
   return salida.join('\n');
 }
 
-console.log(informe());
+console.log(informe().trimEnd());

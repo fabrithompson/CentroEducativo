@@ -33,8 +33,24 @@ for (let i = 1; i <= corridas; i++) {
     '--chrome-flags=--headless=new',
     ...(args.escritorio ? ['--preset=desktop'] : []),
   ];
-  execFileSync('pnpm', banderas, { stdio: 'ignore', shell: process.platform === 'win32' });
-  const r = JSON.parse(readFileSync(salida, 'utf8'));
+  // En Windows, Lighthouse a veces sale con código 1 al borrar el perfil
+  // temporal del navegador aunque el informe ya esté escrito. Si el JSON
+  // existe se usa; si no, se reintenta hasta dos veces.
+  let r = null;
+  for (let intento = 1; intento <= 3 && !r; intento++) {
+    try {
+      execFileSync('pnpm', banderas, { stdio: 'ignore', shell: process.platform === 'win32' });
+    } catch {
+      // se decide abajo, según haya informe o no
+    }
+    try {
+      r = JSON.parse(readFileSync(salida, 'utf8'));
+      if (r.runtimeError) r = null;
+    } catch {
+      r = null;
+    }
+  }
+  if (!r) throw new Error(`La corrida ${i} de Lighthouse falló tres veces.`);
   const a = r.audits;
   resultados.push({
     rendimiento: r.categories.performance.score * 100,
