@@ -106,14 +106,14 @@ camino alternativo; una restricción del motor no.
 
 | Capa | Tecnología |
 |---|---|
-| Backend | Node.js 24 · Express 4 · TypeScript 5.9 en modo estricto |
+| Backend | Node.js 22.13 (fijado en `.nvmrc`, el mismo en el CI y en Railway) · Express 4 · TypeScript 5 en modo estricto |
 | Acceso a datos | Prisma 6 (ORM) |
-| Base de datos | PostgreSQL 15 |
+| Base de datos | PostgreSQL 18 en producción y en el CI · 15 embebido en desarrollo |
 | Frontend web | HTML5 · CSS3 · JavaScript con módulos ES |
 | Aplicación móvil | Expo SDK 57 · React Native 0.86.3 · React 19.2.3 |
 | Pruebas | Ejecutor nativo de Node (`node --test`) contra PostgreSQL real mediante `embedded-postgres` |
 | Repositorio | Monorepo pnpm · Git · GitHub |
-| Gestión | Jira (tablero Kanban) |
+| Gestión | GitHub Issues + tablero Kanban en GitHub Projects (desde el 26/10/2026; el plan original decía Jira, que nunca se llegó a usar) |
 
 ### 4.1 Justificación del stack
 
@@ -265,7 +265,7 @@ Una historia se considera terminada cuando:
 2. El usuario sólo accede a las funciones habilitadas para su rol.
 3. Las pruebas definidas se ejecutaron y los defectos detectados se corrigieron.
 4. No hay errores de tipado ni de lint.
-5. El código está en GitHub, revisado por el otro integrante, y la tarea cerrada en Jira.
+5. El código está en GitHub, revisado por el otro integrante, y el issue cerrado por el PR que lo resuelve (`Closes #N`).
 6. Si intervino inteligencia artificial, la intervención está registrada en `docs/bitacora_ia.md`.
 
 ---
@@ -282,12 +282,12 @@ Equipo **Naft**, dos integrantes.
 Cada historia la revisa el otro integrante antes de darla por terminada.
 
 **Reunión diaria.** Al inicio de la jornada ambos informan qué se hizo, qué se
-hará y si hay algún bloqueo. Lo acordado se refleja en el tablero de Jira.
+hará y si hay algún bloqueo. Lo acordado se refleja en el tablero de GitHub Projects.
 
 ### 7.1 Convenciones de trabajo
 
-- **Ramas:** `main` (versión estable) · `develop` (integración) · ramas por funcionalidad con el formato `feat/<módulo>-<detalle>` o `fix/<módulo>-<detalle>`, que entran a `develop` por *pull request* revisado por el otro integrante.
-- **Commits:** Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`), referenciando el identificador de la tarea en Jira.
+- **Ramas:** `main` (versión estable, protegida: sólo se modifica por *pull request* con el CI en verde) · `developer` (integración) · ramas por funcionalidad con el formato `feat/<módulo>-<detalle>` o `fix/<módulo>-<detalle>`, que entran por *pull request* revisado por el otro integrante.
+- **Commits:** Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`), validados por el hook `commit-msg`; el PR referencia el issue (`Closes #N`).
 - **Lenguaje:** TypeScript estricto en backend y móvil; JavaScript con módulos ES en el frontend web.
 - **Documentación:** cada módulo relevante deja su documento técnico en `docs/`.
 
