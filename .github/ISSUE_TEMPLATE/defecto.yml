@@ -1,0 +1,37 @@
+name: Defecto
+description: Algo no se comporta como dice el requerimiento.
+title: "Defecto: "
+labels: ["tipo: defecto"]
+body:
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducirlo
+      placeholder: |
+        1. Ingresar como …
+        2. …
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Resultado esperado
+    validations:
+      required: true
+  - type: textarea
+    id: obtenido
+    attributes:
+      label: Resultado obtenido
+      description: Mensaje de error, captura o respuesta de la API.
+    validations:
+      required: true
+  - type: dropdown
+    id: entorno
+    attributes:
+      label: Dónde pasa
+      options:
+        - Producción (Railway)
+        - Local
+        - CI
+    validations:
+      required: true

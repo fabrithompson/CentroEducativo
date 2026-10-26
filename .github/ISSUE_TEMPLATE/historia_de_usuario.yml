@@ -1,0 +1,36 @@
+name: Historia de usuario
+description: Una funcionalidad vista desde quien la usa, con criterios que se puedan verificar.
+title: "HU: "
+labels: ["tipo: historia"]
+body:
+  - type: input
+    id: requerimiento
+    attributes:
+      label: Requerimiento
+      description: El RF o RNF del plan de trabajo que cubre (por ejemplo, RF-03).
+      placeholder: RF-03
+    validations:
+      required: true
+  - type: textarea
+    id: historia
+    attributes:
+      label: Historia
+      value: |
+        **Como** …
+        **quiero** …
+        **para** …
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Cada uno tiene que poder comprobarse con una prueba. Si no se puede probar, no es un criterio.
+      placeholder: |
+        - Dado … cuando … entonces …
+    validations:
+      required: true
+  - type: textarea
+    id: notas
+    attributes:
+      label: Notas para quien la implemente
