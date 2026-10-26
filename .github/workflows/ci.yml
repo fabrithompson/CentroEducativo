@@ -2,11 +2,20 @@ name: CI
 
 # Hasta ahora las pruebas corrían sólo si alguien se acordaba de correrlas.
 # Esto las vuelve obligatorias en cada PR contra las dos ramas de integración.
+#
+# Los push que sólo tocan documentación no disparan nada: no hay código que
+# compilar ni probar, y Railway ya los saltea por su cuenta. En la línea base
+# del 26/10/2026 eran 21 de 50 corridas (42 %). En los PR el filtro no se
+# aplica a propósito: si los chequeos son obligatorios para mergear y un PR de
+# documentación no los dispara, GitHub lo deja esperando para siempre.
 on:
   pull_request:
     branches: [main, developer]
   push:
     branches: [main, developer]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
 
 # Un push nuevo sobre la misma rama cancela la corrida anterior: no tiene
 # sentido esperar el resultado de un commit que ya quedó atrás.
@@ -14,38 +23,15 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Tres jobs independientes que corren en paralelo. Antes eran pasos de un solo
+# job, en fila: el typecheck esperaba a que arrancara PostgreSQL aunque no lo
+# usa, y la duración total era la suma de todo. Ahora es la del job más lento,
+# y Railway —que no construye hasta que el CI termina— arranca antes.
 jobs:
-  verificar:
-    name: Typecheck y pruebas de integración
+  typecheck:
+    name: Typecheck
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    # PostgreSQL de verdad, no un doble. Las reglas de negocio de este proyecto
-    # viven en disparadores PL/pgSQL, restricciones CHECK y un índice único
-    # parcial: sin motor real no se verifica ninguna de las tres.
-    #
-    # Es un service container y no `embedded-postgres` porque las variantes de
-    # Linux de ese paquete están deshabilitadas en pnpm-workspace.yaml, para no
-    # meter ~100 MB de binarias en la imagen que se despliega a Railway.
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: educar
-          POSTGRES_PASSWORD: educar
-          POSTGRES_DB: educar_transformar_test
-          # La base de producción es UTF8. Si acá fuera otra, un carácter fuera
-          # de Latin-1 en una migración pasaría el CI y rompería el despliegue,
-          # que es exactamente lo que ya pasó una vez con el símbolo ∈.
-          POSTGRES_INITDB_ARGS: '--encoding=UTF8 --lc-collate=C --lc-ctype=C'
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U educar -d educar_transformar_test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -71,14 +57,90 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+  integracion:
+    name: Pruebas de integración (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # PostgreSQL de verdad, no un doble. Las reglas de negocio de este proyecto
+    # viven en disparadores PL/pgSQL, restricciones CHECK y un índice único
+    # parcial: sin motor real no se verifica ninguna de las tres.
+    #
+    # Es un service container y no `embedded-postgres` porque las variantes de
+    # Linux de ese paquete están deshabilitadas en pnpm-workspace.yaml, para no
+    # meter ~100 MB de binarias en la imagen que se despliega a Railway.
+    services:
+      postgres:
+        # La misma versión mayor que producción. El workflow de respaldo la
+        # informa cada noche («Servidor PostgreSQL 18»); el CI venía probando
+        # contra 15, que no es el motor que ejecuta las migraciones de verdad.
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: educar
+          POSTGRES_PASSWORD: educar
+          POSTGRES_DB: educar_transformar_test
+          # La base de producción es UTF8. Si acá fuera otra, un carácter fuera
+          # de Latin-1 en una migración pasaría el CI y rompería el despliegue,
+          # que es exactamente lo que ya pasó una vez con el símbolo ∈.
+          POSTGRES_INITDB_ARGS: '--encoding=UTF8 --lc-collate=C --lc-ctype=C'
+        ports:
+          - 5432:5432
+        # GitHub no corre ningún paso hasta que el contenedor informa que está
+        # sano, y el primer chequeo ocurre recién después de un intervalo. Con
+        # 10 s, «Initialize containers» era el paso más lento del pipeline
+        # (21 s de promedio) aunque PostgreSQL arranca en dos o tres.
+        options: >-
+          --health-cmd "pg_isready -U educar -d educar_transformar_test"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.1
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
       - name: Pruebas de integración contra PostgreSQL
-        # Aplica las 9 migraciones, carga el seed, verifica las reglas en el
-        # motor y corre la suite completa del backend.
+        # Aplica las migraciones, genera el cliente de Prisma, carga el seed,
+        # verifica las reglas en el motor y corre la suite completa del backend.
         run: pnpm --filter backend test:integracion
         env:
           DATABASE_URL_TEST: postgresql://educar:educar@localhost:5432/educar_transformar_test?schema=public
 
+  movil:
+    name: Pruebas de la app móvil
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.1
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13
+          cache: pnpm
+
+      - name: Instalar dependencias
+        # Sólo las de la app: el dominio que se prueba acá —cálculo de importes,
+        # clasificación de cuotas, TOTP— no toca la base ni el backend.
+        run: pnpm install --frozen-lockfile --filter mobile
+
       - name: Pruebas de la aplicación móvil
-        # El dominio de la app —cálculo de importes, clasificación de cuotas,
-        # TOTP— no toca la base y corre aparte de la suite de integración.
         run: pnpm --filter mobile test
