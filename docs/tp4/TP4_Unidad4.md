@@ -328,7 +328,6 @@ Antes: línea base hasta el 25/10/2026. Después: mediciones del 26/10/2026, tom
 - Activar SonarCloud con el token.
 - Configurar `healthcheckPath` en Railway para que la etapa *Verify* sea completa.
 
-<!-- salto -->
 
 ## Anexo — Evidencia
 

@@ -43,7 +43,6 @@ Es una de las reglas de negocio críticas del sistema: protege datos de menores 
 
 **Resultado obtenido:** ✅ **Pasó.** Los seis pasos están automatizados con Selenium (sección 6), que los ejecuta en un navegador real tal como los haría una persona: 3 de 3 pruebas en verde con Microsoft Edge en la máquina de desarrollo y con Google Chrome en GitHub Actions, en los PR #41 y #42.
 
-<!-- salto -->
 
 # 3. Prueba estática: revisión por pares (*peer review*)
 
@@ -73,7 +72,6 @@ En la revisión por pares, un integrante evalúa el trabajo del otro antes de in
 6. **Comentarios clasificados** en el PR: *bloqueante*, *sugerencia* o *pregunta*. Sólo los bloqueantes impiden aprobar.
 7. **Medir la revisión**: defectos encontrados por PR y tiempo de revisión. La línea base del TP de la Unidad 4 mostró 0 de 25 PR con revisión: ese es el número a mejorar.
 
-<!-- salto -->
 
 # 4. Documentación del proyecto
 
@@ -158,7 +156,6 @@ Tres aplicaciones —portal web institucional, backoffice de gestión y aplicaci
 | Pruebas de humo por HTTP | `pnpm --filter backend test:humo` | 4 circuitos |
 | Lint | `pnpm lint` | 136 archivos |
 
-<!-- salto -->
 
 # 5. Controles de calidad configurados
 
@@ -221,7 +218,6 @@ husky - commit-msg script failed (code 1)
 - El job `SonarCloud` del CI corre el análisis en cada PR y en cada push a `main`. Mientras no exista el secreto `SONAR_TOKEN`, termina en verde con un aviso, para que el pipeline no quede en rojo por falta de configuración.
 - **Activación** (requiere iniciar sesión con la cuenta de GitHub del dueño del repositorio, por eso queda a cargo del equipo): sonarcloud.io → *Log in with GitHub* → *Analyze new project* → `CentroEducativo` → desactivar *Automatic Analysis* → copiar el token → GitHub → *Settings → Secrets → Actions* → `SONAR_TOKEN`. Desde ese momento el *quality gate* aparece como chequeo en cada PR.
 
-<!-- salto -->
 
 # 6. Prueba dinámica: Selenium WebDriver
 
@@ -271,7 +267,6 @@ E2E: TODO EN VERDE
 
 ![CI del PR #41: el job «Pruebas E2E (Selenium)» junto con los otros cinco, todos en verde](capturas/01_pr41_ci.png)
 
-<!-- salto -->
 
 # 7. Métricas
 
