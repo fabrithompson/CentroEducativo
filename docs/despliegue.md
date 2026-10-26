@@ -1,7 +1,8 @@
 # Despliegue y operación
 
 Cómo se despliega el sistema, qué quedó automatizado y qué sigue dependiendo del
-panel de Railway. El servicio corre en `backend-production-7a0d.up.railway.app`.
+panel de Railway. El servicio corre en `transformar-para-educar.up.railway.app` (el dominio
+anterior, `backend-production-7a0d.up.railway.app`, ya no responde).
 
 ---
 
@@ -328,9 +329,21 @@ los demás. Ver `web/backend/src/config/env.ts`.
 ## 4. Integración continua
 
 `.github/workflows/ci.yml` corre en cada push y cada PR contra `main` y
-`developer`: typecheck, las 11 migraciones sobre PostgreSQL 15 real, el seed, las
-17 verificaciones de reglas en el motor, las 271 pruebas del backend y las 70 de
-la aplicación móvil.
+`developer`, en seis jobs paralelos desde el 26/10/2026:
+
+| Job | Qué hace |
+|---|---|
+| Typecheck | `tsc` del backend, las semillas y la app móvil |
+| Pruebas de integración (PostgreSQL) | las 12 migraciones sobre PostgreSQL 18 real —la versión de producción—, el seed, las 17 verificaciones de reglas en el motor y las 295 pruebas del backend |
+| Pruebas de la app móvil | las 70 pruebas del dominio de la app |
+| Lint (ESLint) | las reglas de `eslint.config.mjs` |
+| Pruebas E2E (Selenium) | la pila completa con Chrome; **sólo en los PR**, para no demorar el despliegue después del merge |
+| SonarCloud | análisis estático; se activa con el secreto `SONAR_TOKEN` |
+
+Los push que sólo tocan `docs/` o archivos `.md` no disparan el CI (en los PR sí,
+para que los chequeos obligatorios siempre informen). `main` está protegida: sólo
+se modifica por PR y con los seis chequeos en verde. Las mediciones de antes y
+después del cambio están en `docs/tp4/`.
 
 Usa un *service container* de PostgreSQL y no `embedded-postgres`, porque las
 variantes de Linux de ese paquete están deshabilitadas a propósito en
