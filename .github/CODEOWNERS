@@ -1,0 +1,9 @@
+# Quién revisa qué. GitHub pide la revisión de estas personas automáticamente
+# al abrir un PR que toca esos archivos. Cada integrante revisa lo del otro
+# (plan de trabajo, §6.3: «revisado por el otro integrante»).
+*                       @fabrithompson @Nehuelsito
+
+# Lo que decide qué llega a producción y cómo: los dos, siempre.
+/.github/               @fabrithompson @Nehuelsito
+/.railway/              @fabrithompson @Nehuelsito
+/web/backend/prisma/    @fabrithompson @Nehuelsito

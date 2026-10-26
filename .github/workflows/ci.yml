@@ -144,3 +144,104 @@ jobs:
 
       - name: Pruebas de la aplicación móvil
         run: pnpm --filter mobile test
+
+  lint:
+    name: Lint (ESLint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.1
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        # Las mismas reglas que el editor y el hook de pre-commit. Un error
+        # corta el pipeline; las advertencias se informan sin cortarlo.
+        run: pnpm lint
+
+  e2e:
+    name: Pruebas E2E (Selenium)
+    # Sólo en los PR: es el control más lento y ya corrió antes de mergear.
+    # En el push a main no se repite, para que Railway —que espera al CI—
+    # no tarde más en desplegar lo que ya se verificó.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: educar
+          POSTGRES_PASSWORD: educar
+          POSTGRES_DB: educar_transformar_e2e
+          POSTGRES_INITDB_ARGS: '--encoding=UTF8 --lc-collate=C --lc-ctype=C'
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U educar -d educar_transformar_e2e"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.1
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Generar el cliente de Prisma
+        run: pnpm --filter backend exec prisma generate
+
+      - name: Selenium contra la pila completa (Chrome headless)
+        # El runner trae Google Chrome; Selenium Manager baja el chromedriver
+        # de la misma versión.
+        run: pnpm --filter backend test:e2e
+        env:
+          DATABASE_URL_TEST: postgresql://educar:educar@localhost:5432/educar_transformar_e2e?schema=public
+          E2E_NAVEGADOR: chrome
+
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Se activa al cargar el secreto SONAR_TOKEN en el repositorio (ver
+    # docs/tp5/calidad.md). Sin él, el job termina en verde con un aviso: un
+    # chequeo que falla por falta de configuración enseña a ignorar el rojo.
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Historial completo: Sonar atribuye cada problema a su commit y
+          # distingue el código nuevo del que ya estaba.
+          fetch-depth: 0
+
+      - name: Análisis estático en SonarCloud
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@v5
+
+      - name: SonarCloud sin configurar
+        if: env.SONAR_TOKEN == ''
+        run: echo "::notice title=SonarCloud::Falta el secreto SONAR_TOKEN; el análisis no corrió."
