@@ -2,16 +2,22 @@
   "name": "educar-para-transformar",
   "version": "0.1.0",
   "private": true,
-  "description": "Campus virtual del colegio Transformar para educar — monorepo backend (Node/Express/Prisma) + frontend (React/Vite/Tailwind).",
+  "description": "Campus virtual del colegio Transformar para educar — monorepo backend (Node/Express/Prisma) + frontend (HTML, CSS y JavaScript) + app móvil (Expo).",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
     "start": "pnpm --filter backend start",
-    "lint": "pnpm -r lint",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prepare": "husky",
     "backend:dev": "pnpm --filter backend dev",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "mobile:dev": "pnpm --filter mobile start"
+    "mobile:dev": "pnpm --filter mobile start",
+    "metricas:entrega": "node scripts/metricas/entrega.mjs"
+  },
+  "lint-staged": {
+    "*.{js,mjs,ts,tsx}": "eslint --no-warn-ignored"
   },
   "engines": {
     "node": ">=22.13",
@@ -19,6 +25,12 @@
   },
   "packageManager": "pnpm@11.1.1",
   "devDependencies": {
-    "railway": "^3.11.0"
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "railway": "^3.11.0",
+    "typescript-eslint": "^8.72.0"
   }
 }

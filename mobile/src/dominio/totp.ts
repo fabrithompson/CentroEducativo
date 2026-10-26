@@ -112,7 +112,7 @@ const TAMANO_BLOQUE = 64;
 export function hmacSha256(clave: Uint8Array, mensaje: Uint8Array): Uint8Array {
   // Una clave más larga que el bloque se reduce con un hash; una más corta se
   // completa con ceros.
-  let claveNormalizada = clave.length > TAMANO_BLOQUE ? sha256(clave) : clave;
+  const claveNormalizada = clave.length > TAMANO_BLOQUE ? sha256(clave) : clave;
 
   const claveRellena = new Uint8Array(TAMANO_BLOQUE);
   claveRellena.set(claveNormalizada);

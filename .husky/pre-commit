@@ -1,0 +1,8 @@
+# Antes de cada commit, en la máquina de quien commitea:
+# 1. ESLint sobre los archivos en stage (sintaxis y reglas básicas). Un error
+#    corta el commit; las advertencias no.
+# 2. `git diff --check` sobre lo que se está commiteando: espacios al final de
+#    línea, líneas en blanco al final del archivo y marcadores de conflicto
+#    (<<<<<<<) olvidados. Es el control de formato mínimo, sin reformatear nada.
+pnpm exec lint-staged
+git diff --cached --check
