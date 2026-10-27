@@ -11,7 +11,7 @@ export default defineRailway(() => {
     // vigilar `.railway/` en su lugar: sin eso, un cambio en la propia
     // configuración no dispara despliegue y Railway lo saltea en silencio, que
     // es como se perdieron varios deploys del frontend antes.
-    build: { buildCommand: "pnpm build", buildEnvironment: "V3", builder: "RAILPACK", watchPatterns: ["/web/**", "/package.json", "/pnpm-lock.yaml", "/pnpm-workspace.yaml", "/.railway/**", "/.nvmrc"] },
+    build: { buildCommand: "pnpm build", buildEnvironment: "V3", builder: "RAILPACK", watchPatterns: ["/web/**", "/package.json", "/pnpm-lock.yaml", "/pnpm-workspace.yaml", "/.railway/**", "/railpack.json", "/.nvmrc"] },
     start: "pnpm start",
     preDeploy: "pnpm --filter backend predespliegue",
     deploy: { restartPolicyType: "ON_FAILURE", restartPolicyMaxRetries: 3 },
