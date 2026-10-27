@@ -78,6 +78,13 @@ export const PLAZOS = {
    * así que sólo queda el dato personal sin finalidad que lo sostenga.
    */
   opinionesRechazadas: 180,
+
+  /**
+   * Consultas del formulario de contacto ya atendidas. Seis meses cubren la
+   * repregunta habitual ("les escribí en marzo…"); pasado eso sólo queda el
+   * email de alguien sin un trámite abierto. Se cuenta desde que se atendió.
+   */
+  consultasAtendidas: 180,
 } as const;
 
 export type Plazos = typeof PLAZOS;
@@ -218,6 +225,19 @@ export async function aplicarRetencion(
             status: 'RECHAZADO',
             resolvedAt: { not: null, lt: corte(plazos.opinionesRechazadas, ahora) },
           },
+        }),
+    },
+    {
+      concepto: 'Consultas del formulario de contacto ya atendidas',
+      modelo: 'ConsultaContacto',
+      plazoDias: plazos.consultasAtendidas,
+      contar: () =>
+        prisma.consultaContacto.count({
+          where: { atendida: true, atendidaAt: { not: null, lt: corte(plazos.consultasAtendidas, ahora) } },
+        }),
+      borrar: () =>
+        prisma.consultaContacto.deleteMany({
+          where: { atendida: true, atendidaAt: { not: null, lt: corte(plazos.consultasAtendidas, ahora) } },
         }),
     },
   ];

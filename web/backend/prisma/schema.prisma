@@ -915,6 +915,22 @@ model EmploymentApplication {
   @@index([createdAt])
 }
 
+/// Consultas del formulario "Envianos un mensaje" del sitio público. Antes el
+/// formulario respondía "Mensaje enviado" sin guardar ni mandar nada; ahora la
+/// consulta queda acá y administración la ve en su panel hasta atenderla.
+model ConsultaContacto {
+  id         Int       @id @default(autoincrement())
+  nombre     String
+  email      String
+  mensaje    String
+  atendida   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  atendidaAt DateTime?
+
+  @@index([atendida])
+  @@index([createdAt])
+}
+
 model StudyPlan {
   id         Int      @id @default(autoincrement())
   docenteId  Int

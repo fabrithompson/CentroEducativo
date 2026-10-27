@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { Router } from 'express';
 import { z } from 'zod';
 import { ModerationStatus, Role } from '@prisma/client';
@@ -6,9 +7,22 @@ import { prisma } from '../../db/prisma';
 import { HttpError } from '../../utils/httpError';
 import { requireAuth, requireRole } from '../../middleware/auth';
 import { upload, publicUrlFor } from '../../middleware/upload';
+import { rateLimit } from '../shared/rateLimit';
 
 const publicRouter = Router();
 const adminRouter = Router();
+
+/**
+ * Los cuatro formularios públicos no piden cuenta: sin un tope, cualquiera
+ * podía llenar la base de inscripciones o de consultas con un script. Diez
+ * envíos por hora y por formulario alcanzan para una familia con varios hijos.
+ */
+const limitePublico = () =>
+  rateLimit({
+    max: 10,
+    ventanaMs: 60 * 60 * 1000,
+    mensaje: 'Recibimos muchos envíos desde tu conexión. Probá de nuevo en un rato.',
+  });
 
 // ============================================================
 // INSCRIPCIONES
@@ -23,7 +37,7 @@ const inscriptionSchema = z.object({
   mensaje: z.string().max(2000).optional().nullable(),
 });
 
-publicRouter.post('/inscriptions', async (req, res, next) => {
+publicRouter.post('/inscriptions', limitePublico(), async (req, res, next) => {
   try {
     const data = inscriptionSchema.parse(req.body);
     const created = await prisma.inscription.create({ data: { ...data, mensaje: data.mensaje ?? null } });
@@ -89,7 +103,7 @@ const opinionSchema = z.object({
   rating: z.coerce.number().int().min(1).max(5),
 });
 
-publicRouter.post('/opinions', async (req, res, next) => {
+publicRouter.post('/opinions', limitePublico(), async (req, res, next) => {
   try {
     const data = opinionSchema.parse(req.body);
     const created = await prisma.opinionPublica.create({
@@ -169,8 +183,18 @@ const employmentSchema = z.object({
   puesto: z.string().min(2).max(60),
 });
 
-publicRouter.post('/employment', upload.single('cv'), async (req, res, next) => {
+/** El portal anuncia "PDF, hasta 10 MB": se controla acá también. */
+const CV_MAX_BYTES = 10 * 1024 * 1024;
+
+publicRouter.post('/employment', limitePublico(), upload.single('cv'), async (req, res, next) => {
   try {
+    if (req.file) {
+      const esPdf = req.file.mimetype === 'application/pdf' || /.pdf$/i.test(req.file.originalname);
+      if (!esPdf || req.file.size > CV_MAX_BYTES) {
+        fs.unlink(req.file.path, () => { /* si no se pudo borrar, lo limpia la retención */ });
+        throw new HttpError(400, !esPdf ? 'El CV tiene que ser un archivo PDF.' : 'El CV supera el máximo de 10 MB.');
+      }
+    }
     const data = employmentSchema.parse(req.body);
     const cvUrl = req.file ? publicUrlFor(req.file.filename) : null;
     const created = await prisma.employmentApplication.create({
@@ -227,15 +251,68 @@ adminRouter.delete('/employment/:id', async (req, res, next) => {
 });
 
 // ============================================================
+// CONSULTAS DEL FORMULARIO DE CONTACTO
+// ============================================================
+const contactoSchema = z.object({
+  nombre: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(120),
+  mensaje: z.string().trim().min(10).max(2000),
+});
+
+publicRouter.post('/contact', limitePublico(), async (req, res, next) => {
+  try {
+    const data = contactoSchema.parse(req.body);
+    const creada = await prisma.consultaContacto.create({ data });
+    res.json({
+      exito: true,
+      mensaje: 'Recibimos tu mensaje. Te vamos a responder por email.',
+      id: creada.id,
+    });
+  } catch (err) { next(err); }
+});
+
+adminRouter.get('/contact', async (req, res, next) => {
+  try {
+    const estado = String(req.query.estado ?? 'pendientes');
+    const where = estado === 'atendidas' ? { atendida: true }
+      : estado === 'todas' ? {}
+      : { atendida: false };
+    const consultas = await prisma.consultaContacto.findMany({ where, orderBy: { createdAt: 'desc' } });
+    res.json({ exito: true, consultas });
+  } catch (err) { next(err); }
+});
+
+const atenderSchema = z.object({ atendida: z.boolean().default(true) });
+
+adminRouter.post('/contact/:id/atender', async (req, res, next) => {
+  try {
+    const { atendida } = atenderSchema.parse(req.body ?? {});
+    const consulta = await prisma.consultaContacto.update({
+      where: { id: Number(req.params.id) },
+      data: { atendida, atendidaAt: atendida ? new Date() : null },
+    });
+    res.json({ exito: true, consulta });
+  } catch (err) { next(err); }
+});
+
+adminRouter.delete('/contact/:id', async (req, res, next) => {
+  try {
+    await prisma.consultaContacto.delete({ where: { id: Number(req.params.id) } });
+    res.json({ exito: true });
+  } catch (err) { next(err); }
+});
+
+// ============================================================
 // CONTADORES PARA EL BADGE DEL ADMIN
 // ============================================================
 adminRouter.get('/moderation/counts', async (_req, res, next) => {
   try {
-    const [insc, op, emp, doc] = await Promise.all([
+    const [insc, op, emp, doc, contacto] = await Promise.all([
       prisma.inscription.count({ where: { status: ModerationStatus.PENDIENTE } }),
       prisma.opinionPublica.count({ where: { status: ModerationStatus.PENDIENTE } }),
       prisma.employmentApplication.count({ where: { status: ModerationStatus.PENDIENTE } }),
       prisma.user.count({ where: { role: Role.DOCENTE, pendienteAprobacion: true } }),
+      prisma.consultaContacto.count({ where: { atendida: false } }),
     ]);
     res.json({
       exito: true,
@@ -244,14 +321,15 @@ adminRouter.get('/moderation/counts', async (_req, res, next) => {
         opiniones: op,
         empleo: emp,
         docentes: doc,
-        total: insc + op + emp + doc,
+        contacto,
+        total: insc + op + emp + doc + contacto,
       },
     });
   } catch (err) { next(err); }
 });
 
-// Admin endpoints requieren ADMIN
-adminRouter.use((_req, _res, next) => next()); // placeholder; auth se aplica al montarlo
+// Las rutas de adminRouter exigen ADMIN: el guard se aplica al montarlo en
+// routes/index.ts (ver requireAdmin).
 
 export { publicRouter as moderacionPublicaRouter, adminRouter as moderacionAdminRouter };
 

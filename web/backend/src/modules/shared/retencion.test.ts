@@ -50,6 +50,7 @@ function doble(cantidades: Record<string, number> = {}) {
     employmentApplication: modelo('EmploymentApplication'),
     inscription: modelo('Inscription'),
     opinionPublica: modelo('OpinionPublica'),
+    consultaContacto: modelo('ConsultaContacto'),
   };
 
   return { prisma: prisma as never, llamadas };
@@ -128,6 +129,15 @@ test('REGLA: una inscripción sin resolver no se purga', async () => {
 
   const where = whereDe(llamadas, 'Inscription');
   assert.equal(where.resolvedAt.not, null);
+});
+
+test('REGLA: una consulta de contacto sin atender no se purga', async () => {
+  const { prisma, llamadas } = doble({ ConsultaContacto: 10 });
+  await aplicarRetencion(prisma, { activa: true, ahora: AHORA });
+
+  const where = whereDe(llamadas, 'ConsultaContacto');
+  assert.equal(where.atendida, true);
+  assert.equal(where.atendidaAt.not, null);
 });
 
 test('REGLA: sólo se purgan las opiniones rechazadas, no las aprobadas ni las pendientes', async () => {
