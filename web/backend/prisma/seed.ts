@@ -262,7 +262,7 @@ async function main() {
       maxScore: 10,
     },
   });
-  const act3 = await prisma.activity.create({
+  await prisma.activity.create({
     data: {
       docenteId: uid('csilva'),
       materia: 'Física',

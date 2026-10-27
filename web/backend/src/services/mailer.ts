@@ -23,7 +23,9 @@ export function getMailer(): Transporter {
     });
     logger.info(`Mailer: SMTP ${env.SMTP_HOST}:${env.SMTP_PORT}`);
   } else {
-    cached = nodemailer.createTransport({ streamTransport: true, newline: 'unix', buffer: true });
+    // Sin SMTP el correo se arma en memoria y se escribe en el log: no sale a
+    // la red, así que no hay protocolo que cifrar (falso positivo de S5332).
+    cached = nodemailer.createTransport({ streamTransport: true, newline: 'unix', buffer: true }); // NOSONAR
     logger.info('Mailer: stream transport (sin SMTP — los mails se loggean por consola)');
   }
   return cached;
@@ -46,7 +48,7 @@ export interface MailInput {
 export async function sendMail(input: MailInput): Promise<void> {
   try {
     const info = await getMailer().sendMail({
-      from: env.SMTP_FROM || 'Transformar para educar <no-reply@educarparatransformar.edu.ar>',
+      from: env.SMTP_FROM || 'Educar para Transformar <no-reply@educarparatransformar.edu.ar>',
       ...input,
     });
     if (!isSmtpConfigured()) {

@@ -11,6 +11,34 @@ import { registrarMensajesEnEspanol } from './config/zodEs';
 import { apiRouter } from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
+/**
+ * Política de seguridad de contenido (CSP). Antes estaba apagada: el navegador
+ * ejecutaba un script o cargaba una hoja de estilos de cualquier origen que
+ * lograra colarse en la página.
+ *
+ * Los orígenes externos son los que el frontend usa de verdad: cdnjs (iconos y
+ * sus fuentes), jsDelivr (jsQR, el lector del escáner, con integridad) y
+ * Unsplash (fotos del portal). Los paneles todavía llaman a sus funciones desde
+ * atributos `onclick` y tienen <script> en línea, por eso `'unsafe-inline'` en
+ * scripts: sacarlo exige mover esos manejadores a archivos, y queda como deuda.
+ * No va `upgrade-insecure-requests`: en desarrollo (http://localhost) pasaría
+ * todo a https y no cargaría nada; en producción Railway ya sirve sólo https.
+ */
+const POLITICA_DE_CONTENIDO = {
+  defaultSrc: ["'self'"],
+  baseUri: ["'self'"],
+  objectSrc: ["'none'"],
+  frameAncestors: ["'self'"],
+  formAction: ["'self'"],
+  scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+  scriptSrcAttr: ["'unsafe-inline'"],
+  styleSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
+  fontSrc: ["'self'", 'https://cdnjs.cloudflare.com', 'data:'],
+  imgSrc: ["'self'", 'data:', 'blob:', 'https://images.unsplash.com'],
+  // Socket.IO usa el mismo origen, tanto por sondeo como por WebSocket.
+  connectSrc: ["'self'"],
+};
+
 export function createApp() {
   // Los errores de validación llegan a la pantalla tal cual: en español y
   // diciendo de qué campo se trata (ver config/zodEs.ts).
@@ -33,7 +61,7 @@ export function createApp() {
 
   app.use(
     helmet({
-      contentSecurityPolicy: false,
+      contentSecurityPolicy: { useDefaults: false, directives: POLITICA_DE_CONTENIDO },
       crossOriginEmbedderPolicy: false,
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),

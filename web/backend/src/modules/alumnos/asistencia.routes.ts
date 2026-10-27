@@ -5,9 +5,21 @@ import { AttendanceStatus, Role } from '@prisma/client';
 import { prisma } from '../../db/prisma';
 import { HttpError } from '../../utils/httpError';
 import { requireAuth, requireRole } from '../../middleware/auth';
-import { esHijoDelTutor } from '../shared/authz';
+import { esHijoDelTutor, estudiantesDelDocente } from '../shared/authz';
 
 const router = Router();
+
+/**
+ * Un docente sólo registra asistencia de los estudiantes de sus cursos.
+ * Administración, de cualquiera.
+ */
+async function assertPuedeTomarAsistencia(user: { id: number; role: Role }, estudianteIds: number[]) {
+  if (user.role !== Role.DOCENTE) return;
+  const propios = new Set((await estudiantesDelDocente(prisma, user.id)).map((e) => e.userId));
+  if (estudianteIds.some((id) => !propios.has(id))) {
+    throw HttpError.forbidden('Sólo podés registrar la asistencia de alumnos de tus cursos.');
+  }
+}
 
 const STATUS_VALUES = ['PRESENTE', 'AUSENTE', 'TARDE', 'JUSTIFICADO'] as const;
 
@@ -34,6 +46,7 @@ const bulkSchema = z.object({
 router.post('/', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN), async (req, res, next) => {
   try {
     const data = recordSchema.parse(req.body);
+    await assertPuedeTomarAsistencia(req.authUser!, [data.estudiante_id]);
     const result = await prisma.attendance.upsert({
       where: {
         estudianteId_fecha_materia: {
@@ -60,6 +73,7 @@ router.post('/', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN), async (req,
 router.post('/bulk', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN), async (req, res, next) => {
   try {
     const data = bulkSchema.parse(req.body);
+    await assertPuedeTomarAsistencia(req.authUser!, data.records.map((r) => r.estudiante_id));
     const fechaDate = new Date(data.fecha);
     const materiaKey = data.materia ?? '';
 

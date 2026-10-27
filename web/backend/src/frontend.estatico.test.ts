@@ -77,7 +77,7 @@ test('la raíz sirve el landing', async () => {
   assert.equal(res.status, 200);
 
   const html = await res.text();
-  assert.match(html, /Transformar para educar|TRANSFORMAR PARA EDUCAR/i);
+  assert.match(html, /Educar para Transformar|EDUCAR PARA TRANSFORMAR/i);
 });
 
 test('los imports de los paneles apuntan a archivos que existen', async () => {

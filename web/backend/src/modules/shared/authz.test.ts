@@ -15,6 +15,7 @@ import assert from 'node:assert/strict';
 import {
   alumnosDelTutor,
   assertPuedeVerAlumno,
+  estudiantesDelDocente,
   filtroAlumnosVisibles,
   type AuthUser,
 } from './authz.ts';
@@ -59,7 +60,6 @@ function fakePrisma() {
         return id === undefined ? null : { id };
       },
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
 }
 
@@ -177,4 +177,60 @@ test('un rol desconocido no ve nada (lista blanca, no lista negra)', async () =>
   const raro = { id: 77, usuario: 'raro', role: 'OTRO' } as unknown as AuthUser;
   assert.deepEqual(await filtroAlumnosVisibles(fakePrisma(), raro), { id: { in: [] } });
   await assert.rejects(() => assertPuedeVerAlumno(fakePrisma(), raro, 100));
+});
+
+// ------------------------------------------------------------------
+// Planilla de asistencia del docente
+// ------------------------------------------------------------------
+
+/** Doble con sólo lo que mira `estudiantesDelDocente`, y lo que le preguntaron. */
+function prismaDocente(materias: { cursoId: number }[], alumnos: unknown[]) {
+  const consultas: { materia?: unknown; alumno?: unknown } = {};
+  const prisma = {
+    materia: {
+      findMany: async (args: { where: unknown }) => {
+        consultas.materia = args.where;
+        return materias;
+      },
+    },
+    alumno: {
+      findMany: async (args: { where: unknown }) => {
+        consultas.alumno = args.where;
+        return alumnos;
+      },
+    },
+  };
+  return { prisma: prisma as never, consultas };
+}
+
+test('REGLA: un docente sin materias no tiene alumnos en su planilla', async () => {
+  const { prisma, consultas } = prismaDocente([], []);
+  assert.deepEqual(await estudiantesDelDocente(prisma, 5), []);
+  assert.equal(consultas.alumno, undefined, 'ni siquiera consulta alumnos');
+});
+
+test('la planilla del docente sale de los cursos de sus materias activas', async () => {
+  const { prisma, consultas } = prismaDocente(
+    [{ cursoId: 3 }, { cursoId: 3 }, { cursoId: 7 }],
+    [
+      {
+        userId: 60,
+        apellido: 'Medina',
+        nombres: 'Mateo',
+        dni: '40000001',
+        curso: { id: 3, nombre: '1er Año', division: 'A', nivel: { nombre: 'Secundario' } },
+      },
+    ],
+  );
+  const lista = await estudiantesDelDocente(prisma, 5);
+
+  assert.deepEqual(consultas.materia, { activo: true, profesor: { userId: 5 } });
+  assert.deepEqual(consultas.alumno, {
+    cursoId: { in: [3, 7] },
+    estado: 'ACTIVO',
+    userId: { not: null },
+  });
+  assert.deepEqual(lista, [
+    { userId: 60, nombre: 'Medina, Mateo', dni: '40000001', cursoId: 3, curso: 'Secundario · 1er Año "A"' },
+  ]);
 });

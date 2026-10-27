@@ -426,7 +426,7 @@ async function notificarTutores(
           '',
           'Este aviso es automático y se genera al escanear el carnet digital.',
           '',
-          'Centro Educativo "Transformar para educar" — Resistencia, Chaco',
+          'Centro Educativo "Educar para Transformar" — Resistencia, Chaco',
         ].join('\n'),
         tipo: punto === PuntoControl.TRANSPORTE ? 'ACCESO_TRANSPORTE' : 'ACCESO_COMEDOR',
         alumnoId: alumno.id,

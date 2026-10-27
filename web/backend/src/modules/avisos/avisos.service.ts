@@ -146,7 +146,7 @@ const ENCABEZADO: Record<TipoAviso, string> = {
 
 /** Texto del mensaje. Se mantiene corto: un SMS se corta a los 160 caracteres. */
 function armarTexto(tipo: TipoAviso, titulo: string, cuerpo: string, alumno: string): string {
-  return `[${ENCABEZADO[tipo]}] ${titulo}\n${alumno}: ${cuerpo}\nCentro Educativo Transformar para educar`;
+  return `[${ENCABEZADO[tipo]}] ${titulo}\n${alumno}: ${cuerpo}\nCentro Educativo Educar para Transformar`;
 }
 
 /**
@@ -219,7 +219,7 @@ export async function emitirAviso(
           'Te enviamos este aviso por correo porque no tenemos un teléfono válido',
           'registrado en el sistema. Podés actualizarlo en secretaría.',
           '',
-          'Centro Educativo "Transformar para educar"',
+          'Centro Educativo "Educar para Transformar"',
         ].join('\n'),
         tipo: `AVISO_${input.tipo}`,
         alumnoId: d.alumnoId,

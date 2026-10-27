@@ -495,6 +495,15 @@ export async function reporteIngresos(
 }
 
 /** Deuda viva por alumno, ordenada de mayor a menor. */
+/** Compara dos períodos "MM/AAAA" en orden cronológico. */
+function compararMesAnio(a: string, b: string): number {
+  const valor = (p: string) => {
+    const [mes, anio] = p.split('/').map(Number);
+    return anio * 100 + mes;
+  };
+  return valor(a) - valor(b);
+}
+
 export async function reporteMorosidad(prisma: PrismaClient, filtros: { nivelId?: number; anio?: number }) {
   const facturas = await prisma.factura.findMany({
     where: {
@@ -553,7 +562,9 @@ export async function reporteMorosidad(prisma: PrismaClient, filtros: { nivelId?
   }
 
   const filas = [...porAlumno.values()]
-    .map((v) => ({ ...v, deuda: redondear(v.deuda), mesesAdeudados: v.mesesAdeudados.sort() }))
+    // "MM/AAAA" ordenado como texto ponía "12/2025" después de "01/2026": se
+    // ordena por año y mes.
+    .map((v) => ({ ...v, deuda: redondear(v.deuda), mesesAdeudados: v.mesesAdeudados.sort(compararMesAnio) }))
     .sort((a, b) => b.deuda - a.deuda);
 
   return {

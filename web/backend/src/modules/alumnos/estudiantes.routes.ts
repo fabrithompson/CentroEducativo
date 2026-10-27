@@ -5,11 +5,26 @@ import { prisma } from '../../db/prisma';
 import { requireAuth, requireRole } from '../../middleware/auth';
 import { HttpError } from '../../utils/httpError';
 import { minutosAHora } from '../deportes/horarios';
+import { estudiantesDelDocente } from '../shared/authz';
 
 const router = Router();
 
-router.get('/', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN), async (_req, res, next) => {
+/**
+ * GET /api/students
+ *
+ * Para un docente, sólo los estudiantes de sus cursos (con `cursoId`, para que
+ * la planilla se pueda armar por curso). Para administración, todos.
+ */
+router.get('/', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN), async (req, res, next) => {
   try {
+    if (req.authUser!.role === Role.DOCENTE) {
+      const propios = await estudiantesDelDocente(prisma, req.authUser!.id);
+      res.json({
+        exito: true,
+        estudiantes: propios.map((e) => ({ id: e.userId, nombre: e.nombre, dni: e.dni, curso: e.curso, cursoId: e.cursoId })),
+      });
+      return;
+    }
     const students = await prisma.user.findMany({
       where: { role: Role.ESTUDIANTE, isActive: true },
       orderBy: { nombre: 'asc' },
