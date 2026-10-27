@@ -343,7 +343,7 @@ los demás. Ver `web/backend/src/config/env.ts`.
 Los push que sólo tocan `docs/` o archivos `.md` no disparan el CI (en los PR sí,
 para que los chequeos obligatorios siempre informen). `main` está protegida: sólo
 se modifica por PR y con los seis chequeos en verde. Las mediciones de antes y
-después del cambio están en `docs/tp4/`.
+después del cambio están en `docs/metricas/`.
 
 Usa un *service container* de PostgreSQL y no `embedded-postgres`, porque las
 variantes de Linux de ese paquete están deshabilitadas a propósito en

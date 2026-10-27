@@ -227,7 +227,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # Se activa al cargar el secreto SONAR_TOKEN en el repositorio (ver
-    # docs/tp5/calidad.md). Sin él, el job termina en verde con un aviso: un
+    # docs/calidad.md). Sin él, el job termina en verde con un aviso: un
     # chequeo que falla por falta de configuración enseña a ignorar el rojo.
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
