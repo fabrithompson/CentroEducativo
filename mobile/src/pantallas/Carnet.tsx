@@ -11,7 +11,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, AppState, ScrollView, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as SecureStore from 'expo-secure-store';
 
@@ -114,6 +114,20 @@ export function PantallaCarnet({ hijo }: Props) {
   }, [credencial, contador]);
 
   // ---------- Reemisión ----------
+
+  // Reemitir deja inservible al instante el carnet del otro teléfono (el del
+  // chico, por ejemplo): un toque sin querer lo dejaba sin poder subir al
+  // micro. Se pide confirmación.
+  function confirmarReemision() {
+    Alert.alert(
+      'Reemitir credencial',
+      'El carnet que esté abierto en cualquier otro teléfono deja de funcionar en el momento. ¿Seguimos?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Reemitir', style: 'destructive', onPress: () => void reemitir() },
+      ],
+    );
+  }
 
   async function reemitir() {
     setReemitiendo(true);
@@ -226,7 +240,7 @@ export function PantallaCarnet({ hijo }: Props) {
         <Boton
           titulo="Reemitir credencial"
           variante="suave"
-          onPress={() => void reemitir()}
+          onPress={confirmarReemision}
           cargando={reemitiendo}
           style={{ marginTop: espaciado.md }}
         />

@@ -21,6 +21,8 @@
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 
+import { mensajeDeError } from '../dominio/errores';
+
 const CLAVE_TOKEN = 'et_access_token';
 const CLAVE_USUARIO = 'et_usuario';
 
@@ -235,11 +237,7 @@ async function pedir<T>(
   const data = (await res.json()) as Record<string, unknown>;
 
   if (!res.ok) {
-    throw new ApiError(
-      res.status,
-      (data?.message as string) ?? (data?.mensaje as string) ?? 'No se pudo completar la operación.',
-      data?.details,
-    );
+    throw new ApiError(res.status, mensajeDeError(data), data?.details);
   }
 
   return data as T;

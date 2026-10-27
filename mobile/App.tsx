@@ -12,7 +12,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
@@ -140,7 +140,7 @@ function AppConSesion() {
       <Encabezado
         titulo={vista === 'dashboard' ? 'Mi hijo' : vista === 'carnet' ? 'Carnet digital' : 'Pagos y finanzas'}
         subtitulo={usuario?.nombre}
-        onSalir={() => void salir()}
+        onSalir={() => confirmarSalida(() => void salir())}
       />
 
       {hijos.length > 1 ? (
@@ -183,6 +183,17 @@ function AppConSesion() {
 }
 
 // ------------------------------------------------------------------
+
+/**
+ * "Salir" está pegado al título, donde es fácil tocarlo sin querer, y volver a
+ * entrar obliga a tipear la contraseña en el teléfono. Se confirma antes.
+ */
+function confirmarSalida(salir: () => void) {
+  Alert.alert('Cerrar sesión', '¿Querés cerrar la sesión en este teléfono?', [
+    { text: 'Cancelar', style: 'cancel' },
+    { text: 'Cerrar sesión', style: 'destructive', onPress: salir },
+  ]);
+}
 
 function Encabezado({
   titulo,

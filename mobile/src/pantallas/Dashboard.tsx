@@ -23,7 +23,7 @@ import api, {
 import { deudaTotal } from '../dominio/pagos';
 import { dia, hora, moneda, periodo } from '../dominio/formato';
 import { Aviso, Boton, Cargando, Dato, ErrorPantalla, Estado, Tarjeta, Vacio } from '../ui/componentes';
-import { colores, espaciado, radio, tipografia } from '../ui/tema';
+import { colores, espaciado, tipografia } from '../ui/tema';
 
 interface Props {
   hijo: Hijo;
