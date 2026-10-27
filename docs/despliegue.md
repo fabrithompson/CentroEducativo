@@ -280,7 +280,10 @@ Railpack detecta el workspace de pnpm y, por defecto, corre
 `railpack.json`, en la raíz, reemplaza los comandos del paso de instalación:
 
 ```json
-"install": { "commands": ["PATH:/opt/pnpm/bin", "pnpm add -g node-gyp", "pnpm install --frozen-lockfile --prefer-offline --filter backend..."] }
+"install": {
+  "commands": ["PATH:/opt/pnpm/bin", "pnpm add -g node-gyp", "pnpm install --frozen-lockfile --prefer-offline --filter backend..."],
+  "deployOutputs": []
+}
 ```
 
 La lista reemplaza **todos** los comandos que Railpack genera para ese paso,
@@ -291,6 +294,18 @@ está en el `PATH`. Así falló el primer build después del merge del #50, el
 27/10/2026; producción siguió con el despliegue anterior. Si se actualiza pnpm
 o Railpack, conviene revisar contra `core/providers/node/package_manager.go` del
 repositorio de Railpack qué comandos genera.
+
+`"deployOutputs": []` es igual de necesario, por una razón menos visible.
+Railpack arma la imagen final con el `node_modules` y el código del paso
+`build`; un paso definido en `railpack.json` sin `deployOutputs` se agrega
+además, entero, encima de esas capas. El `/app` del paso de instalación
+tiene el cliente de Prisma sin generar (se genera en `build`, con
+`prisma generate`), así que al superponerse lo pisaba: la imagen se
+construía bien y el servidor caía al arrancar con «@prisma/client did not
+initialize yet». Así quedó producción caída el 27/10/2026, después del
+arreglo del `PATH`. La lista vacía le dice a Railpack que no copie nada de
+ese paso a la imagen (`core/generate/context.go`, al aplicar los pasos de la
+configuración).
 
 `node-gyp` se mantiene porque lo necesita `bcrypt`; `backend...` instala el
 backend con sus dependencias (y las de la raíz, que pnpm agrega igual). Medido
