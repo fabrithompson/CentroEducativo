@@ -1,6 +1,6 @@
 # Plan de Trabajo
 
-**Proyecto:** Sistema integral de gestión — Centro Educativo "TRANSFORMAR PARA EDUCAR"
+**Proyecto:** Sistema integral de gestión — Centro Educativo "EDUCAR PARA TRANSFORMAR"
 **Materia:** Metodología de Sistemas II — Tecnicatura Universitaria en Programación (TUP 2026)
 **Equipo:** **Naft** — Nahuel Alem · Fabricio Ceniquel Thompson
 **Localidad:** Resistencia, Chaco · Inicio previsto de actividades de la institución: marzo de 2027

@@ -1,6 +1,6 @@
 # API REST — Servicios y Controladores
 
-**Proyecto:** Centro Educativo "TRANSFORMAR PARA EDUCAR"
+**Proyecto:** Centro Educativo "EDUCAR PARA TRANSFORMAR"
 **Versión de la API:** 0.3.0
 **Migración asociada:** `20260915213000_vinculo_tutor_alumno_y_password_reset`
 **Fecha:** 15/09/2026
@@ -421,10 +421,15 @@ Criterios que hay que conocer para leer bien los números:
 | GET | `/api/activities/:id/submissions` | Responde `maxScore` de la actividad |
 | POST | `/api/activities/submissions/:id/grade` | Rechaza una nota mayor al puntaje máximo de la actividad |
 
+| GET | `/api/students` | Para un **docente**, sólo los estudiantes de los cursos donde tiene materias, con `cursoId` para armar la planilla por curso. Administración sigue viendo a todos |
+| POST | `/api/attendance`, `/api/attendance/bulk` | Un docente recibe 403 si incluye a un estudiante que no cursa con él |
+
 Además, en todas las rutas: los errores de validación llegan **en español y con el
 nombre del campo** ("DNI: tiene que tener al menos 7 caracteres.", ver
 `config/zodEs.ts`); un registro duplicado de Prisma responde 409 y uno inexistente
-404 en lugar de 500; un archivo que supera el tope responde 413.
+404 en lugar de 500; un archivo que supera el tope responde 413. Toda respuesta
+lleva una política de seguridad de contenido (`Content-Security-Policy`) que sólo
+admite el propio origen más cdnjs, jsDelivr y Unsplash (ver `app.ts`).
 
 ### 4.10 Tiempo real
 

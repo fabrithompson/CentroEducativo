@@ -2,7 +2,7 @@
   "name": "educar-para-transformar",
   "version": "0.1.0",
   "private": true,
-  "description": "Campus virtual del colegio Transformar para educar — monorepo backend (Node/Express/Prisma) + frontend (HTML, CSS y JavaScript) + app móvil (Expo).",
+  "description": "Campus virtual del colegio Educar para Transformar — monorepo backend (Node/Express/Prisma) + frontend (HTML, CSS y JavaScript) + app móvil (Expo).",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",

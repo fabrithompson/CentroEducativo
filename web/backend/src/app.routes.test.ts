@@ -69,8 +69,21 @@ test('GET /api/ responde con la versión de la API', async () => {
   assert.equal(res.status, 200);
 
   const body = (await res.json()) as { name: string; version: string };
-  assert.match(body.name, /Transformar para educar/);
+  assert.match(body.name, /Educar para Transformar/);
   assert.ok(body.version);
+});
+
+test('las respuestas llevan una política de seguridad de contenido', async () => {
+  const csp = (await pedir('GET', '/health')).headers.get('content-security-policy') ?? '';
+
+  assert.match(csp, /default-src 'self'/);
+  assert.match(csp, /object-src 'none'/);
+  // Sólo los orígenes externos que el frontend usa de verdad.
+  assert.match(csp, /style-src [^;]*https:\/\/cdnjs\.cloudflare\.com/);
+  assert.match(csp, /script-src [^;]*https:\/\/cdn\.jsdelivr\.net/);
+  assert.match(csp, /img-src [^;]*https:\/\/images\.unsplash\.com/);
+  // En desarrollo (http) pasaría todo a https y no cargaría nada.
+  assert.doesNotMatch(csp, /upgrade-insecure-requests/);
 });
 
 // ------------------------------------------------------------------

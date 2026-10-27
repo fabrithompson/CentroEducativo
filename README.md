@@ -1,4 +1,4 @@
-# Sistema Integral de Gestión — Centro Educativo "Transformar para Educar"
+# Sistema Integral de Gestión — Centro Educativo "Educar para Transformar"
 
 **Trabajo Práctico Integrador — Metodología de Sistemas II**
 Tecnicatura Universitaria en Programación (TUP) · 2026

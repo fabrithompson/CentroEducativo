@@ -47,7 +47,7 @@ import { ALTO_TOCABLE, colores, espaciado, radio, tipografia } from '../ui/tema'
 
 /** Datos bancarios del colegio. Coinciden con los de la factura del backend. */
 const BANCO = {
-  titular: 'Centro Educativo "Transformar para educar"',
+  titular: 'Centro Educativo "Educar para Transformar"',
   cuit: '30-71234567-9',
   banco: 'Banco de la Nación Argentina',
   cbu: '0110599520000012345678',

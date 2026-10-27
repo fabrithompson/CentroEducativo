@@ -10,7 +10,7 @@
  * que está explícitamente permitido para el rol.
  */
 
-import { Role, type PrismaClient } from '@prisma/client';
+import { EstadoAlumno, Role, type PrismaClient } from '@prisma/client';
 
 import { HttpError } from '../../utils/httpError';
 
@@ -109,6 +109,55 @@ export async function usuariosDeLosHijos(
   return vinculos
     .map((v) => v.alumno.userId)
     .filter((id): id is number => id !== null);
+}
+
+export interface EstudianteDelDocente {
+  /** Id de la cuenta del campus: es lo que guardan notas y asistencia. */
+  userId: number;
+  nombre: string;
+  dni: string;
+  cursoId: number;
+  curso: string;
+}
+
+/**
+ * Los estudiantes que cursan con un docente: alumnos activos, con cuenta en el
+ * campus, de los cursos donde el docente tiene al menos una materia activa.
+ *
+ * Es la planilla de asistencia del docente. Antes la planilla listaba a todos
+ * los estudiantes del colegio, y un docente podía registrar la asistencia de
+ * cualquiera.
+ */
+export async function estudiantesDelDocente(
+  prisma: PrismaClient,
+  docenteUserId: number,
+): Promise<EstudianteDelDocente[]> {
+  const materias = await prisma.materia.findMany({
+    where: { activo: true, profesor: { userId: docenteUserId } },
+    select: { cursoId: true },
+  });
+  const cursoIds = [...new Set(materias.map((m) => m.cursoId))];
+  if (cursoIds.length === 0) return [];
+
+  const alumnos = await prisma.alumno.findMany({
+    where: { cursoId: { in: cursoIds }, estado: EstadoAlumno.ACTIVO, userId: { not: null } },
+    orderBy: [{ apellido: 'asc' }, { nombres: 'asc' }],
+    select: {
+      userId: true,
+      apellido: true,
+      nombres: true,
+      dni: true,
+      curso: { select: { id: true, nombre: true, division: true, nivel: { select: { nombre: true } } } },
+    },
+  });
+
+  return alumnos.map((a) => ({
+    userId: a.userId as number,
+    nombre: `${a.apellido}, ${a.nombres}`,
+    dni: a.dni,
+    cursoId: a.curso.id,
+    curso: `${a.curso.nivel.nombre} · ${a.curso.nombre} "${a.curso.division}"`,
+  }));
 }
 
 /** ¿La cuenta `estudianteUserId` pertenece a un hijo de `tutorId`? */

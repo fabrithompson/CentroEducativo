@@ -25,8 +25,8 @@
     <link rel="stylesheet" href="css/componentes.css">
     <!-- Los iconos no hacen falta para pintar la primera pantalla: se cargan
          sin bloquear el render y se aplican cuando llegan. -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
     <script>
         // Aplicar tema guardado antes de pintar para evitar parpadeo
         (function () {
@@ -57,38 +57,41 @@
                 </div>
             </div>
         </div>
-        <nav class="main-nav" aria-label="Navegación principal">
-            <div class="container">
-                <div class="logo">
-                    <span class="logo-icon" aria-hidden="true">🎓</span>
-                    <h1>Transformar Para Educar</h1>
-                </div>
-                <ul class="nav-links" id="menu-principal">
-                    <li><a href="#nosotros">Quiénes Somos</a></li>
-                    <li><a href="#niveles">Niveles Educativos</a></li>
-                    <li><a href="#bienestar">Bienestar Estudiantil</a></li>
-                    <li><a href="#noticias">Noticias</a></li>
-                    <li><a href="#empleo">Empleo</a></li>
-                    <li><button type="button" onclick="toggleLandingTheme()" class="btn-theme-landing" id="themeToggleLanding" aria-label="Cambiar a tema oscuro" title="Cambiar tema"><i class="fas fa-moon" aria-hidden="true"></i></button></li>
-                    <li class="user-menu" id="userMenu" hidden>
-                        <a href="#" class="dropbtn" onclick="return false;" aria-haspopup="true"><i class="fas fa-user" aria-hidden="true"></i> <span id="userName"></span> <i class="fas fa-chevron-down" aria-hidden="true"></i></a>
-                        <div class="dropdown-content">
-                            <a href="#" onclick="showUserPanel(); return false;"><i class="fas fa-tachometer-alt" aria-hidden="true"></i> Mi Panel</a>
-                            <a href="#" onclick="logout(); return false;" class="logout-btn"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar Sesión</a>
-                        </div>
-                    </li>
-                    <li class="login-link" id="loginLink">
-                        <a href="#" onclick="openLoginModal(); return false;"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Iniciar sesión</a>
-                    </li>
-                </ul>
-                <button type="button" class="hamburger" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu-principal">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-            </div>
-        </nav>
     </header>
+    <!-- La navegación va fuera del <header> a propósito: `position: sticky`
+         la retiene sólo dentro de su contenedor, y el <header> termina a los
+         120 px. Adentro, el menú no quedaba fijo al bajar por la página. -->
+    <nav class="main-nav" aria-label="Navegación principal">
+        <div class="container">
+            <div class="logo">
+                <span class="logo-icon" aria-hidden="true">🎓</span>
+                <h1>Educar para Transformar</h1>
+            </div>
+            <ul class="nav-links" id="menu-principal">
+                <li><a href="#nosotros">Quiénes Somos</a></li>
+                <li><a href="#niveles">Niveles Educativos</a></li>
+                <li><a href="#bienestar">Bienestar Estudiantil</a></li>
+                <li><a href="#noticias">Noticias</a></li>
+                <li><a href="#empleo">Empleo</a></li>
+                <li><button type="button" onclick="toggleLandingTheme()" class="btn-theme-landing" id="themeToggleLanding" aria-label="Cambiar a tema oscuro" title="Cambiar tema"><i class="fas fa-moon" aria-hidden="true"></i></button></li>
+                <li class="user-menu" id="userMenu" hidden>
+                    <a href="#" class="dropbtn" onclick="return false;" aria-haspopup="true"><i class="fas fa-user" aria-hidden="true"></i> <span id="userName"></span> <i class="fas fa-chevron-down" aria-hidden="true"></i></a>
+                    <div class="dropdown-content">
+                        <a href="#" onclick="showUserPanel(); return false;"><i class="fas fa-tachometer-alt" aria-hidden="true"></i> Mi Panel</a>
+                        <a href="#" onclick="logout(); return false;" class="logout-btn"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar Sesión</a>
+                    </div>
+                </li>
+                <li class="login-link" id="loginLink">
+                    <a href="#" onclick="openLoginModal(); return false;"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Iniciar sesión</a>
+                </li>
+            </ul>
+            <button type="button" class="hamburger" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu-principal">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
 
     <main id="contenido-principal">
     <section id="inicio" class="hero">
@@ -711,7 +714,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>Transformar Para Educar</h3>
+                    <h3>Educar para Transformar</h3>
                     <p>Formando personas integrales para un futuro mejor.</p>
                 </div>
                 <div class="footer-section">
@@ -733,7 +736,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2026 Transformar Para Educar. Todos los derechos reservados.</p>
+                <p>&copy; 2026 Educar para Transformar. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>

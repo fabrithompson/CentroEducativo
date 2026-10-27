@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Docente — Transformar Para Educar</title>
+    <title>Panel Docente — Educar para Transformar</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="css/componentes.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
         :root { 
             --sidebar-bg: #0f172a; 
             --sidebar-hover: #1e293b; 
             --text-light: #f8fafc; 
             --bg-main: #f1f5f9; 
-            --accent: #3b82f6; 
-            --accent-hover: #2563eb;
+            /* #2563eb: 5.2:1 con blanco (el #3b82f6 anterior daba 3.7:1). */
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
             --border-color: #e2e8f0;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -72,7 +73,7 @@
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
                 <a href="index.html" class="logo" title="Ir a la página de inicio" style="display: flex; align-items: center; gap: 10px;">
                     <span class="logo-icon" aria-hidden="true">🎓</span>
-                    <h1 style="margin:0; font-size: 1.3rem; color: #0f172a;">Transformar Para Educar</h1>
+                    <h1 style="margin:0; font-size: 1.3rem; color: #0f172a;">Educar para Transformar</h1>
                 </a>
                 <ul class="nav-links" style="display: flex; gap: 25px; align-items: center; margin: 0; list-style: none;">
                     <li><a href="index.html#inicio">Inicio</a></li>
@@ -190,8 +191,18 @@
 
             <section id="asistencia" class="view-section">
                 <h2 class="section-title">Registro de asistencia diaria</h2>
-                <div style="margin-bottom: 15px; color: #475569; font-size: 0.92rem;">
-                    <i class="fas fa-calendar-day" style="color:#1d4ed8;" aria-hidden="true"></i> Fecha: <strong id="asistenciaFecha"></strong>
+                <!-- La planilla es por curso, y sólo con los cursos donde el docente
+                     tiene materias (GET /api/students ya devuelve sólo esos). -->
+                <div style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap; margin-bottom: 15px;">
+                    <div class="form-group" style="flex: 0 1 340px;">
+                        <label for="asistenciaCurso">Curso</label>
+                        <select id="asistenciaCurso" class="form-select" onchange="renderPlanilla()" disabled>
+                            <option value="">Cargando tus cursos...</option>
+                        </select>
+                    </div>
+                    <div style="color: #475569; font-size: 0.92rem; padding-bottom: 10px;">
+                        <i class="fas fa-calendar-day" style="color:#1d4ed8;" aria-hidden="true"></i> Fecha: <strong id="asistenciaFecha"></strong>
+                    </div>
                 </div>
                 <table class="data-table" id="tablaAsistencia">
                     <thead>
@@ -208,7 +219,7 @@
                         <tr><td colspan="6" style="text-align:center; color:#64748b;">Cargando lista de alumnos...</td></tr>
                     </tbody>
                 </table>
-                <div style="margin-top: 20px; text-align: right;"><button type="button" class="btn-action" id="asistenciaFirmar" onclick="firmarAsistencia(event)"><i class="fas fa-signature" aria-hidden="true"></i> Firmar planilla</button></div>
+                <div style="margin-top: 20px; text-align: right;"><button type="button" class="btn-action" id="asistenciaFirmar" onclick="firmarAsistencia(event)" disabled><i class="fas fa-signature" aria-hidden="true"></i> Firmar planilla</button></div>
             </section>
 
             <section id="comunicados" class="view-section">
@@ -554,37 +565,64 @@
             else toastError(res.mensaje || 'No se pudo borrar la calificación.');
         }
 
+        let _alumnosAsistencia = [];
+        let _asistenciaHoy = {};
+
         async function cargarAsistencia() {
             const tbody = document.querySelector('#tablaAsistencia tbody');
-            const hoy = window.hoyLocal();
+            const select = document.getElementById('asistenciaCurso');
             try {
-                const sData = await window.apiGet('/api/students');
-                if (!sData.exito || !sData.estudiantes.length) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">No hay alumnos cargados.</td></tr>';
+                const [sData, aData] = await Promise.all([
+                    window.apiGet('/api/students'),
+                    window.apiGet('/api/attendance/by-date?fecha=' + window.hoyLocal()),
+                ]);
+                if (!sData.exito) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#b91c1c;">${window.escapeHtml(sData.mensaje || 'No se pudo cargar la lista de alumnos.')}</td></tr>`;
                     return;
                 }
-                const aData = await window.apiGet('/api/attendance/by-date?fecha=' + hoy);
-                const existente = {};
-                (aData.asistencias || []).forEach(a => { existente[a.estudiante_id] = a.status.toLowerCase(); });
-                tbody.innerHTML = '';
-                sData.estudiantes.forEach(e => {
-                    const estado = existente[e.id] || 'presente';
-                    const radioName = 'asist_' + e.id;
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${e.dni}</td>
-                            <td>${window.escapeHtml(e.nombre)}</td>
-                            <td>${window.escapeHtml(e.curso || '—')}</td>
-                            <td style="text-align:center;"><input type="radio" name="${radioName}" value="presente" aria-label="Presente — ${window.escapeHtml(e.nombre)}" ${estado === 'presente' ? 'checked' : ''}></td>
-                            <td style="text-align:center;"><input type="radio" name="${radioName}" value="ausente" aria-label="Ausente — ${window.escapeHtml(e.nombre)}" ${estado === 'ausente' ? 'checked' : ''}></td>
-                            <td style="text-align:center;"><input type="radio" name="${radioName}" value="tarde" aria-label="Tarde — ${window.escapeHtml(e.nombre)}" ${estado === 'tarde' ? 'checked' : ''}></td>
-                        </tr>
-                    `;
-                });
+                _alumnosAsistencia = sData.estudiantes;
+                _asistenciaHoy = {};
+                (aData.asistencias || []).forEach(a => { _asistenciaHoy[a.estudiante_id] = a.status.toLowerCase(); });
+                if (_alumnosAsistencia.length === 0) {
+                    select.innerHTML = '<option value="">Sin cursos asignados</option>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">No tenés alumnos con cuenta en tus cursos. Si falta alguno, avisá a administración.</td></tr>';
+                    return;
+                }
+                const cursos = new Map();
+                _alumnosAsistencia.forEach(e => { if (!cursos.has(e.cursoId)) cursos.set(e.cursoId, e.curso); });
+                const elegido = select.value;
+                select.innerHTML = [...cursos.entries()]
+                    .sort((a, b) => a[1].localeCompare(b[1], 'es'))
+                    .map(([id, nombre]) => `<option value="${id}">${window.escapeHtml(nombre)}</option>`).join('');
+                if (elegido && cursos.has(Number(elegido))) select.value = elegido;
+                select.disabled = cursos.size < 2;
+                renderPlanilla();
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#c0392b;">Error al cargar la lista de alumnos.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#b91c1c;">Error al cargar la lista de alumnos.</td></tr>';
             }
+        }
+
+        // Muestra los alumnos del curso elegido; "Firmar planilla" registra sólo esos.
+        function renderPlanilla() {
+            const tbody = document.querySelector('#tablaAsistencia tbody');
+            const cursoId = Number(document.getElementById('asistenciaCurso').value);
+            const esc = window.escapeHtml;
+            const alumnos = _alumnosAsistencia.filter(e => e.cursoId === cursoId);
+            document.getElementById('asistenciaFirmar').disabled = alumnos.length === 0;
+            tbody.innerHTML = alumnos.map(e => {
+                const estado = _asistenciaHoy[e.id] || 'presente';
+                const radio = (valor, texto) => `<td style="text-align:center;"><input type="radio" name="asist_${e.id}" value="${valor}" aria-label="${texto} — ${esc(e.nombre)}" ${estado === valor ? 'checked' : ''}></td>`;
+                return `
+                    <tr>
+                        <td>${esc(e.dni)}</td>
+                        <td>${esc(e.nombre)}</td>
+                        <td>${esc(e.curso)}</td>
+                        ${radio('presente', 'Presente')}
+                        ${radio('ausente', 'Ausente')}
+                        ${radio('tarde', 'Tarde')}
+                    </tr>`;
+            }).join('');
         }
 
         async function firmarAsistencia(e) {
@@ -613,6 +651,7 @@
             try {
                 const res = await window.apiPost('/api/attendance/bulk', { fecha, records });
                 if (res.exito) {
+                    records.forEach(r => { _asistenciaHoy[r.estudiante_id] = r.status.toLowerCase(); });
                     toastSuccess(`Planilla firmada — ${presentes} presentes, ${ausentes} ausentes, ${tardes} tardes.`);
                 } else {
                     toastError(res.mensaje || 'No se pudo guardar la planilla.');

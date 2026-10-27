@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Familias — Transformar Para Educar</title>
+    <title>Panel Familias — Educar para Transformar</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="css/componentes.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
         body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f4f6f9; }
         header { flex-shrink: 0; z-index: 100; }
@@ -45,7 +45,7 @@
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
                 <a href="index.html" class="logo" title="Ir a la página de inicio" style="display: flex; align-items: center; gap: 10px;">
                     <span class="logo-icon" aria-hidden="true">🎓</span>
-                    <h1 style="margin:0; font-size: 1.3rem;">Transformar Para Educar</h1>
+                    <h1 style="margin:0; font-size: 1.3rem;">Educar para Transformar</h1>
                 </a>
                 <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none;">
                     <li><a href="index.html#inicio">Inicio</a></li>
@@ -128,7 +128,7 @@
 
             <section id="materias" class="view-section">
                 <h2 class="section-title">Materias que está cursando</h2>
-                <p style="color:#64748b; margin-bottom:18px;">Resumen de cada asignatura, con cantidad de evaluaciones registradas y promedio actual.</p>
+                <p style="color:#64748b; margin-bottom:18px;">Todas las materias del curso, con su docente y, cuando ya hay notas, las evaluaciones y el promedio.</p>
                 <div id="materiasGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;"></div>
             </section>
 
@@ -227,6 +227,8 @@
 
         // Con window.apiGet: renueva la sesión si el token venció. Los fetch
         // sueltos de antes dejaban de andar a los 15 minutos de abrir el panel.
+        let _alumnoDeUsuario = new Map();
+
         async function cargarHijos() {
             const select = document.getElementById('selectHijo');
             const esc = window.escapeHtml;
@@ -246,6 +248,9 @@
                     return;
                 }
                 const elegido = select.value;
+                // El selector usa el id de usuario (boletín y asistencias), y las
+                // materias se piden por el id de alumno del padrón.
+                _alumnoDeUsuario = new Map(data.hijos.filter(v => v.alumno.user).map(v => [String(v.alumno.user.id), v.alumno.id]));
                 select.innerHTML = data.hijos.map(v => {
                     const a = v.alumno;
                     const curso = a.curso ? `${a.curso.nombre} "${a.curso.division}"` : null;
@@ -267,14 +272,21 @@
                 renderHijo(null);
                 return;
             }
+            const alumnoId = _alumnoDeUsuario.get(hijoId);
             try {
-                const data = await window.apiGet('/api/grades?estudiante_id=' + hijoId);
+                // Las notas y las materias del curso van en paralelo: las
+                // materias salen de la ficha del alumno, no de sus notas.
+                const [data, ficha] = await Promise.all([
+                    window.apiGet('/api/grades?estudiante_id=' + hijoId),
+                    alumnoId ? window.apiGet('/api/padres/mis-hijos/' + alumnoId) : Promise.resolve(null),
+                ]);
                 if (!data.exito) toastError(data.mensaje || 'No se pudo cargar la información.');
-                renderHijo({ notas: (data.exito && data.notas) || [] }, hijoId);
+                const materias = ficha && ficha.exito && ficha.alumno.curso ? ficha.alumno.curso.materias.filter(m => m.activo !== false) : [];
+                renderHijo({ notas: (data.exito && data.notas) || [], materias }, hijoId);
             } catch (err) {
                 console.error(err);
                 toastError('Error al conectar con el servidor.');
-                renderHijo({ notas: [] }, hijoId);
+                renderHijo({ notas: [], materias: [] }, hijoId);
             }
         }
 
@@ -305,6 +317,7 @@
 
             // Stats
             const materias = new Set(notas.map(n => n.materia));
+            const cursando = payload.materias && payload.materias.length ? payload.materias.length : materias.size;
             const promedioGeneral = (notas.reduce((s, n) => s + Number(n.nota), 0) / notas.length).toFixed(2);
             const aprobadas = Array.from(materias).filter(m => {
                 const ms = notas.filter(n => n.materia === m);
@@ -314,7 +327,7 @@
             stats.innerHTML = `
                 <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:15px;">
                     <div style="color:#1e3a8a; font-size:0.82rem; font-weight:600;">MATERIAS CURSANDO</div>
-                    <div style="font-size:1.8rem; font-weight:700; color:#3498db; margin-top:5px;">${materias.size}</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#3498db; margin-top:5px;">${cursando}</div>
                 </div>
                 <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:15px;">
                     <div style="color:#065f46; font-size:0.82rem; font-weight:600;">PROMEDIO GENERAL</div>
@@ -325,7 +338,7 @@
                     <div style="font-size:1.8rem; font-weight:700; color:#8b5cf6; margin-top:5px;">${notas.length}</div>
                 </div>
                 <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:8px; padding:15px;">
-                    <div style="color:#92400e; font-size:0.82rem; font-weight:600;">MATERIAS APROBADAS</div>
+                    <div style="color:#92400e; font-size:0.82rem; font-weight:600;">APROBADAS (DE LAS QUE TIENEN NOTA)</div>
                     <div style="font-size:1.8rem; font-weight:700; color:#f59e0b; margin-top:5px;">${aprobadas} / ${materias.size}</div>
                 </div>
             `;
@@ -369,52 +382,75 @@
             });
         }
 
+        // Una tarjeta por materia del curso, tenga o no notas. Antes las materias
+        // salían de las notas: una materia sin evaluaciones todavía no aparecía,
+        // y la familia no sabía qué cursaba su hijo ni quién se la daba.
         function renderMaterias(payload) {
             const grid = document.getElementById('materiasGrid');
-            if (!payload || !payload.notas || payload.notas.length === 0) {
-                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#64748b; padding:30px;">No hay materias registradas para el alumno seleccionado.</div>';
+            const esc = window.escapeHtml;
+            if (!payload) {
+                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#64748b; padding:30px;">Seleccioná un hijo para ver sus materias.</div>';
                 return;
             }
-            const map = new Map();
-            payload.notas.forEach(n => {
-                if (!map.has(n.materia)) map.set(n.materia, []);
-                map.get(n.materia).push(n);
+            const notasPorMateria = new Map();
+            (payload.notas || []).forEach(n => {
+                if (!notasPorMateria.has(n.materia)) notasPorMateria.set(n.materia, []);
+                notasPorMateria.get(n.materia).push(n);
             });
-            const colores = ['#3498db', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#f97316', '#84cc16'];
-            grid.innerHTML = '';
-            Array.from(map.entries()).sort().forEach(([materia, evals], idx) => {
+            const delCurso = (payload.materias || []).map(m => ({
+                nombre: m.nombre,
+                docente: m.profesor ? m.profesor.apellido + ', ' + m.profesor.nombres : null,
+                cargaHoraria: m.cargaHoraria,
+            }));
+            // Notas de materias que ya no están en el curso (por ejemplo, cargadas
+            // antes de un cambio de curso): se muestran igual, para no esconder nada.
+            const nombres = new Set(delCurso.map(m => m.nombre));
+            const sueltas = [...notasPorMateria.keys()].filter(n => !nombres.has(n)).map(nombre => ({
+                nombre,
+                docente: notasPorMateria.get(nombre)[0].nombre_docente || null,
+                cargaHoraria: null,
+            }));
+            const todas = [...delCurso, ...sueltas].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+            if (todas.length === 0) {
+                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#64748b; padding:30px;">El curso todavía no tiene materias cargadas.</div>';
+                return;
+            }
+            const colores = ['#1d6fa5', '#047857', '#b45309', '#6d28d9', '#b91c1c', '#0e7490', '#be185d', '#c2410c', '#4d7c0f'];
+            const fila = (etiqueta, valor) => `
+                <div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:8px;">
+                    <span style="color:#64748b; font-size:0.85rem;">${etiqueta}</span>
+                    <span style="font-weight:600; text-align:right;">${valor}</span>
+                </div>`;
+            grid.innerHTML = todas.map((m, idx) => {
+                const evals = notasPorMateria.get(m.nombre) || [];
                 const color = colores[idx % colores.length];
-                const prom = (evals.reduce((s, e) => s + Number(e.nota), 0) / evals.length).toFixed(2);
-                const ultima = evals[0]; // ya viene desc
-                const docente = ultima.nombre_docente;
-                const aprobado = prom >= 7;
-                grid.innerHTML += `
-                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.04); transition: transform 0.15s;">
+                let pie;
+                if (evals.length === 0) {
+                    pie = '<span style="color:#64748b;">Sin notas todavía</span>';
+                } else {
+                    const prom = evals.reduce((s, e) => s + Number(e.nota), 0) / evals.length;
+                    const tono = prom >= 7 ? '#047857' : prom >= 4 ? '#b45309' : '#b91c1c';
+                    pie = `<span style="font-size:1.6rem; font-weight:700; color:${tono};">${prom.toFixed(2)}</span>`;
+                }
+                const ultima = evals[0]; // las notas vienen de la más reciente a la más vieja
+                return `
+                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.04);">
                         <div style="background:${color}; color:#fff; padding:14px 16px; display:flex; align-items:center; gap:10px;">
-                            <i class="fas fa-book" style="font-size:1.2rem;"></i>
-                            <strong style="flex:1;">${window.escapeHtml(materia)}</strong>
+                            <i class="fas fa-book" style="font-size:1.2rem;" aria-hidden="true"></i>
+                            <strong style="flex:1;">${esc(m.nombre)}</strong>
                         </div>
                         <div style="padding:14px 16px;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <span style="color:#64748b; font-size:0.85rem;">Docente</span>
-                                <span style="font-weight:600;">${window.escapeHtml(docente)}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <span style="color:#64748b; font-size:0.85rem;">Evaluaciones</span>
-                                <span style="font-weight:600;">${evals.length}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <span style="color:#64748b; font-size:0.85rem;">Última nota</span>
-                                <span style="font-weight:600;">${window.escapeHtml(ultima.nota)} (${window.escapeHtml(ultima.instancia_evaluacion)})</span>
-                            </div>
+                            ${fila('Docente', m.docente ? esc(m.docente) : '<span style="color:#64748b; font-weight:400;">Sin asignar</span>')}
+                            ${m.cargaHoraria ? fila('Horas semanales', m.cargaHoraria + ' h') : ''}
+                            ${fila('Evaluaciones', evals.length)}
+                            ${ultima ? fila('Última nota', esc(ultima.nota) + ' (' + esc(ultima.instancia_evaluacion) + ')') : ''}
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid #f1f5f9;">
                                 <span style="color:#64748b; font-size:0.85rem;">Promedio</span>
-                                <span style="font-size:1.6rem; font-weight:700; color:${aprobado ? '#10b981' : prom >= 4 ? '#f59e0b' : '#ef4444'};">${prom}</span>
+                                ${pie}
                             </div>
                         </div>
-                    </div>
-                `;
-            });
+                    </div>`;
+            }).join('');
         }
 
         async function renderAsistencias(hijoId) {

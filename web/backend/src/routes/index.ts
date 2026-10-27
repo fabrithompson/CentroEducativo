@@ -73,7 +73,7 @@ router.use((req, res, next) => {
 
 router.get('/', (_req, res) => {
   res.json({
-    name: 'Transformar para educar — API',
+    name: 'Educar para Transformar — API',
     version: '0.6.0',
   });
 });

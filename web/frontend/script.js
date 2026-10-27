@@ -221,10 +221,12 @@ document.addEventListener('keydown', function (e) {
     if (!modal.contains(document.activeElement)) {
         e.preventDefault();
         primero.focus();
-    } else if (e.shiftKey && document.activeElement === primero) {
+    // Los dos lados son elementos del DOM: SonarCloud infiere tipos distintos
+    // y marca estas comparaciones como siempre falsas (S3403).
+    } else if (e.shiftKey && document.activeElement === primero) { // NOSONAR
         e.preventDefault();
         ultimo.focus();
-    } else if (!e.shiftKey && document.activeElement === ultimo) {
+    } else if (!e.shiftKey && document.activeElement === ultimo) { // NOSONAR
         e.preventDefault();
         primero.focus();
     }

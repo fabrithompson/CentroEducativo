@@ -290,7 +290,7 @@ export function filtros({ id, campos, textoBoton = 'Aplicar filtros' }) {
 export function leerFiltros(form) {
   const datos = {};
   for (const [clave, valor] of new FormData(form).entries()) {
-    if (valor !== '' && valor !== null) datos[clave] = valor;
+    if (valor !== '') datos[clave] = valor;
   }
   return datos;
 }

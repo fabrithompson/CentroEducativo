@@ -18,9 +18,7 @@ const prisma = new PrismaClient();
 
 let alumnoSecundario: number;
 let alumnoOtro: number;
-let deporteFutbol: number;
 let deporteBasquet: number;
-let deporteAjedrez: number;
 
 before(async () => {
   // El seed ya cargó el dominio completo. Se toman referencias de ahí.
@@ -34,9 +32,7 @@ before(async () => {
 
   alumnoSecundario = a1.id;
   alumnoOtro = a2.id;
-  deporteFutbol = futbol.id;
   deporteBasquet = basquet.id;
-  deporteAjedrez = ajedrez.id;
 });
 
 after(async () => {

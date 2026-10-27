@@ -270,7 +270,9 @@ async function crearLector() {
     try {
       const formatos = await window.BarcodeDetector.getSupportedFormats?.();
       if (!formatos || formatos.includes('qr_code')) {
-        const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+        // BarcodeDetector es una clase nativa del navegador (Shape Detection API);
+        // Sonar no la reconoce como constructor.
+        const detector = new window.BarcodeDetector({ formats: ['qr_code'] }); // NOSONAR
         return async (video) => {
           const codigos = await detector.detect(video);
           return codigos.length > 0 ? codigos[0].rawValue : null;
@@ -398,7 +400,10 @@ function recordarVisto(texto) {
 }
 
 async function bucleEscaneo(video, leer, sesion) {
-  while (sesion === sesionCamara) {
+  // `sesionCamara` cambia afuera del bucle (detenerCamara la incrementa)
+  // mientras éste espera en cada await: es lo que lo corta. SonarCloud no ve
+  // esa modificación asíncrona y lo marca como bucle infinito (S2189).
+  while (sesion === sesionCamara) { // NOSONAR
     try {
       const texto = await leer(video);
       // El mismo QR se ignora mientras vale: la cámara lo ve muchas veces.

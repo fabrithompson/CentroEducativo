@@ -511,7 +511,7 @@ export async function iniciarMisHijos(idContenedor = 'vista-mis-hijos') {
     btn.addEventListener('click', () => {
       hijoActivo = Number(btn.dataset.hijo);
       contenedor.querySelectorAll('[data-hijo]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-      dibujarSeccion();
+      void dibujarSeccion();
     });
   });
 
@@ -524,7 +524,7 @@ export async function iniciarMisHijos(idContenedor = 'vista-mis-hijos') {
         b.setAttribute('aria-selected', String(activa));
       });
       document.getElementById('panel-hijo').setAttribute('aria-labelledby', `tab-hijo-${seccionActiva}`);
-      dibujarSeccion();
+      void dibujarSeccion();
     });
   });
 

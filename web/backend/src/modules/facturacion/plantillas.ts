@@ -13,7 +13,7 @@
 import { formatearFecha, formatearMoneda, nombrePeriodo, type Periodo } from './periodos';
 
 const INSTITUCION = {
-  nombre: 'Centro Educativo "Transformar para educar"',
+  nombre: 'Centro Educativo "Educar para Transformar"',
   domicilio: 'Av. 9 de Julio 1250 — Resistencia, Chaco',
   cuit: '30-71234567-9',
   email: 'administracion@educarparatransformar.edu.ar',
@@ -225,7 +225,7 @@ export interface DatosResumenMensual {
 }
 
 export function asuntoResumenMensual(periodo: Periodo): string {
-  return `Cuota de ${nombrePeriodo(periodo)} — Transformar para educar`;
+  return `Cuota de ${nombrePeriodo(periodo)} — Educar para Transformar`;
 }
 
 export function resumenMensualTexto(d: DatosResumenMensual): string {
@@ -352,7 +352,7 @@ export interface DatosRecordatorio {
 
 export function asuntoRecordatorio(periodo: Periodo, hayVencidas: boolean): string {
   return hayVencidas
-    ? `Cuota vencida de ${nombrePeriodo(periodo)} — Transformar para educar`
+    ? `Cuota vencida de ${nombrePeriodo(periodo)} — Educar para Transformar`
     : `Recordatorio de pago — ${nombrePeriodo(periodo)}`;
 }
 

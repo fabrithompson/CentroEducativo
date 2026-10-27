@@ -76,7 +76,7 @@ export async function solicitarReset(
 
   await sendMail({
     to: user.email,
-    subject: 'Recuperación de contraseña — Transformar para educar',
+    subject: 'Recuperación de contraseña — Educar para Transformar',
     text: [
       `Hola ${user.nombre},`,
       '',
@@ -87,7 +87,7 @@ export async function solicitarReset(
       '',
       'Si no pediste esto, ignorá el mensaje: tu contraseña actual sigue funcionando.',
       '',
-      'Centro Educativo "Transformar para educar" — Resistencia, Chaco',
+      'Centro Educativo "Educar para Transformar" — Resistencia, Chaco',
     ].join('\n'),
     html: `
       <p>Hola ${user.nombre},</p>
@@ -95,7 +95,7 @@ export async function solicitarReset(
       <p><a href="${enlace}">Elegir una contraseña nueva</a> (el enlace vence en ${RESET_TTL_MINUTOS} minutos).</p>
       <p>Si no pediste esto, ignorá el mensaje: tu contraseña actual sigue funcionando.</p>
       <hr>
-      <p><small>Centro Educativo "Transformar para educar" — Resistencia, Chaco</small></p>
+      <p><small>Centro Educativo "Educar para Transformar" — Resistencia, Chaco</small></p>
     `,
   });
 
