@@ -34,8 +34,10 @@ const CLAVE_USUARIO = 'et_usuario';
  * emulador ve al host. En un dispositivo real hay que poner la IP de la red
  * local en `app.json` → `extra.apiUrl`.
  */
+// El http del valor por defecto es sólo para desarrollo, contra la máquina
+// local desde el emulador; la app publicada usa la URL https de app.json.
 export const API_URL: string =
-  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? 'http://10.0.2.2:4000';
+  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? 'http://10.0.2.2:4000'; // NOSONAR
 
 export class ApiError extends Error {
   readonly status: number;

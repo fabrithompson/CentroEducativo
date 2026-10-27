@@ -162,7 +162,7 @@ export function PantallaCarnet({ hijo }: Props) {
     <ScrollView contentContainerStyle={estilos.scroll}>
       <Tarjeta style={estilos.carnet}>
         <Text style={estilos.institucion}>Centro Educativo</Text>
-        <Text style={estilos.marca}>Transformar para educar</Text>
+        <Text style={estilos.marca}>Educar para Transformar</Text>
 
         <View style={estilos.cajaQR}>
           <QRCode

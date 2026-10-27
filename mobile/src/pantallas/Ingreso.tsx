@@ -87,7 +87,7 @@ export function PantallaIngreso() {
         keyboardDismissMode="on-drag"
       >
         <View style={estilos.encabezado}>
-          <Text style={estilos.marca}>Transformar para educar</Text>
+          <Text style={estilos.marca}>Educar para Transformar</Text>
           <Text style={estilos.subtitulo}>Portal de familias</Text>
         </View>
 
@@ -191,7 +191,7 @@ export function PantallaIngreso() {
         </View>
 
         <Text style={estilos.pie}>
-          Centro Educativo "Transformar para educar" — Resistencia, Chaco
+          Centro Educativo "Educar para Transformar" — Resistencia, Chaco
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>

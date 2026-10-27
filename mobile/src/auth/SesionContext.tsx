@@ -35,7 +35,7 @@ export function ProveedorSesion({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let vigente = true;
 
-    (async () => {
+    void (async () => {
       try {
         const token = await leerToken();
         if (!token) return;

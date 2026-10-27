@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Transformar para educar",
+    "name": "Educar para Transformar",
     "slug": "educar-para-transformar",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -30,7 +30,7 @@
       "expo-secure-store"
     ],
     "extra": {
-      "apiUrl": "https://backend-production-7a0d.up.railway.app"
+      "apiUrl": "https://transformar-para-educar.up.railway.app"
     }
   }
 }

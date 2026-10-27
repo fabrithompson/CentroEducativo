@@ -36,7 +36,7 @@ const texto = (s: string) => new Uint8Array(Buffer.from(s, 'utf8'));
 // ==================================================================
 
 test('SHA-256 coincide con node:crypto en los vectores clásicos', () => {
-  for (const entrada of ['', 'abc', 'hola', 'Transformar para educar']) {
+  for (const entrada of ['', 'abc', 'hola', 'Educar para Transformar']) {
     const propio = bytesAHex(sha256(texto(entrada)));
     const nodejs = crypto.createHash('sha256').update(entrada, 'utf8').digest('hex');
     assert.equal(propio, nodejs, `difieren para "${entrada}"`);
