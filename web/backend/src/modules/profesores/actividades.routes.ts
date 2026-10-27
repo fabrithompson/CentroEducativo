@@ -161,6 +161,9 @@ router.get('/:id/submissions', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN
 
     res.json({
       exito: true,
+      // El formulario de calificación necesita el tope de la actividad: antes
+      // lo fijaba en 10 aunque la actividad valiera 20.
+      maxScore: activity.maxScore,
       entregas: rows.map((s) => ({
         id: s.id,
         estudiante: s.estudiante.nombre,
@@ -180,7 +183,7 @@ router.get('/:id/submissions', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN
 
 const gradeSchema = z.object({
   score: z.coerce.number().int().min(1).max(100),
-  feedback: z.string().optional(),
+  feedback: z.string().max(1000).optional(),
 });
 
 router.post('/submissions/:id/grade', requireAuth, requireRole(Role.DOCENTE, Role.ADMIN), async (req, res, next) => {
@@ -195,6 +198,9 @@ router.post('/submissions/:id/grade', requireAuth, requireRole(Role.DOCENTE, Rol
     if (!sub) throw HttpError.notFound('Entrega no encontrada.');
     if (me.role === Role.DOCENTE && sub.activity.docenteId !== me.id) {
       throw HttpError.forbidden('Solo el docente autor puede calificar.');
+    }
+    if (data.score > sub.activity.maxScore) {
+      throw HttpError.badRequest(`La nota no puede superar el puntaje máximo de la actividad (${sub.activity.maxScore}).`);
     }
 
     const updated = await prisma.submission.update({
