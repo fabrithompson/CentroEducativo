@@ -7,10 +7,15 @@ import cookieParser from 'cookie-parser';
 import path from 'node:path';
 
 import { env, TRUST_PROXY } from './config/env';
+import { registrarMensajesEnEspanol } from './config/zodEs';
 import { apiRouter } from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 export function createApp() {
+  // Los errores de validación llegan a la pantalla tal cual: en español y
+  // diciendo de qué campo se trata (ver config/zodEs.ts).
+  registrarMensajesEnEspanol();
+
   const app = express();
 
   // De esto depende que `req.ip` sea la IP de quien realmente hace el pedido y
