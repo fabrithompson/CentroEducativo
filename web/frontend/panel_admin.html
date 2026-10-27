@@ -69,12 +69,12 @@
                 </a>
                 <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none; margin: 0;">
                     <li><a href="index.html#inicio">Inicio</a></li>
-                    <li><button id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button></li>
+                    <li><button type="button" id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar a tema oscuro"><i class="fas fa-moon" aria-hidden="true"></i></button></li>
                     <li class="bell-container" id="bellContainer"></li>
                     <li class="user-menu">
-                        <a href="#" style="color: #8b5cf6; font-weight: 600;"><i class="fas fa-user-shield"></i> <span id="userNameDisplay">Admin</span> <i class="fas fa-chevron-down"></i></a>
+                        <a href="#" onclick="return false;" aria-haspopup="true" style="color: #7c3aed; font-weight: 600;"><i class="fas fa-user-shield" aria-hidden="true"></i> <span id="userNameDisplay">Admin</span> <i class="fas fa-chevron-down" aria-hidden="true"></i></a>
                         <div class="dropdown-content">
-                            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                            <a href="#" onclick="logout(); return false;"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar sesión</a>
                         </div>
                     </li>
                 </ul>
@@ -89,29 +89,30 @@
                 <span style="font-size: 0.78rem; color: #a5b4fc;">Panel de control institucional</span>
             </div>
             <ul class="sidebar-menu">
-                <li><a class="nav-link active" onclick="switchView('dashboard', this); cargarStats();"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a class="nav-link" onclick="switchView('m-alumnos', this); window.abrirAdminAlumnos();"><i class="fas fa-user-graduate"></i> Alumnos</a></li>
-                <li><a class="nav-link" onclick="switchView('m-profesores', this); window.abrirAdminProfesores();"><i class="fas fa-chalkboard-user"></i> Profesores</a></li>
-                <li><a class="nav-link" onclick="switchView('m-academico', this); window.abrirAdminAcademico();"><i class="fas fa-graduation-cap"></i> Niveles, cursos y materias</a></li>
-                <li><a class="nav-link" onclick="switchView('escaner', this); window.abrirEscaner();"><i class="fas fa-qrcode"></i> Escanear carnet</a></li>
-                <li><a class="nav-link" onclick="switchView('reportes', this); window.abrirReportes();"><i class="fas fa-chart-column"></i> Reportes</a></li>
-                <li><a class="nav-link" onclick="switchView('usuarios', this); cargarUsuarios();"><i class="fas fa-users"></i> Usuarios</a></li>
-                <li><a class="nav-link" onclick="switchView('docentes', this); cargarDocentesPendientes();"><i class="fas fa-user-clock"></i> Docentes pendientes <span id="badgePendientes" class="chat-list-unread" style="display:none;">0</span></a></li>
-                <li><a class="nav-link" onclick="switchView('inscripciones', this); cargarInscripciones();"><i class="fas fa-file-signature"></i> Inscripciones <span id="badgeInscripciones" class="chat-list-unread" style="display:none;">0</span></a></li>
-                <li><a class="nav-link" onclick="switchView('opiniones', this); cargarOpiniones();"><i class="fas fa-comment-dots"></i> Opiniones <span id="badgeOpiniones" class="chat-list-unread" style="display:none;">0</span></a></li>
-                <li><a class="nav-link" onclick="switchView('empleo', this); cargarPostulaciones();"><i class="fas fa-briefcase"></i> Postulaciones empleo <span id="badgeEmpleo" class="chat-list-unread" style="display:none;">0</span></a></li>
-                <li><a class="nav-link" onclick="switchView('vinculos', this); cargarLinks();"><i class="fas fa-link"></i> Vínculos Padre-Hijo</a></li>
-                <li><a class="nav-link" onclick="switchView('comprobantes', this); window.abrirComprobantes();"><i class="fas fa-receipt"></i> Comprobantes <span id="badgeComprobantes" class="chat-list-unread" style="display:none;">0</span></a></li>
-                <li><a class="nav-link" onclick="switchView('tareas', this); window.abrirTareas();"><i class="fas fa-clock"></i> Tareas programadas</a></li>
-                <li><a class="nav-link" onclick="switchView('cuotas', this); cargarCuotas();"><i class="fas fa-money-bill"></i> Cargar Cuota</a></li>
-                <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments"></i> Mensajes</a></li>
-                <li><a class="nav-link" onclick="switchView('anuncios', this); cargarAnuncios();"><i class="fas fa-bullhorn"></i> Anuncios</a></li>
+                <li><a class="nav-link active" onclick="switchView('dashboard', this); cargarStats();"><i class="fas fa-tachometer-alt" aria-hidden="true"></i> Dashboard</a></li>
+                <li><a class="nav-link" onclick="switchView('m-alumnos', this); window.abrirAdminAlumnos();"><i class="fas fa-user-graduate" aria-hidden="true"></i> Alumnos</a></li>
+                <li><a class="nav-link" onclick="switchView('m-profesores', this); window.abrirAdminProfesores();"><i class="fas fa-chalkboard-user" aria-hidden="true"></i> Profesores</a></li>
+                <li><a class="nav-link" onclick="switchView('m-academico', this); window.abrirAdminAcademico();"><i class="fas fa-graduation-cap" aria-hidden="true"></i> Niveles, cursos y materias</a></li>
+                <li><a class="nav-link" onclick="switchView('escaner', this); window.abrirEscaner();"><i class="fas fa-qrcode" aria-hidden="true"></i> Escanear carnet</a></li>
+                <li><a class="nav-link" onclick="switchView('reportes', this); window.abrirReportes();"><i class="fas fa-chart-column" aria-hidden="true"></i> Reportes</a></li>
+                <li><a class="nav-link" onclick="switchView('usuarios', this); cargarUsuarios();"><i class="fas fa-users" aria-hidden="true"></i> Usuarios</a></li>
+                <li><a class="nav-link" onclick="switchView('docentes', this); cargarDocentesPendientes();"><i class="fas fa-user-clock" aria-hidden="true"></i> Docentes pendientes <span id="badgePendientes" class="chat-list-unread" style="display:none;">0</span></a></li>
+                <li><a class="nav-link" onclick="switchView('inscripciones', this); cargarInscripciones();"><i class="fas fa-file-signature" aria-hidden="true"></i> Inscripciones <span id="badgeInscripciones" class="chat-list-unread" style="display:none;">0</span></a></li>
+                <li><a class="nav-link" onclick="switchView('opiniones', this); cargarOpiniones();"><i class="fas fa-comment-dots" aria-hidden="true"></i> Opiniones <span id="badgeOpiniones" class="chat-list-unread" style="display:none;">0</span></a></li>
+                <li><a class="nav-link" onclick="switchView('empleo', this); cargarPostulaciones();"><i class="fas fa-briefcase" aria-hidden="true"></i> Postulaciones de empleo <span id="badgeEmpleo" class="chat-list-unread" style="display:none;">0</span></a></li>
+                <li><a class="nav-link" onclick="switchView('consultas', this); cargarConsultas();"><i class="fas fa-envelope-open-text" aria-hidden="true"></i> Consultas de contacto <span id="badgeConsultas" class="chat-list-unread" style="display:none;">0</span></a></li>
+                <li><a class="nav-link" onclick="switchView('vinculos', this); cargarLinks();"><i class="fas fa-link" aria-hidden="true"></i> Vínculos familia-alumno</a></li>
+                <li><a class="nav-link" onclick="switchView('comprobantes', this); window.abrirComprobantes();"><i class="fas fa-receipt" aria-hidden="true"></i> Comprobantes <span id="badgeComprobantes" class="chat-list-unread" style="display:none;">0</span></a></li>
+                <li><a class="nav-link" onclick="switchView('tareas', this); window.abrirTareas();"><i class="fas fa-clock" aria-hidden="true"></i> Tareas programadas</a></li>
+                <li><a class="nav-link" onclick="switchView('cuotas', this); cargarCuotas();"><i class="fas fa-money-bill" aria-hidden="true"></i> Cuotas</a></li>
+                <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments" aria-hidden="true"></i> Mensajes</a></li>
+                <li><a class="nav-link" onclick="switchView('anuncios', this); cargarAnuncios();"><i class="fas fa-bullhorn" aria-hidden="true"></i> Anuncios</a></li>
             </ul>
         </aside>
 
         <main class="main-content" id="contenido-principal" tabindex="-1">
             <section id="dashboard" class="view-section active">
-                <h3 class="section-title">Dashboard institucional</h3>
+                <h2 class="section-title">Dashboard institucional</h2>
                 <div id="statsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;"></div>
             </section>
 
@@ -151,25 +152,25 @@
             </section>
 
             <section id="usuarios" class="view-section">
-                <h3 class="section-title">Gestión de Usuarios</h3>
+                <h2 class="section-title">Gestión de usuarios</h2>
 
                 <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
                     <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#8b5cf6;"></i> Crear nuevo usuario</summary>
                     <form onsubmit="crearUsuario(event)" style="margin-top: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
-                        <input type="text" id="newUsuario" placeholder="Usuario" required class="form-input">
-                        <input type="email" id="newEmail" placeholder="Email" required class="form-input">
-                        <input type="text" id="newDni" placeholder="DNI (7-8 dígitos)" required class="form-input">
-                        <input type="text" id="newNombre" placeholder="Nombre completo" required class="form-input">
-                        <select id="newRole" aria-label="Rol del nuevo usuario" required class="form-select">
+                        <input type="text" id="newUsuario" placeholder="Usuario" aria-label="Usuario" required minlength="3" maxlength="40" autocomplete="off" autocapitalize="none" spellcheck="false" class="form-input">
+                        <input type="email" id="newEmail" placeholder="Email" aria-label="Email" required maxlength="100" class="form-input">
+                        <input type="text" id="newDni" placeholder="DNI (7-8 dígitos)" aria-label="DNI" required pattern="[0-9]{7,8}" inputmode="numeric" maxlength="8" title="7 u 8 dígitos, sin puntos" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="form-input">
+                        <input type="text" id="newNombre" placeholder="Nombre completo" aria-label="Nombre completo" required maxlength="100" class="form-input">
+                        <select id="newRole" aria-label="Rol del nuevo usuario" required class="form-select" onchange="newUserToggleCurso()">
                             <option value="">Rol...</option>
                             <option value="ESTUDIANTE">Estudiante</option>
                             <option value="DOCENTE">Docente</option>
-                            <option value="PADRE">Padre</option>
-                            <option value="ADMIN">Admin</option>
+                            <option value="PADRE">Padre / Tutor</option>
+                            <option value="ADMIN">Administrador</option>
                         </select>
-                        <input type="text" id="newCurso" placeholder="Curso (solo estudiante)" class="form-input">
-                        <input type="password" id="newPassword" placeholder="Mínimo 8, con letras y números" required minlength="8" maxlength="72" class="form-input">
-                        <button type="submit" class="btn-action" style="grid-column: 1 / -1; justify-self: end;"><i class="fas fa-user-plus"></i> Crear</button>
+                        <select id="newCurso" aria-label="Curso del estudiante" class="form-select" hidden></select>
+                        <input type="password" id="newPassword" placeholder="Contraseña: mínimo 8, con letras y números" aria-label="Contraseña inicial" required minlength="8" maxlength="72" autocomplete="new-password" class="form-input">
+                        <button type="submit" class="btn-action" style="grid-column: 1 / -1; justify-self: end;"><i class="fas fa-user-plus" aria-hidden="true"></i> Crear usuario</button>
                     </form>
                 </details>
 
@@ -190,16 +191,16 @@
             </section>
 
             <section id="docentes" class="view-section">
-                <h3 class="section-title">Docentes pendientes de aprobación</h3>
+                <h2 class="section-title">Docentes pendientes de aprobación</h2>
                 <p style="color:#64748b; margin-bottom:14px;">Estos usuarios se registraron como docentes y necesitan tu autorización para poder iniciar sesión.</p>
                 <table class="data-table" id="tablaDocentesPend">
                     <thead><tr><th>ID</th><th>Nombre</th><th>Usuario</th><th>DNI</th><th>Email</th><th>Solicitado</th><th>Acciones</th></tr></thead>
-                    <tbody><tr><td colspan="8" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
+                    <tbody><tr><td colspan="7" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
                 </table>
             </section>
 
             <section id="inscripciones" class="view-section">
-                <h3 class="section-title">Solicitudes de inscripción</h3>
+                <h2 class="section-title">Solicitudes de inscripción</h2>
                 <div style="display:flex; gap:10px; margin-bottom:14px;">
                     <select id="filtroInsc" aria-label="Filtrar solicitudes de inscripción por estado" class="form-select" style="max-width:220px;" onchange="cargarInscripciones()">
                         <option value="PENDIENTE">Pendientes</option>
@@ -215,7 +216,7 @@
             </section>
 
             <section id="opiniones" class="view-section">
-                <h3 class="section-title">Moderación de opiniones</h3>
+                <h2 class="section-title">Moderación de opiniones</h2>
                 <div style="display:flex; gap:10px; margin-bottom:14px;">
                     <select id="filtroOp" aria-label="Filtrar opiniones por estado" class="form-select" style="max-width:220px;" onchange="cargarOpiniones()">
                         <option value="PENDIENTE">Pendientes</option>
@@ -231,7 +232,7 @@
             </section>
 
             <section id="empleo" class="view-section">
-                <h3 class="section-title">Postulaciones de empleo</h3>
+                <h2 class="section-title">Postulaciones de empleo</h2>
                 <div style="display:flex; gap:10px; margin-bottom:14px;">
                     <select id="filtroEmp" aria-label="Filtrar postulaciones por estado" class="form-select" style="max-width:220px;" onchange="cargarPostulaciones()">
                         <option value="PENDIENTE">Pendientes</option>
@@ -246,8 +247,21 @@
                 </table>
             </section>
 
+            <section id="consultas" class="view-section">
+                <h2 class="section-title">Consultas del formulario de contacto</h2>
+                <p style="color:#64748b; margin-bottom:14px;">Lo que escriben en "Envianos un mensaje" del sitio. Respondé por email y marcá la consulta como atendida.</p>
+                <div style="display:flex; gap:10px; margin-bottom:14px;">
+                    <select id="filtroConsultas" aria-label="Filtrar consultas por estado" class="form-select" style="max-width:220px;" onchange="cargarConsultas()">
+                        <option value="pendientes">Sin atender</option>
+                        <option value="atendidas">Atendidas</option>
+                        <option value="todas">Todas</option>
+                    </select>
+                </div>
+                <div id="listaConsultas"><p class="texto-vacio">Cargando...</p></div>
+            </section>
+
             <section id="vinculos" class="view-section">
-                <h3 class="section-title">Vínculos Padre-Hijo</h3>
+                <h2 class="section-title">Vínculos familia-alumno</h2>
 
                 <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
                     <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#8b5cf6;"></i> Crear vínculo</summary>
@@ -277,12 +291,13 @@
 
                 <table class="data-table" id="tablaVinculos">
                     <thead><tr><th>Tutor</th><th>DNI</th><th>Parentesco</th><th>Alumno</th><th>Legajo</th><th>Curso</th><th>Factura</th><th>Acciones</th></tr></thead>
-                    <tbody><tr><td colspan="7" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
+                    <tbody><tr><td colspan="8" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
                 </table>
             </section>
 
             <section id="cuotas" class="view-section">
-                <h3 class="section-title">Cargar nueva cuota</h3>
+                <h2 class="section-title">Cuotas</h2>
+                <h3 class="subtitulo">Cargar una cuota nueva</h3>
                 <form onsubmit="crearCuota(event)" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; max-width: 800px;">
                     <div>
                         <label style="font-size:0.85rem; font-weight:600;" for="cuotaEst">Estudiante</label>
@@ -306,31 +321,31 @@
                     <button type="submit" class="btn-action" id="cuotaGuardar" style="grid-column: 1 / -1; justify-self: end;"><i class="fas fa-money-check"></i> Cargar cuota</button>
                 </form>
 
-                <h4 style="color: #0f172a; font-size: 1.05rem; margin: 30px 0 4px;">Cuotas cargadas</h4>
-                <p style="margin: 0 0 6px; font-size: 0.85rem; color: #475569;">Las últimas 50, de la más reciente a la más antigua.</p>
+                <h3 class="subtitulo" style="margin-top: 30px;">Cuotas cargadas</h3>
+                <p style="margin: 0 0 6px; font-size: 0.85rem; color: #475569;">Las últimas 50, de la más reciente a la más antigua. Las familias pagan sólo por transferencia: cuando la transferencia se acredita, registrá el pago desde acá.</p>
                 <table class="data-table" id="tablaCuotas">
                     <caption class="sr-only">Cuotas cargadas, de la más reciente a la más antigua</caption>
-                    <thead><tr><th>Cargada</th><th>Alumno</th><th>Concepto</th><th>Monto</th><th>Vence</th><th>Estado</th><th>Tutor responsable</th></tr></thead>
-                    <tbody><tr><td colspan="7" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
+                    <thead><tr><th>Cargada</th><th>Alumno</th><th>Concepto</th><th>Monto</th><th>Vence</th><th>Estado</th><th>Tutor responsable</th><th>Acciones</th></tr></thead>
+                    <tbody><tr><td colspan="8" style="text-align:center; color:#64748b;">Cargando...</td></tr></tbody>
                 </table>
             </section>
 
             <section id="anuncios" class="view-section">
-                <h3 class="section-title">Anuncios publicados</h3>
+                <h2 class="section-title">Anuncios publicados</h2>
                 <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
                     <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-plus-circle" style="color:#8b5cf6;"></i> Publicar anuncio</summary>
                     <form onsubmit="crearAnuncio(event)" style="margin-top: 15px; display: grid; gap: 10px;">
-                        <input type="text" id="anuncioTitulo" placeholder="Título" required class="form-input">
-                        <textarea id="anuncioContenido" placeholder="Contenido..." rows="3" required class="form-input"></textarea>
+                        <input type="text" id="anuncioTitulo" placeholder="Título" aria-label="Título del anuncio" required maxlength="150" class="form-input">
+                        <textarea id="anuncioContenido" placeholder="Contenido..." aria-label="Contenido del anuncio" rows="3" required maxlength="5000" class="form-input"></textarea>
                         <div style="display:flex; gap:10px; align-items:center;">
                             <label for="anuncioTarget">Para:</label>
                             <select id="anuncioTarget" class="form-select" style="flex:1;">
                                 <option value="ALL">Toda la comunidad</option>
                                 <option value="ESTUDIANTE">Estudiantes</option>
                                 <option value="DOCENTE">Docentes</option>
-                                <option value="PADRE">Padres</option>
+                                <option value="PADRE">Familias</option>
                             </select>
-                            <button type="submit" class="btn-action"><i class="fas fa-paper-plane"></i> Publicar</button>
+                            <button type="submit" class="btn-action"><i class="fas fa-paper-plane" aria-hidden="true"></i> Publicar</button>
                         </div>
                     </form>
                 </details>
@@ -338,7 +353,7 @@
             </section>
 
             <section id="mensajes" class="view-section">
-                <h3 class="section-title">Mensajes</h3>
+                <h2 class="section-title">Mensajes</h2>
                 <div class="chat-wrapper">
                     <div class="chat-sidebar">
                         <div class="chat-sidebar-header">Conversaciones</div>
@@ -436,6 +451,8 @@
     <script src="campus.js"></script>
     <script>
         const ROLE_LABEL = { ESTUDIANTE: 'Estudiante', DOCENTE: 'Docente', PADRE: 'Padre', ADMIN: 'Admin' };
+        // Cómo se presentó quien dejó la opinión (select "¿Sos…?" del portal).
+        const ROL_OPINION = { padre: 'Padre/Madre', estudiante: 'Estudiante', exalumno: 'Ex alumno', otro: 'Otro' };
 
         document.addEventListener('DOMContentLoaded', async () => {
             // La cuenta de esta pestaña (ver js/sesion.js): otra pestaña puede
@@ -447,10 +464,6 @@
             refrescarBadgePendientes();
             window.initBell();
             window.connectSocket && window.connectSocket();
-            window.onIncomingMessage = function (m) {
-                if (currentChatId === m.from) openChat(m.from);
-                if (typeof cargarContactos === 'function') cargarContactos();
-            };
             window.restaurarVista();
         });
 
@@ -476,6 +489,7 @@
                 { seccion: 'inscripciones', contenedor: 'tablaInsc', recargar: cargarInscripciones },
                 { seccion: 'opiniones', contenedor: 'tablaOp', recargar: cargarOpiniones },
                 { seccion: 'empleo', contenedor: 'tablaEmp', recargar: cargarPostulaciones },
+                { seccion: 'consultas', contenedor: 'listaConsultas', recargar: cargarConsultas },
             ],
             cuotas: [
                 { seccion: 'cuotas', contenedor: 'tablaCuotas', recargar: () => cargarHistorialCuotas() },
@@ -640,24 +654,45 @@
             }
         }
 
+        // El curso del alta sale de la misma lista que la edición: antes era un
+        // campo de texto libre y cada quien lo escribía distinto.
+        function newUserToggleCurso() {
+            const sel = document.getElementById('newCurso');
+            if (!sel.options.length) {
+                sel.innerHTML = document.getElementById('editUserCurso').innerHTML;
+                sel.querySelectorAll('option[data-custom]').forEach(o => o.remove());
+            }
+            const esEstudiante = document.getElementById('newRole').value === 'ESTUDIANTE';
+            sel.hidden = !esEstudiante;
+            sel.required = esEstudiante;
+            if (!esEstudiante) sel.value = '';
+        }
+
         async function crearUsuario(e) {
             e.preventDefault();
+            const role = document.getElementById('newRole').value;
             const body = {
-                usuario: document.getElementById('newUsuario').value,
-                email: document.getElementById('newEmail').value,
-                dni: document.getElementById('newDni').value,
-                nombre: document.getElementById('newNombre').value,
-                role: document.getElementById('newRole').value,
-                curso: document.getElementById('newCurso').value || null,
+                usuario: document.getElementById('newUsuario').value.trim(),
+                email: document.getElementById('newEmail').value.trim(),
+                dni: document.getElementById('newDni').value.trim(),
+                nombre: document.getElementById('newNombre').value.trim(),
+                role,
+                curso: role === 'ESTUDIANTE' ? (document.getElementById('newCurso').value || null) : null,
                 password: document.getElementById('newPassword').value,
             };
-            const r = await window.apiPost('/api/admin/users', body);
-            if (r.exito) {
-                toastSuccess('Usuario creado: ' + r.usuario.usuario);
-                e.target.reset();
-                cargarUsuarios();
-            } else {
-                toastError(r.mensaje || 'No se pudo crear.');
+            const liberar = window.bloquearEnvio(e);
+            try {
+                const r = await window.apiPost('/api/admin/users', body);
+                if (r.exito) {
+                    toastSuccess('Usuario creado: ' + r.usuario.usuario);
+                    e.target.reset();
+                    newUserToggleCurso();
+                    cargarUsuarios();
+                } else {
+                    toastError(r.mensaje || 'No se pudo crear el usuario.');
+                }
+            } finally {
+                liberar();
             }
         }
 
@@ -714,13 +749,18 @@
                 role,
                 curso: role === 'ESTUDIANTE' ? (document.getElementById('editUserCurso').value || null) : null,
             };
-            const r = await window.apiPatch('/api/admin/users/' + id, body);
-            if (r.exito) {
-                toastSuccess('Usuario actualizado.');
-                cerrarEditarUsuario();
-                cargarUsuarios();
-            } else {
-                toastError(r.mensaje || 'No se pudo actualizar.');
+            const liberar = window.bloquearEnvio(e);
+            try {
+                const r = await window.apiPatch('/api/admin/users/' + id, body);
+                if (r.exito) {
+                    toastSuccess('Usuario actualizado.');
+                    cerrarEditarUsuario();
+                    cargarUsuarios();
+                } else {
+                    toastError(r.mensaje || 'No se pudo actualizar el usuario.');
+                }
+            } finally {
+                liberar();
             }
         }
 
@@ -784,7 +824,8 @@
                 setBadge('badgeInscripciones', p.inscripciones);
                 setBadge('badgeOpiniones', p.opiniones);
                 setBadge('badgeEmpleo', p.empleo);
-            } catch { /* ignore */ }
+                setBadge('badgeConsultas', p.contacto);
+            } catch { /* el contador es informativo: si falla, el panel sigue */ }
         }
 
         async function cargarDocentesPendientes() {
@@ -877,10 +918,10 @@
                     <td style="font-size:0.82rem;">${fmtFechaCorta(i.createdAt)}</td>
                     <td>
                         ${i.status === 'PENDIENTE' ? `
-                            <button class="btn-action" style="padding:6px 10px; font-size:0.8rem;" onclick="resolverInsc(${i.id}, 'approve')"><i class="fas fa-check"></i></button>
-                            <button class="btn-danger" onclick="resolverInsc(${i.id}, 'reject')"><i class="fas fa-times"></i></button>
+                            <button type="button" class="btn-action" style="padding:6px 10px; font-size:0.8rem;" title="Aprobar" aria-label="Aprobar la solicitud" onclick="resolverInsc(${i.id}, 'approve')"><i class="fas fa-check" aria-hidden="true"></i></button>
+                            <button type="button" class="btn-danger" title="Rechazar" aria-label="Rechazar" onclick="resolverInsc(${i.id}, 'reject')"><i class="fas fa-times" aria-hidden="true"></i></button>
                         ` : `
-                            <button class="btn-danger" onclick="borrarInsc(${i.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            <button type="button" class="btn-danger" onclick="borrarInsc(${i.id})" title="Eliminar" aria-label="Eliminar"><i class="fas fa-trash" aria-hidden="true"></i></button>
                         `}
                     </td>
                 </tr>
@@ -935,17 +976,17 @@
                 <tr>
                     <td>${o.id}</td>
                     <td>${window.escapeHtml(o.nombre || 'Anónimo')}</td>
-                    <td>${window.escapeHtml(o.rol)}</td>
+                    <td>${window.escapeHtml(ROL_OPINION[o.rol] || o.rol)}</td>
                     <td style="max-width:300px; font-size:0.88rem;">"${window.escapeHtml(o.texto)}"</td>
                     <td style="color:#f59e0b;">${'★'.repeat(o.rating)}${'☆'.repeat(5 - o.rating)}</td>
                     <td><span style="color:${STATUS_COLOR[o.status]}; font-weight:600;">${STATUS_LABEL[o.status]}</span></td>
                     <td style="font-size:0.82rem;">${fmtFechaCorta(o.createdAt)}</td>
                     <td>
                         ${o.status === 'PENDIENTE' ? `
-                            <button class="btn-action" style="padding:6px 10px; font-size:0.8rem;" onclick="resolverOp(${o.id}, 'approve')"><i class="fas fa-check"></i></button>
-                            <button class="btn-danger" onclick="resolverOp(${o.id}, 'reject')"><i class="fas fa-times"></i></button>
+                            <button type="button" class="btn-action" style="padding:6px 10px; font-size:0.8rem;" title="Aprobar" aria-label="Aprobar la opinión" onclick="resolverOp(${o.id}, 'approve')"><i class="fas fa-check" aria-hidden="true"></i></button>
+                            <button type="button" class="btn-danger" title="Rechazar" aria-label="Rechazar" onclick="resolverOp(${o.id}, 'reject')"><i class="fas fa-times" aria-hidden="true"></i></button>
                         ` : `
-                            <button class="btn-danger" onclick="borrarOp(${o.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            <button type="button" class="btn-danger" onclick="borrarOp(${o.id})" title="Eliminar" aria-label="Eliminar"><i class="fas fa-trash" aria-hidden="true"></i></button>
                         `}
                     </td>
                 </tr>
@@ -988,15 +1029,15 @@
                     <td><b>${window.escapeHtml(p.nombre)}</b></td>
                     <td>${window.escapeHtml(p.email)}</td>
                     <td>${window.escapeHtml(p.puesto)}</td>
-                    <td>${p.cvUrl ? `<a href="${p.cvUrl}" target="_blank" style="color:#8b5cf6; font-weight:600;"><i class="fas fa-file-pdf"></i> Ver CV</a>` : '<span style="color:#94a3b8;">Sin CV</span>'}</td>
+                    <td>${p.cvUrl ? `<a href="${window.escapeHtml(p.cvUrl)}" target="_blank" rel="noopener" style="color:#6d28d9; font-weight:600;"><i class="fas fa-file-pdf" aria-hidden="true"></i> Ver CV</a>` : '<span style="color:#94a3b8;">Sin CV</span>'}</td>
                     <td><span style="color:${STATUS_COLOR[p.status]}; font-weight:600;">${STATUS_LABEL[p.status]}</span></td>
                     <td style="font-size:0.82rem;">${fmtFechaCorta(p.createdAt)}</td>
                     <td>
                         ${p.status === 'PENDIENTE' ? `
-                            <button class="btn-action" style="padding:6px 10px; font-size:0.8rem;" onclick="resolverEmp(${p.id}, 'approve')"><i class="fas fa-check"></i></button>
-                            <button class="btn-danger" onclick="resolverEmp(${p.id}, 'reject')"><i class="fas fa-times"></i></button>
+                            <button type="button" class="btn-action" style="padding:6px 10px; font-size:0.8rem;" title="Aprobar" aria-label="Aprobar la postulación" onclick="resolverEmp(${p.id}, 'approve')"><i class="fas fa-check" aria-hidden="true"></i></button>
+                            <button type="button" class="btn-danger" title="Rechazar" aria-label="Rechazar" onclick="resolverEmp(${p.id}, 'reject')"><i class="fas fa-times" aria-hidden="true"></i></button>
                         ` : `
-                            <button class="btn-danger" onclick="borrarEmp(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            <button type="button" class="btn-danger" onclick="borrarEmp(${p.id})" title="Eliminar" aria-label="Eliminar"><i class="fas fa-trash" aria-hidden="true"></i></button>
                         `}
                     </td>
                 </tr>
@@ -1034,6 +1075,73 @@
         }
 
         /* ============================================================
+           CONSULTAS DEL FORMULARIO DE CONTACTO
+           ============================================================ */
+        let _consultas = [];
+
+        async function cargarConsultas() {
+            const cont = document.getElementById('listaConsultas');
+            const esc = window.escapeHtml;
+            const estado = document.getElementById('filtroConsultas').value;
+            const data = await window.apiGet('/api/admin/contact?estado=' + encodeURIComponent(estado));
+            if (!data.exito) {
+                cont.innerHTML = `<p class="texto-vacio">${esc(data.mensaje || 'No se pudieron cargar las consultas.')}</p>`;
+                return;
+            }
+            _consultas = data.consultas;
+            refrescarBadgePendientes();
+            if (_consultas.length === 0) {
+                cont.innerHTML = `<p class="texto-vacio">${estado === 'pendientes' ? 'No hay consultas sin atender.' : 'No hay consultas.'}</p>`;
+                return;
+            }
+            cont.innerHTML = _consultas.map(c => {
+                const asunto = encodeURIComponent('Respuesta a tu consulta — Transformar Para Educar');
+                return `
+                <article class="campus-card consulta${c.atendida ? ' consulta--atendida' : ''}">
+                    <h3 class="campus-card-title">${esc(c.nombre)}</h3>
+                    <div class="campus-card-meta">
+                        <span><i class="fas fa-envelope" aria-hidden="true"></i> ${esc(c.email)}</span>
+                        <span><i class="fas fa-clock" aria-hidden="true"></i> Recibida ${fmtFechaCorta(c.createdAt)}</span>
+                        ${c.atendida ? `<span class="badge badge--ok">Atendida ${c.atendidaAt ? fmtFechaCorta(c.atendidaAt) : ''}</span>` : '<span class="badge badge--espera">Sin atender</span>'}
+                    </div>
+                    <p class="campus-card-body consulta__mensaje">${esc(c.mensaje)}</p>
+                    <div class="acciones-fila">
+                        <a class="btn btn--chico btn--suave" href="mailto:${esc(c.email)}?subject=${asunto}"><i class="fas fa-reply" aria-hidden="true"></i> Responder por email</a>
+                        <button type="button" class="btn btn--chico ${c.atendida ? 'btn--suave' : 'btn--ok'}" onclick="atenderConsulta(${c.id}, ${!c.atendida})">
+                            <i class="fas ${c.atendida ? 'fa-rotate-left' : 'fa-check'}" aria-hidden="true"></i> ${c.atendida ? 'Volver a pendiente' : 'Marcar como atendida'}
+                        </button>
+                        <button type="button" class="btn btn--chico btn--peligro" onclick="borrarConsulta(${c.id})" aria-label="Eliminar la consulta de ${esc(c.nombre)}"><i class="fas fa-trash" aria-hidden="true"></i> Eliminar</button>
+                    </div>
+                </article>`;
+            }).join('');
+        }
+
+        async function atenderConsulta(id, atendida) {
+            const r = await window.apiPost('/api/admin/contact/' + id + '/atender', { atendida });
+            if (r.exito) {
+                toastSuccess(atendida ? 'Consulta marcada como atendida.' : 'La consulta volvió a pendientes.');
+                cargarConsultas();
+            } else {
+                toastError(r.mensaje || 'No se pudo actualizar la consulta.');
+            }
+        }
+
+        async function borrarConsulta(id) {
+            const c = _consultas.find(x => x.id === id);
+            const ok = await window.uxConfirm('Vas a eliminar esta consulta.', {
+                title: 'Eliminar consulta',
+                subtitle: c ? c.nombre + ' · ' + c.email : '',
+                danger: true,
+                okLabel: 'Eliminar',
+                consecuencias: ['Se borra el mensaje y los datos de contacto. No se puede deshacer.'],
+            });
+            if (!ok) return;
+            const r = await window.apiDelete('/api/admin/contact/' + id);
+            if (r.exito) { toastSuccess('Consulta eliminada.'); cargarConsultas(); }
+            else toastError(r.mensaje || 'No se pudo eliminar la consulta.');
+        }
+
+        /* ============================================================
            VINCULOS
            ============================================================ */
         async function cargarLinks() {
@@ -1063,20 +1171,25 @@
             const alumnoId = document.getElementById('vincEstudiante').value;
             if (!alumnoId) { toastError('Elegí un alumno.'); return; }
 
-            const r = await window.apiPost('/api/admin/links', {
-                tutorId: document.getElementById('vincPadre').value,
-                alumnoId: alumnoId,
-                parentesco: document.getElementById('vincParentesco').value.trim() || null,
-                esResponsableFacturacion: document.getElementById('vincFacturacion').value === 'true',
-            });
-            if (r.exito) {
-                toastSuccess(r.mensaje || 'Vínculo creado.');
-                document.getElementById('vincParentesco').value = '';
-                cargarLinks();
-            } else {
-                // El backend responde `message` cuando falla, y ahí viene el
-                // motivo real: tutor sin rol PADRE, vínculo ya existente, etc.
-                toastError(r.mensaje || r.message || 'No se pudo crear el vínculo.');
+            const liberar = window.bloquearEnvio(e);
+            try {
+                const r = await window.apiPost('/api/admin/links', {
+                    tutorId: document.getElementById('vincPadre').value,
+                    alumnoId: alumnoId,
+                    parentesco: document.getElementById('vincParentesco').value.trim() || null,
+                    esResponsableFacturacion: document.getElementById('vincFacturacion').value === 'true',
+                });
+                if (r.exito) {
+                    toastSuccess(r.mensaje || 'Vínculo creado.');
+                    document.getElementById('vincParentesco').value = '';
+                    cargarLinks();
+                } else {
+                    // apiPost ya copia a `mensaje` el motivo real que manda el
+                    // backend: tutor sin rol PADRE, vínculo ya existente, etc.
+                    toastError(r.mensaje || 'No se pudo crear el vínculo.');
+                }
+            } finally {
+                liberar();
             }
         }
 
@@ -1106,13 +1219,14 @@
             const tbody = document.querySelector('#tablaCuotas tbody');
             const data = await window.apiGet('/api/admin/payments?limit=50');
             if (!data.exito) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#dc2626;">No se pudo cargar el historial.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#dc2626;">No se pudo cargar el historial.</td></tr>';
                 return;
             }
             const esc = window.escapeHtml;
             const pesos = (n) => '$ ' + Number(n).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+            _cuotas = data.cuotas;
             tbody.innerHTML = data.cuotas.length === 0
-                ? '<tr><td colspan="7" style="text-align:center; color:#64748b;">Todavía no se cargó ninguna cuota.</td></tr>'
+                ? '<tr><td colspan="8" style="text-align:center; color:#64748b;">Todavía no se cargó ninguna cuota.</td></tr>'
                 : data.cuotas.map(c => {
                     const [texto, color] = ESTADO_CUOTA[c.status] || [c.status, '#334155'];
                     return `
@@ -1124,8 +1238,29 @@
                         <td>${window.formatFecha(c.vencimiento)}</td>
                         <td><span style="color:${color}; font-weight:600;">${texto}</span></td>
                         <td>${c.responsable ? esc(c.responsable.nombre) : '<span style="color:#64748b;">Sin tutor vinculado</span>'}</td>
+                        <td>${c.status === 'PAGADO' ? '—' : `<button type="button" class="btn-reactivar" onclick="registrarPagoCuota(${c.id})"><i class="fas fa-check" aria-hidden="true"></i> Registrar pago</button>`}</td>
                     </tr>`;
                 }).join('');
+        }
+
+        let _cuotas = [];
+
+        // La familia transfiere y avisa; administración confirma acá cuando ve
+        // la transferencia acreditada. Antes la familia podía marcar la cuota
+        // como pagada con un clic, sin transferir nada.
+        async function registrarPagoCuota(id) {
+            const c = _cuotas.find(x => x.id === id);
+            const ok = await window.uxConfirm('Confirmá que la transferencia de esta cuota ya está acreditada en la cuenta del colegio.', {
+                title: 'Registrar pago',
+                subtitle: c ? c.estudiante.nombre + ' · ' + c.concepto : '',
+                okLabel: 'Registrar pago',
+                variant: 'success',
+                consecuencias: ['La cuota pasa a "Pagada" y deja de figurar como deuda para la familia.'],
+            });
+            if (!ok) return;
+            const r = await window.apiPost('/api/payments/' + id + '/pay');
+            if (r.exito) { toastSuccess('Pago registrado.'); cargarHistorialCuotas(id); }
+            else toastError(r.mensaje || 'No se pudo registrar el pago.');
         }
 
         async function crearCuota(e) {
@@ -1194,9 +1329,14 @@
                 contenido: document.getElementById('anuncioContenido').value,
                 targetRole: document.getElementById('anuncioTarget').value,
             };
-            const r = await window.apiPost('/api/announcements', body);
-            if (r.exito) { toastSuccess('Anuncio publicado.'); e.target.reset(); cargarAnuncios(); }
-            else toastError(r.mensaje || 'No se pudo publicar el anuncio.');
+            const liberar = window.bloquearEnvio(e);
+            try {
+                const r = await window.apiPost('/api/announcements', body);
+                if (r.exito) { toastSuccess('Anuncio publicado.'); e.target.reset(); cargarAnuncios(); }
+                else toastError(r.mensaje || 'No se pudo publicar el anuncio.');
+            } finally {
+                liberar();
+            }
         }
 
         async function borrarAnuncio(id) {
@@ -1212,91 +1352,6 @@
             const r = await window.apiDelete('/api/announcements/' + id);
             if (r.exito) { toastSuccess('Anuncio borrado.'); cargarAnuncios(); }
             else toastError(r.mensaje || 'Error.');
-        }
-
-        /* ============================================================
-           MENSAJES (reusa la misma lógica que docente)
-           ============================================================ */
-        let currentChatId = null;
-
-        async function cargarContactos() {
-            const [hilos, contactos] = await Promise.all([
-                window.apiGet('/api/messages/threads'),
-                window.apiGet('/api/messages/contacts'),
-            ]);
-            const list = document.getElementById('chatList');
-            const conts = document.getElementById('chatContacts');
-            if (hilos.exito && hilos.hilos.length) {
-                list.innerHTML = hilos.hilos.map(h => `
-                    <li class="chat-list-item" onclick="openChat(${h.contactId})" data-id="${h.contactId}">
-                        <div class="chat-list-name">${window.escapeHtml(h.contactNombre)} ${h.noLeidos ? `<span class="chat-list-unread">${h.noLeidos}</span>` : ''}</div>
-                        <div class="chat-list-role">${ROLE_LABEL[h.contactRol]}</div>
-                        <div class="chat-list-last">${window.escapeHtml(h.ultimoMensaje)}</div>
-                    </li>
-                `).join('');
-            } else {
-                list.innerHTML = '<li class="bell-empty">Sin conversaciones</li>';
-            }
-            if (contactos.exito) {
-                conts.innerHTML = contactos.contactos.map(c => `
-                    <li class="chat-list-item" onclick="openChat(${c.id})">
-                        <div class="chat-list-name">${window.escapeHtml(c.nombre)}</div>
-                        <div class="chat-list-role">${ROLE_LABEL[c.role]}</div>
-                    </li>
-                `).join('');
-            }
-        }
-
-        async function openChat(contactId) {
-            currentChatId = contactId;
-            document.querySelectorAll('#chatList .chat-list-item').forEach(el => {
-                el.classList.toggle('active', el.dataset.id == contactId);
-            });
-            const main = document.getElementById('chatMain');
-            main.innerHTML = '<div class="chat-empty">Cargando...</div>';
-            const data = await window.apiGet('/api/messages/thread/' + contactId);
-            if (!data.exito) { main.innerHTML = '<div class="chat-empty">Error</div>'; return; }
-            const msgsHtml = data.mensajes.map(m => `
-                <div class="chat-bubble ${m.deMi ? 'chat-bubble-mine' : 'chat-bubble-other'}">
-                    ${window.escapeHtml(m.contenido)}
-                    <div class="chat-bubble-meta">${window.formatFechaHora(m.createdAt)}</div>
-                </div>
-            `).join('');
-            main.innerHTML = `
-                <div class="chat-main-header"><i class="fas fa-user"></i> ${window.escapeHtml(data.contacto.nombre)} <span style="font-size:0.8rem; color:#94a3b8; font-weight:normal;">(${ROLE_LABEL[data.contacto.role]})</span></div>
-                <div class="chat-messages" id="chatMessages">${msgsHtml || '<div class="chat-empty">Sin mensajes</div>'}</div>
-                <form class="chat-composer" onsubmit="enviarMensaje(event)">
-                    <textarea id="chatInput" rows="2" aria-label="Mensaje" placeholder="Escribí tu mensaje · Enter para enviar, Shift+Enter para otra línea" required></textarea>
-                    <button type="submit" aria-label="Enviar mensaje"><i class="fas fa-paper-plane" aria-hidden="true"></i></button>
-                </form>
-            `;
-            const mEl = document.getElementById('chatMessages');
-            mEl.scrollTop = mEl.scrollHeight;
-            window.refreshBell();
-        }
-
-        let enviandoMensaje = false;
-
-        async function enviarMensaje(e) {
-            e.preventDefault();
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            if (!text || !currentChatId || enviandoMensaje) return;
-            enviandoMensaje = true;
-            try {
-                const res = await window.apiPost('/api/messages', { receiverId: currentChatId, contenido: text });
-                if (res.exito) {
-                    input.value = '';
-                    await openChat(currentChatId);
-                    const nuevo = document.getElementById('chatInput');
-                    if (nuevo) nuevo.focus();
-                    cargarContactos();
-                } else {
-                    toastError(res.mensaje || 'No se pudo enviar.');
-                }
-            } finally {
-                enviandoMensaje = false;
-            }
         }
 
         function logout() {
@@ -1350,8 +1405,8 @@
 <script type="module">
   import { iniciarEscaner, detenerEscaner } from './js/vistas/escaner.js';
   window.abrirEscaner = () => iniciarEscaner('vista-escaner');
-  // Al cambiar de vista se libera la cámara: dejarla abierta consume batería
-  // y mantiene el indicador encendido.
+  // Al salir de la página se libera la cámara. Al cambiar de sección la
+  // apaga el propio módulo (escucha "vista-cambiada" de campus.js).
   window.addEventListener('beforeunload', detenerEscaner);
 </script>
 </body>

@@ -58,6 +58,11 @@ const DIAS = {
 
 export const dia = (d) => DIAS[d] ?? d ?? '—';
 
+const TURNOS = { MANANA: 'Mañana', TARDE: 'Tarde', JORNADA_COMPLETA: 'Jornada completa' };
+
+/** Turno del curso como lo lee la gente ("MANANA" → "Mañana"). */
+export const turno = (t) => TURNOS[t] ?? t ?? '—';
+
 /** Escapa HTML. Todo texto de origen externo pasa por acá antes de inyectarse. */
 export function esc(valor) {
   if (valor === null || valor === undefined) return '';

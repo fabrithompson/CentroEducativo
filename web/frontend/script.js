@@ -29,7 +29,10 @@ if (totalSlides > 0) {
     function showSlide(n) {
         cargarFondosDiferidos();
         slides.forEach(s => s.classList.remove('active'));
-        dots.forEach(d => d.classList.remove('active'));
+        dots.forEach(d => {
+            d.classList.remove('active');
+            d.removeAttribute('aria-current');
+        });
 
         slideIndex = n;
         if (slideIndex >= totalSlides) slideIndex = 0;
@@ -37,12 +40,15 @@ if (totalSlides > 0) {
 
         slides[slideIndex].classList.add('active');
         dots[slideIndex].classList.add('active');
+        dots[slideIndex].setAttribute('aria-current', 'true');
     }
 
     function moveSlide(n) {
         showSlide(slideIndex + n);
     }
 
+    // Se llama desde el onclick de los puntos del slider (index.html).
+    // eslint-disable-next-line no-unused-vars
     function currentSlide(n) {
         showSlide(n);
     }
@@ -50,22 +56,31 @@ if (totalSlides > 0) {
     setInterval(() => moveSlide(1), 5000);
 }
 
-// Menu Hamburguesa (Mobile)
+// Menú hamburguesa (teléfono)
+// Se abre con una clase y no con estilos inline: los inline sobrevivían al
+// agrandar la ventana y dejaban el menú de escritorio en columna, con fondo
+// blanco fijo que en modo oscuro escondía el texto (también blanco).
 const hamburger = document.querySelector('.hamburger');
 const navLinks = document.querySelector('.nav-links');
 
+function abrirMenu(abrir) {
+    if (!hamburger || !navLinks) return;
+    navLinks.classList.toggle('abierto', abrir);
+    hamburger.setAttribute('aria-expanded', String(abrir));
+    hamburger.setAttribute('aria-label', abrir ? 'Cerrar menú' : 'Abrir menú');
+}
+
 if (hamburger && navLinks) {
-    hamburger.addEventListener('click', () => {
-        navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
-        navLinks.style.flexDirection = 'column';
-        navLinks.style.position = 'absolute';
-        navLinks.style.top = '70px';
-        navLinks.style.left = '0';
-        navLinks.style.width = '100%';
-        navLinks.style.background = 'white';
-        navLinks.style.padding = '20px';
-        navLinks.style.boxShadow = '0 5px 10px rgba(0,0,0,0.1)';
-        navLinks.style.zIndex = '1000';
+    hamburger.addEventListener('click', () => abrirMenu(!navLinks.classList.contains('abierto')));
+    // Al elegir una sección el menú se cierra: si no, quedaba tapando la página.
+    navLinks.addEventListener('click', (e) => {
+        if (e.target.closest('a[href^="#"]:not(.dropbtn), .login-link a')) abrirMenu(false);
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && navLinks.classList.contains('abierto')) {
+            abrirMenu(false);
+            hamburger.focus();
+        }
     });
 }
 
@@ -75,8 +90,9 @@ function syncThemeToggleIcon() {
     if (!btn) return;
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     btn.innerHTML = isDark
-        ? '<i class="fas fa-sun"></i>'
-        : '<i class="fas fa-moon"></i>';
+        ? '<i class="fas fa-sun" aria-hidden="true"></i>'
+        : '<i class="fas fa-moon" aria-hidden="true"></i>';
+    btn.setAttribute('aria-label', isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
 }
 
 function toggleLandingTheme() {
@@ -164,6 +180,20 @@ function switchToLogin() {
     openLoginModal();
 }
 
+function openForgotModal() {
+    cerrarModal('loginModal', { devolverFoco: false });
+    abrirModal('forgotModal', '#forgot-email');
+}
+
+function closeForgotModal() {
+    cerrarModal('forgotModal');
+}
+
+function switchForgotToLogin() {
+    cerrarModal('forgotModal', { devolverFoco: false });
+    openLoginModal();
+}
+
 // Cerrar al tocar afuera, salvo que el clic haya empezado adentro: al
 // seleccionar texto de un campo es fácil soltar el mouse fuera del recuadro.
 window.addEventListener('mousedown', function (e) {
@@ -207,11 +237,11 @@ function updateRegisterFields() {
     
     // Si eligen "estudiante", mostramos el curso y lo hacemos obligatorio
     if (tipo === 'estudiante') {
-        cursoGroup.style.display = 'block';
+        cursoGroup.hidden = false;
         cursoInput.required = true;
     } else {
         // Para docentes o padres, lo volvemos a ocultar
-        cursoGroup.style.display = 'none';
+        cursoGroup.hidden = true;
         cursoInput.required = false;
         cursoInput.value = ''; // Limpiamos lo que haya escrito por error
     }
@@ -233,14 +263,9 @@ function checkUserStatus() {
     const userName = document.getElementById('userName');
 
     if (userMenu && loginLink && userName) {
-        if (user) {
-            userMenu.style.display = 'block';
-            loginLink.style.display = 'none';
-            userName.textContent = user.nombre.split(' ')[0];
-        } else {
-            userMenu.style.display = 'none';
-            loginLink.style.display = 'block';
-        }
+        userMenu.hidden = !user;
+        loginLink.hidden = Boolean(user);
+        if (user) userName.textContent = user.nombre.split(' ')[0];
     }
 }
 
@@ -288,80 +313,119 @@ function mensajeDeError(data, porDefecto) {
     return (data && (data.mensaje || data.message)) || porDefecto;
 }
 
-// Enviar formulario de Login al PHP
+/**
+ * Envía un formulario al backend con el botón deshabilitado mientras espera:
+ * antes un doble clic mandaba la misma inscripción o el mismo CV dos veces.
+ * Devuelve el JSON de la respuesta, o lanza si no hubo respuesta legible.
+ */
+async function enviarFormulario(form, url, opciones) {
+    const boton = form.querySelector('button[type="submit"]');
+    if (boton) boton.disabled = true;
+    form.setAttribute('aria-busy', 'true');
+    try {
+        const res = await fetch(url, opciones);
+        // Un 429 del limitador o un 502 del proxy no traen JSON: se informa
+        // el problema real en lugar de "Error al conectar con el servidor".
+        const tipo = res.headers.get('content-type') || '';
+        if (!tipo.includes('application/json')) {
+            return { exito: false, message: res.status === 429
+                ? 'Hiciste demasiados intentos seguidos. Esperá unos minutos y volvé a probar.'
+                : 'El servidor no respondió como se esperaba. Probá de nuevo en unos minutos.' };
+        }
+        return await res.json();
+    } finally {
+        if (boton) boton.disabled = false;
+        form.removeAttribute('aria-busy');
+    }
+}
+
+const enviarJson = (form, url, body) => enviarFormulario(form, url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+});
+
+// Formulario de ingreso
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
-    loginForm.addEventListener('submit', function (e) {
+    loginForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-
-        const usuario = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario: usuario, password: password })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.exito) {
-                    window.guardarSesion(data.usuario);
-                    closeModal();
-                    this.reset();
-                    showUserPanel();
-                } else {
-                    toastError(mensajeDeError(data, 'No se pudo iniciar sesión.'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                toastError('Error al conectar con el servidor.');
+        try {
+            const data = await enviarJson(loginForm, '/api/auth/login', {
+                usuario: document.getElementById('username').value.trim(),
+                password: document.getElementById('password').value,
             });
+            if (data.exito) {
+                window.guardarSesion(data.usuario);
+                closeModal();
+                loginForm.reset();
+                showUserPanel();
+            } else {
+                toastError(mensajeDeError(data, 'No se pudo iniciar sesión.'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            toastError('Error al conectar con el servidor.');
+        }
     });
 }
 
-// Enviar formulario de Registro al PHP
+// Recuperar contraseña: el servidor responde lo mismo exista o no la cuenta,
+// así que el aviso tampoco distingue.
+const forgotForm = document.getElementById('forgotForm');
+if (forgotForm) {
+    forgotForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        try {
+            const data = await enviarJson(forgotForm, '/api/auth/forgot-password', {
+                email: document.getElementById('forgot-email').value.trim(),
+            });
+            if (data.exito) {
+                toastSuccess(data.mensaje || 'Si el correo corresponde a una cuenta, te enviamos el enlace.', 8000);
+                forgotForm.reset();
+                closeForgotModal();
+            } else {
+                toastError(mensajeDeError(data, 'No se pudo enviar el enlace.'));
+            }
+        } catch {
+            toastError('Error al conectar con el servidor.');
+        }
+    });
+}
+
+// Formulario de registro
 const registerForm = document.getElementById('registerForm');
 if (registerForm) {
-    registerForm.addEventListener('submit', function (e) {
+    registerForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-
-        const datosRegistro = {
-            tipo: document.getElementById('reg-tipo').value,
-            nombre: document.getElementById('reg-nombre').value,
-            email: document.getElementById('reg-email').value,
-            usuario: document.getElementById('reg-usuario').value,
-            password: document.getElementById('reg-password').value,
-            dni: document.getElementById('reg-dni').value, 
-            curso: document.getElementById('reg-curso') ? document.getElementById('reg-curso').value : null
-        };
-
-        fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datosRegistro)
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.exito) {
-                    if (data.pendingApproval) {
-                        toastSuccess(data.mensaje || 'Cuenta de docente creada. Un administrador debe aprobarla antes del primer ingreso.');
-                        closeRegisterModal();
-                        this.reset();
-                    } else {
-                        toastSuccess('¡Registro exitoso! Ya puedes iniciar sesión.');
-                        closeRegisterModal();
-                        this.reset();
-                        openLoginModal();
-                    }
-                } else {
-                    toastError(mensajeDeError(data, 'No se pudo completar el registro.'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                toastError('Ocurrió un error al registrar en el servidor.');
+        const tipo = document.getElementById('reg-tipo').value;
+        try {
+            const data = await enviarJson(registerForm, '/api/auth/register', {
+                tipo,
+                nombre: document.getElementById('reg-nombre').value.trim(),
+                email: document.getElementById('reg-email').value.trim(),
+                usuario: document.getElementById('reg-usuario').value.trim(),
+                password: document.getElementById('reg-password').value,
+                dni: document.getElementById('reg-dni').value.trim(),
+                curso: tipo === 'estudiante' ? document.getElementById('reg-curso').value : null,
             });
+            if (!data.exito) {
+                toastError(mensajeDeError(data, 'No se pudo completar el registro.'));
+                return;
+            }
+            closeRegisterModal();
+            registerForm.reset();
+            updateRegisterFields();
+            if (data.pendingApproval) {
+                toastSuccess(data.mensaje || 'Cuenta de docente creada. Un administrador debe aprobarla antes del primer ingreso.', 7000);
+            } else {
+                toastSuccess('¡Registro exitoso! Ya podés iniciar sesión.');
+                openLoginModal();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            toastError('Ocurrió un error al registrar en el servidor.');
+        }
     });
 }
 
@@ -369,15 +433,41 @@ if (registerForm) {
 // 4. FORMULARIOS DE LA LANDING (toast feedback)
 // ==========================================
 
+// Noticias: "Leer más" despliega el resto de la nota en la misma tarjeta.
+document.querySelectorAll('.news-card .read-more').forEach((boton) => {
+    boton.addEventListener('click', () => {
+        const mas = document.getElementById(boton.getAttribute('aria-controls'));
+        if (!mas) return;
+        const abrir = mas.hidden;
+        mas.hidden = !abrir;
+        boton.setAttribute('aria-expanded', String(abrir));
+        boton.textContent = abrir ? 'Leer menos' : 'Leer más';
+    });
+});
+
+// El backend corta en 10 MB los CV (ver moderacion.routes.ts): se avisa
+// antes de subirlo, no después de esperar la subida entera.
+const CV_MAX_MB = 10;
+
 // Helper para el input de archivo del CV
 function updateFileName(input) {
     const el = document.getElementById('fileName');
     if (!el) return;
-    if (input.files && input.files.length > 0) {
-        el.textContent = input.files[0].name;
-    } else {
+    const archivo = input.files && input.files[0];
+    if (!archivo) {
         el.textContent = 'Seleccionar archivo';
+        return;
     }
+    const esPdf = archivo.type === 'application/pdf' || /\.pdf$/i.test(archivo.name);
+    if (!esPdf || archivo.size > CV_MAX_MB * 1024 * 1024) {
+        toastWarning(!esPdf
+            ? 'El CV tiene que ser un archivo PDF.'
+            : `El CV pesa más de ${CV_MAX_MB} MB. Probá con una versión más liviana.`);
+        input.value = '';
+        el.textContent = 'Seleccionar archivo';
+        return;
+    }
+    el.textContent = archivo.name;
 }
 
 
@@ -400,48 +490,41 @@ function actualizarCursosInscripcion() {
         return;
     }
     cursoSel.disabled = false;
-    cursoSel.insertAdjacentHTML('beforeend', '<option value="">Seleccionar curso...</option>');
-    opciones.forEach(c => {
-        cursoSel.insertAdjacentHTML('beforeend', `<option value="${c}">${c}</option>`);
-    });
+    cursoSel.add(new Option('Seleccionar curso...', ''));
+    opciones.forEach(c => cursoSel.add(new Option(c, c)));
 }
 
 const inscriptionForm = document.getElementById('inscriptionForm');
 if (inscriptionForm) {
-    inscriptionForm.addEventListener('submit', function (e) {
+    inscriptionForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-        const body = {
-            nombreTutor: document.getElementById('nombre').value.trim(),
-            emailTutor: document.getElementById('email').value.trim(),
-            telefonoTutor: document.getElementById('telefono').value.trim(),
-            nombreEstudiante: document.getElementById('nombre_estudiante').value.trim(),
-            nivel: document.getElementById('nivel').value,
-            curso: document.getElementById('curso').value,
-            mensaje: document.getElementById('mensaje').value.trim() || null,
-        };
-        fetch('/api/public/inscriptions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        })
-            .then(r => r.json())
-            .then(data => {
-                if (data.exito) {
-                    toastSuccess(data.mensaje || 'Solicitud enviada.');
-                    inscriptionForm.reset();
-                    actualizarCursosInscripcion();
-                } else {
-                    toastError(data.mensaje || 'No se pudo enviar la solicitud.');
-                }
-            })
-            .catch(() => toastError('Error al conectar con el servidor.'));
+        try {
+            const data = await enviarJson(inscriptionForm, '/api/public/inscriptions', {
+                nombreTutor: document.getElementById('nombre').value.trim(),
+                emailTutor: document.getElementById('email').value.trim(),
+                telefonoTutor: document.getElementById('telefono').value.trim(),
+                nombreEstudiante: document.getElementById('nombre_estudiante').value.trim(),
+                nivel: document.getElementById('nivel').value,
+                curso: document.getElementById('curso').value,
+                mensaje: document.getElementById('mensaje').value.trim() || null,
+            });
+            if (data.exito) {
+                toastSuccess(data.mensaje || 'Solicitud enviada.', 6000);
+                inscriptionForm.reset();
+                actualizarCursosInscripcion();
+            } else {
+                toastError(mensajeDeError(data, 'No se pudo enviar la solicitud.'));
+            }
+        } catch {
+            toastError('Error al conectar con el servidor.');
+        }
     });
 }
 
 // B) Postulación de Empleo (CV)
 const employmentForm = document.getElementById('employmentForm');
 if (employmentForm) {
-    employmentForm.addEventListener('submit', function (e) {
+    employmentForm.addEventListener('submit', async function (e) {
         e.preventDefault();
         const fd = new FormData();
         fd.append('nombre', document.getElementById('cv-nombre').value.trim());
@@ -449,260 +532,179 @@ if (employmentForm) {
         fd.append('puesto', document.getElementById('cv-puesto').value);
         const file = document.getElementById('cv-archivo').files[0];
         if (file) fd.append('cv', file);
-        fetch('/api/public/employment', { method: 'POST', body: fd })
-            .then(r => r.json())
-            .then(data => {
-                if (data.exito) {
-                    toastSuccess(data.mensaje || 'Postulación enviada.');
-                    employmentForm.reset();
-                    const fileNameEl = document.getElementById('fileName');
-                    if (fileNameEl) fileNameEl.textContent = 'Seleccionar archivo';
-                } else {
-                    toastError(data.mensaje || 'No se pudo enviar la postulación.');
-                }
-            })
-            .catch(() => toastError('Error al conectar con el servidor.'));
+        try {
+            const data = await enviarFormulario(employmentForm, '/api/public/employment', { method: 'POST', body: fd });
+            if (data.exito) {
+                toastSuccess(data.mensaje || 'Postulación enviada.', 6000);
+                employmentForm.reset();
+                updateFileName(document.getElementById('cv-archivo'));
+            } else {
+                toastError(mensajeDeError(data, 'No se pudo enviar la postulación.'));
+            }
+        } catch {
+            toastError('Error al conectar con el servidor.');
+        }
     });
 }
 
 // C) Opinión / Valoración
-let ratingValue = 0;
-document.querySelectorAll('.stars i').forEach(star => {
-    star.addEventListener('click', () => {
-        ratingValue = parseInt(star.dataset.value, 10);
-        document.querySelectorAll('.stars i').forEach(s => {
-            const v = parseInt(s.dataset.value, 10);
-            s.classList.toggle('fas', v <= ratingValue);
-            s.classList.toggle('far', v > ratingValue);
-            s.style.color = v <= ratingValue ? '#f59e0b' : '';
-        });
+// Las estrellas son radios nativos (ver index.html); acá sólo se pinta
+// cuántas quedan llenas, al elegir y al pasar el mouse.
+const radiosEstrellas = [...document.querySelectorAll('.stars input[name="rating"]')];
+
+function pintarEstrellas(hasta) {
+    radiosEstrellas.forEach((radio) => {
+        const icono = document.querySelector(`label[for="${radio.id}"] i`);
+        if (!icono) return;
+        const llena = Number(radio.value) <= hasta;
+        icono.classList.toggle('fas', llena);
+        icono.classList.toggle('far', !llena);
     });
+}
+
+function estrellasElegidas() {
+    const elegida = radiosEstrellas.find((r) => r.checked);
+    return elegida ? Number(elegida.value) : 0;
+}
+
+radiosEstrellas.forEach((radio) => {
+    radio.addEventListener('change', () => pintarEstrellas(estrellasElegidas()));
+    const label = document.querySelector(`label[for="${radio.id}"]`);
+    if (!label) return;
+    label.addEventListener('mouseenter', () => pintarEstrellas(Number(radio.value)));
+    label.addEventListener('mouseleave', () => pintarEstrellas(estrellasElegidas()));
 });
 
 const opinionForm = document.getElementById('opinionForm');
 if (opinionForm) {
-    opinionForm.addEventListener('submit', function (e) {
+    opinionForm.addEventListener('submit', async function (e) {
         e.preventDefault();
         const texto = document.getElementById('opinion-texto').value.trim();
-        const estrellas = ratingValue || 5;
+        const rating = estrellasElegidas();
         if (!texto) {
             toastWarning('Escribí tu opinión antes de enviar.');
             return;
         }
-        const body = {
-            nombre: document.getElementById('opinion-nombre').value.trim() || null,
-            rol: document.getElementById('opinion-rol').value,
-            texto,
-            rating: estrellas,
-        };
-        fetch('/api/public/opinions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        })
-            .then(r => r.json())
-            .then(data => {
-                if (data.exito) {
-                    toastSuccess(data.mensaje || '¡Gracias por compartir tu opinión!');
-                    opinionForm.reset();
-                    ratingValue = 0;
-                    document.querySelectorAll('.stars i').forEach(s => {
-                        s.classList.remove('fas');
-                        s.classList.add('far');
-                        s.style.color = '';
-                    });
-                } else {
-                    toastError(data.mensaje || 'No se pudo enviar la opinión.');
-                }
-            })
-            .catch(() => toastError('Error al conectar con el servidor.'));
+        if (!rating) {
+            toastWarning('Elegí cuántas estrellas le das.');
+            return;
+        }
+        try {
+            const data = await enviarJson(opinionForm, '/api/public/opinions', {
+                nombre: document.getElementById('opinion-nombre').value.trim() || null,
+                rol: document.getElementById('opinion-rol').value,
+                texto,
+                rating,
+            });
+            if (data.exito) {
+                toastSuccess(data.mensaje || '¡Gracias por compartir tu opinión!', 6000);
+                opinionForm.reset();
+                pintarEstrellas(0);
+            } else {
+                toastError(mensajeDeError(data, 'No se pudo enviar la opinión.'));
+            }
+        } catch {
+            toastError('Error al conectar con el servidor.');
+        }
     });
 }
 
-// Mostrar opiniones aprobadas en la landing
+// Mostrar opiniones aprobadas en la landing. Se arma con textContent: el
+// nombre y el texto los escribe cualquiera, sin cuenta.
 function renderOpinionesAprobadas() {
     const display = document.querySelector('.opiniones-display');
     if (!display) return;
+    const mostrarAviso = (texto) => {
+        display.querySelectorAll(':scope > :not(h3)').forEach((n) => n.remove());
+        const p = document.createElement('p');
+        p.className = 'opiniones-vacio';
+        p.textContent = texto;
+        display.appendChild(p);
+    };
     fetch('/api/public/opinions')
         .then(r => r.json())
         .then(data => {
-            if (!data.exito) return;
-            const titulo = display.querySelector('h3');
-            display.innerHTML = '';
-            if (titulo) display.appendChild(titulo);
-            else {
-                const h = document.createElement('h3');
-                h.textContent = 'Últimas opiniones';
-                display.appendChild(h);
-            }
-            if (data.opiniones.length === 0) {
-                const p = document.createElement('p');
-                p.className = 'opiniones-vacio';
-                p.textContent = 'Aún no hay opiniones publicadas.';
-                display.appendChild(p);
+            if (!data.exito) {
+                mostrarAviso('No se pudieron cargar las opiniones.');
                 return;
             }
+            if (data.opiniones.length === 0) {
+                mostrarAviso('Aún no hay opiniones publicadas.');
+                return;
+            }
+            display.querySelectorAll(':scope > :not(h3)').forEach((n) => n.remove());
             data.opiniones.forEach(o => {
                 const card = document.createElement('div');
                 card.className = 'opinion-card';
-                const nombre = o.nombre ? String(o.nombre) : 'Anónimo';
-                const safeNombre = nombre.replace(/[<>&"]/g, '');
-                const safeTexto = String(o.texto).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
-                card.innerHTML = `
-                    <div class="opinion-header">
-                        <span class="opinion-author">${safeNombre}</span>
-                        <span class="opinion-rating">${'★'.repeat(o.rating)}${'☆'.repeat(5 - o.rating)}</span>
-                    </div>
-                    <p>"${safeTexto}"</p>
-                `;
+                const cabecera = document.createElement('div');
+                cabecera.className = 'opinion-header';
+                const autor = document.createElement('span');
+                autor.className = 'opinion-author';
+                autor.textContent = o.nombre ? String(o.nombre) : 'Anónimo';
+                const estrellas = document.createElement('span');
+                estrellas.className = 'opinion-rating';
+                estrellas.setAttribute('aria-label', `${o.rating} de 5 estrellas`);
+                estrellas.textContent = '★'.repeat(o.rating) + '☆'.repeat(5 - o.rating);
+                cabecera.append(autor, estrellas);
+                const texto = document.createElement('p');
+                texto.textContent = `"${o.texto}"`;
+                card.append(cabecera, texto);
                 display.appendChild(card);
             });
         })
-        .catch(() => { /* silencioso */ });
+        .catch(() => mostrarAviso('No se pudieron cargar las opiniones.'));
 }
 document.addEventListener('DOMContentLoaded', renderOpinionesAprobadas);
 
 // D) Contacto
+// Antes mostraba "Mensaje enviado" sin mandar nada a ningún lado. Ahora la
+// consulta queda guardada y administración la ve en su panel.
 const contactForm = document.getElementById('contactForm');
 if (contactForm) {
-    contactForm.addEventListener('submit', function (e) {
+    contactForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-        toastSuccess('Mensaje enviado. Te responderemos dentro de las próximas 24 hs.');
-        this.reset();
-    });
-}
-
-// ==========================================
-// 5. MÓDULO DE CALIFICACIONES
-// ==========================================
-
-// A) Panel Docente: Guardar Nota
-const formCalificaciones = document.getElementById('formCalificaciones');
-if (formCalificaciones) {
-    formCalificaciones.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const token = sessionStorage.getItem('token');
-        const usuarioActual = window.usuarioSesion();
-
-        const datosNota = {
-            estudiante_id: document.getElementById('notaAlumno').value,
-            docente_id: usuarioActual.id,
-            materia: document.getElementById('notaMateria').value,
-            instancia_evaluacion: document.getElementById('notaInstancia').value,
-            nota: document.getElementById('notaValor').value,
-            fecha: new Date().toISOString().split('T')[0] // Saca la fecha de hoy automáticamente
-        };
-
-        fetch('/api/grades', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token // Candado de seguridad
-            },
-            body: JSON.stringify(datosNota)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.exito) {
-                toastSuccess('¡Nota guardada correctamente en la base de datos!');
-                formCalificaciones.reset();
+        try {
+            const data = await enviarJson(contactForm, '/api/public/contact', {
+                nombre: document.getElementById('contact-nombre').value.trim(),
+                email: document.getElementById('contact-email').value.trim(),
+                mensaje: document.getElementById('contact-mensaje').value.trim(),
+            });
+            if (data.exito) {
+                toastSuccess(data.mensaje || 'Recibimos tu mensaje. Te vamos a responder por email.', 6000);
+                contactForm.reset();
             } else {
-                toastError(data.mensaje || 'No se pudo guardar la nota.');
+                toastError(mensajeDeError(data, 'No se pudo enviar el mensaje.'));
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
+        } catch {
             toastError('Error al conectar con el servidor.');
-        });
+        }
     });
 }
-
-// B) Panel Estudiante/Padre: Leer Notas
-function renderizarBoletin() {
-    const token = sessionStorage.getItem('token');
-    const usuarioActual = window.usuarioSesion();
-    
-    if (!usuarioActual) return;
-    
-    const estudianteId = usuarioActual.id; 
-
-    fetch(`/api/grades?estudiante_id=${estudianteId}`, {
-        method: 'GET',
-        headers: { 
-            'Authorization': 'Bearer ' + token // Candado de seguridad
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if(data.exito) {
-            const tbody = document.querySelector('#tablaNotas tbody'); 
-            if (!tbody) return; // Si no hay tabla en esta página, no hace nada
-            
-            tbody.innerHTML = ''; 
-            
-            if(data.notas.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5">No hay calificaciones registradas.</td></tr>';
-            } else {
-                data.notas.forEach(nota => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${nota.materia}</td>
-                            <td>${nota.instancia_evaluacion}</td>
-                            <td>${nota.nota}</td>
-                            <td>${nota.fecha}</td>
-                            <td>${nota.nombre_docente}</td>
-                        </tr>
-                    `;
-                });
-            }
-        } else {
-            console.error('No se pudieron cargar las notas:', data.mensaje);
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
-
-// Hacemos que las notas se carguen solas si entramos a un panel con la tabla
-document.addEventListener('DOMContentLoaded', function () {
-    if (document.getElementById('tablaNotas')) {
-        renderizarBoletin();
-    }
-});
-
 
 // =========================================================
 // CIERRE DE SESIÓN AUTOMÁTICO POR INACTIVIDAD
 // =========================================================
 
+// 30 minutos sin actividad con una sesión abierta en esta pestaña.
+const INACTIVIDAD_MS = 30 * 60 * 1000;
 let temporizadorInactividad;
 
 function resetearTemporizador() {
-    // Limpiamos el contador anterior
     clearTimeout(temporizadorInactividad);
-    
-    // 30 minutos * 60 segundos * 1000 milisegundos = 1.800.000
-    temporizadorInactividad = setTimeout(cerrarSesionPorInactividad, 1800000);
+    temporizadorInactividad = setTimeout(cerrarSesionPorInactividad, INACTIVIDAD_MS);
 }
 
 function cerrarSesionPorInactividad() {
-    // Verificamos si el usuario realmente tiene una sesión iniciada
-    if (sessionStorage.getItem('token') || window.usuarioSesion()) {
-        if (typeof toastWarning === 'function') {
-            toastWarning('Tu sesión caducó por 30 minutos de inactividad. Por tu seguridad, vuelve a iniciar sesión.', 5000);
-        }
-
-        // Se cierra también en el servidor: si sólo se borraba lo local, la
-        // cookie de refresco seguía viva y la sesión se podía recuperar.
-        setTimeout(() => { window.cerrarSesion(); }, 2000);
-    }
+    if (!window.usuarioSesion()) return;
+    toastWarning('Tu sesión caducó por 30 minutos de inactividad. Por tu seguridad, volvé a iniciar sesión.', 5000);
+    // Se cierra también en el servidor: si sólo se borraba lo local, la
+    // cookie de refresco seguía viva y la sesión se podía recuperar.
+    setTimeout(() => { window.cerrarSesion(); }, 2000);
 }
 
-// Empezar a contar cuando la página carga
-window.onload = resetearTemporizador;
-
-// Reiniciar el contador si el usuario hace cualquier de estas acciones:
-document.onmousemove = resetearTemporizador; // Mover el mouse
-document.onkeypress = resetearTemporizador;  // Tocar una tecla
-document.onclick = resetearTemporizador;     // Hacer clic
-document.onscroll = resetearTemporizador;    // Bajar o subir la página
+// addEventListener y no `document.onclick = …`: asignar la propiedad pisaba
+// cualquier otro manejador que se registrara igual.
+['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach((evento) => {
+    document.addEventListener(evento, resetearTemporizador, { passive: true });
+});
+resetearTemporizador();

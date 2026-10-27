@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Tutor - Centro Educativo</title>
+    <title>Panel Familias — Transformar Para Educar</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="css/componentes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -48,13 +48,13 @@
                     <h1 style="margin:0; font-size: 1.3rem;">Transformar Para Educar</h1>
                 </a>
                 <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none;">
-                    <li><button id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar tema"><i class="fas fa-moon"></i></button></li>
-                    <li class="bell-container" id="bellContainer"></li>
                     <li><a href="index.html#inicio">Inicio</a></li>
+                    <li><button type="button" id="themeToggle" class="bell-button" onclick="window.toggleTheme()" aria-label="Cambiar a tema oscuro"><i class="fas fa-moon" aria-hidden="true"></i></button></li>
+                    <li class="bell-container" id="bellContainer"></li>
                     <li class="user-menu">
-                        <a href="#" style="color: #f39c12; font-weight: bold;"><i class="fas fa-users"></i> <span id="userNameDisplay">Tutor</span> <i class="fas fa-chevron-down"></i></a>
+                        <a href="#" onclick="return false;" aria-haspopup="true" style="color: #b45309; font-weight: bold;"><i class="fas fa-users" aria-hidden="true"></i> <span id="userNameDisplay">Tutor</span> <i class="fas fa-chevron-down" aria-hidden="true"></i></a>
                         <div class="dropdown-content">
-                            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                            <a href="#" onclick="logout(); return false;"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar sesión</a>
                         </div>
                     </li>
                 </ul>
@@ -65,33 +65,33 @@
     <div class="app-wrapper">
         <aside class="sidebar">
             <ul class="sidebar-menu">
-                <li><a class="nav-link active" onclick="switchView('boletin', this)"><i class="fas fa-file-invoice"></i> Boletín e Historial</a></li>
-                <li><a class="nav-link" onclick="switchView('mis-hijos', this); window.abrirMisHijos();"><i class="fas fa-children"></i> Ficha de mis hijos</a></li>
-                <li><a class="nav-link" onclick="switchView('materias', this)"><i class="fas fa-book-open"></i> Materias del Hijo</a></li>
-                <li><a class="nav-link" onclick="switchView('asistencias', this)"><i class="fas fa-clipboard-user"></i> Asistencias</a></li>
-                <li><a class="nav-link" onclick="switchView('finanzas', this); cargarPagos();"><i class="fas fa-file-invoice-dollar"></i> Estado de Cuenta</a></li>
-                <li><a class="nav-link" onclick="switchView('anuncios', this); cargarAnuncios();"><i class="fas fa-bullhorn"></i> Anuncios</a></li>
-                <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments"></i> Mensajes</a></li>
+                <li><a class="nav-link active" onclick="switchView('boletin', this)"><i class="fas fa-file-invoice" aria-hidden="true"></i> Boletín e historial</a></li>
+                <li><a class="nav-link" onclick="switchView('mis-hijos', this); window.abrirMisHijos();"><i class="fas fa-children" aria-hidden="true"></i> Ficha de mis hijos</a></li>
+                <li><a class="nav-link" onclick="switchView('materias', this)"><i class="fas fa-book-open" aria-hidden="true"></i> Materias</a></li>
+                <li><a class="nav-link" onclick="switchView('asistencias', this)"><i class="fas fa-clipboard-user" aria-hidden="true"></i> Asistencias</a></li>
+                <li><a class="nav-link" onclick="switchView('finanzas', this); cargarPagos();"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i> Cuotas</a></li>
+                <li><a class="nav-link" onclick="switchView('anuncios', this); cargarAnuncios();"><i class="fas fa-bullhorn" aria-hidden="true"></i> Anuncios</a></li>
+                <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments" aria-hidden="true"></i> Mensajes</a></li>
             </ul>
         </aside>
 
         <main class="main-content" id="contenido-principal" tabindex="-1">
             <!-- Barra superior común: selector de hijo + vincular -->
             <div style="margin-bottom: 20px; padding: 15px; background: #fff; border: 1px solid #d1d8e0; border-radius: 8px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-                <i class="fas fa-child" style="color:#f39c12; font-size:1.4rem;"></i>
+                <i class="fas fa-child" style="color:#b45309; font-size:1.4rem;" aria-hidden="true"></i>
                 <label style="font-weight: bold; margin: 0;" for="selectHijo">Alumno a cargo:</label>
-                <select id="selectHijo" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; min-width: 200px;" onchange="onHijoChange()">
+                <select id="selectHijo" class="form-select" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; min-width: 200px;" onchange="onHijoChange()">
                     <option value="">— Sin hijos vinculados —</option>
                 </select>
-                <small style="color:#5f7072;"><i class="fas fa-info-circle"></i> Los vínculos los registra la escuela. Si falta un hijo, avisá en secretaría.</small>
+                <small style="color:#5f7072;"><i class="fas fa-info-circle" aria-hidden="true"></i> Los vínculos los registra la escuela. Si falta un hijo, avisá en secretaría.</small>
             </div>
 
             <section id="boletin" class="view-section active">
-                <h3 class="section-title">Boletín e Historial Académico</h3>
+                <h2 class="section-title">Boletín e historial académico</h2>
 
                 <div id="boletinStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px;"></div>
 
-                <h4 style="color:#475569; font-size:1.05rem; margin: 18px 0 10px;">Notas por materia y trimestre</h4>
+                <h3 class="subtitulo" style="margin-top: 18px;">Notas por materia y trimestre</h3>
                 <table class="data-table" id="boletinAgrupado">
                     <thead>
                         <tr>
@@ -106,12 +106,12 @@
                     <tbody></tbody>
                 </table>
 
-                <h4 style="color:#475569; font-size:1.05rem; margin: 25px 0 10px;">Historial completo (todas las evaluaciones)</h4>
+                <h3 class="subtitulo" style="margin-top: 25px;">Historial completo (todas las evaluaciones)</h3>
                 <table class="data-table" id="boletinTutor">
                     <thead>
                         <tr>
                             <th>Materia</th>
-                            <th>Instancia de Evaluación</th>
+                            <th>Instancia de evaluación</th>
                             <th>Calificación</th>
                             <th>Fecha</th>
                             <th>Docente</th>
@@ -127,13 +127,13 @@
             </section>
 
             <section id="materias" class="view-section">
-                <h3 class="section-title">Materias que está cursando</h3>
+                <h2 class="section-title">Materias que está cursando</h2>
                 <p style="color:#64748b; margin-bottom:18px;">Resumen de cada asignatura, con cantidad de evaluaciones registradas y promedio actual.</p>
                 <div id="materiasGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;"></div>
             </section>
 
             <section id="asistencias" class="view-section">
-                <h3 class="section-title">Asistencias — Últimos 30 días</h3>
+                <h2 class="section-title">Asistencias</h2>
                 <div id="asistenciaStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px;"></div>
                 <table class="data-table" id="tablaAsistenciasPadre">
                     <thead>
@@ -149,23 +149,30 @@
             </section>
 
             <section id="finanzas" class="view-section">
-                <h3 class="section-title">Estado de Cuenta Arancelario</h3>
+                <h2 class="section-title">Cuotas cargadas por administración</h2>
+                <!-- El botón "Pagar" de cada fila marcaba la cuota como pagada con un
+                     clic, sin transferencia ni comprobante: contradecía la regla de
+                     que sólo se paga por transferencia con comprobante adjunto. -->
+                <p class="aviso-cupo"><i class="fas fa-building-columns" aria-hidden="true"></i>
+                    <span>El pago se hace <strong>únicamente por transferencia bancaria</strong>. Después de transferir, subí el comprobante desde
+                    <a href="#mis-hijos" onclick="window.irAVista('mis-hijos'); return false;">Ficha de mis hijos → Estado de cuenta</a>
+                    o envialo a administración por <a href="#mensajes" onclick="window.irAVista('mensajes'); return false;">Mensajes</a>. La cuota figura como pagada cuando administración confirma la transferencia.</span></p>
                 <div id="pagosStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px;"></div>
                 <table class="data-table" id="tablaPagos">
                     <thead>
-                        <tr><th>Alumno</th><th>Concepto</th><th>Vencimiento</th><th>Monto</th><th>Estado</th><th>Acción</th></tr>
+                        <tr><th>Alumno</th><th>Concepto</th><th>Vencimiento</th><th>Monto</th><th>Estado</th><th>Pagada el</th></tr>
                     </thead>
                     <tbody><tr><td colspan="6" style="text-align:center; color:#64748b;">Cargando cuotas...</td></tr></tbody>
                 </table>
             </section>
 
             <section id="anuncios" class="view-section">
-                <h3 class="section-title">Anuncios institucionales</h3>
+                <h2 class="section-title">Anuncios institucionales</h2>
                 <div id="listaAnunciosPadre"><p style="color:#94a3b8; text-align:center;">Cargando anuncios...</p></div>
             </section>
 
             <section id="mensajes" class="view-section">
-                <h3 class="section-title">Mensajes con docentes</h3>
+                <h2 class="section-title">Mensajes con docentes</h2>
                 <div class="chat-wrapper">
                     <div class="chat-sidebar">
                         <div class="chat-sidebar-header">Conversaciones</div>
@@ -196,10 +203,6 @@
             cargarHijos();
             window.initBell();
             window.connectSocket && window.connectSocket();
-            window.onIncomingMessage = function (m) {
-                if (currentChatId === m.from) openChat(m.from);
-                if (typeof cargarContactos === 'function') cargarContactos();
-            };
             window.restaurarVista();
         });
 
@@ -222,69 +225,57 @@
             window.recordarVista(viewId);
         }
 
-        function authHeaders() {
-            return {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + sessionStorage.getItem('token')
-            };
-        }
-
-        function cargarHijos() {
+        // Con window.apiGet: renueva la sesión si el token venció. Los fetch
+        // sueltos de antes dejaban de andar a los 15 minutos de abrir el panel.
+        async function cargarHijos() {
             const select = document.getElementById('selectHijo');
+            const esc = window.escapeHtml;
             // El boletín y las asistencias de este panel se piden por id de
             // usuario, mientras que /mis-hijos devuelve el alumno del dominio:
             // de ahí sale `alumno.user.id`. Un alumno sin cuenta todavía no
             // tiene boletín consultable, así que queda deshabilitado.
-            fetch('/api/padres/mis-hijos', { headers: authHeaders() })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.exito) {
-                        select.innerHTML = `<option value="">${data.mensaje || data.message || 'No se pudieron cargar tus hijos.'}</option>`;
-                        return;
-                    }
-                    if (!data.hijos || data.hijos.length === 0) {
-                        select.innerHTML = '<option value="">— Sin hijos vinculados —</option>';
-                        renderHijo(null);
-                        return;
-                    }
-                    select.innerHTML = '';
-                    data.hijos.forEach(v => {
-                        const a = v.alumno;
-                        const curso = a.curso ? `${a.curso.nombre} "${a.curso.division}"` : null;
-                        const nombre = `${a.apellido}, ${a.nombres}`;
-                        const label = curso ? `${nombre} (${curso})` : nombre;
-                        const uid = a.user ? a.user.id : '';
-                        select.innerHTML += `<option value="${uid}"${uid ? '' : ' disabled'}>${label}${uid ? '' : ' — sin cuenta'}</option>`;
-                    });
-                    onHijoChange();
-                })
-                .catch(err => {
-                    console.error(err);
-                    select.innerHTML = '<option value="">Error al cargar hijos.</option>';
-                });
+            try {
+                const data = await window.apiGet('/api/padres/mis-hijos');
+                if (!data.exito) {
+                    select.innerHTML = `<option value="">${esc(data.mensaje || 'No se pudieron cargar tus hijos.')}</option>`;
+                    return;
+                }
+                if (!data.hijos || data.hijos.length === 0) {
+                    select.innerHTML = '<option value="">— Sin hijos vinculados —</option>';
+                    renderHijo(null);
+                    return;
+                }
+                const elegido = select.value;
+                select.innerHTML = data.hijos.map(v => {
+                    const a = v.alumno;
+                    const curso = a.curso ? `${a.curso.nombre} "${a.curso.division}"` : null;
+                    const nombre = `${a.apellido}, ${a.nombres}`;
+                    const uid = a.user ? a.user.id : '';
+                    return `<option value="${uid}"${uid ? '' : ' disabled'}>${esc(curso ? `${nombre} (${curso})` : nombre)}${uid ? '' : ' — sin cuenta en el campus'}</option>`;
+                }).join('');
+                if (elegido && [...select.options].some(o => o.value === elegido)) select.value = elegido;
+                onHijoChange();
+            } catch (err) {
+                console.error(err);
+                select.innerHTML = '<option value="">Error al cargar hijos.</option>';
+            }
         }
 
-        function onHijoChange() {
+        async function onHijoChange() {
             const hijoId = document.getElementById('selectHijo').value;
             if (!hijoId) {
                 renderHijo(null);
                 return;
             }
-            fetch(`/api/grades?estudiante_id=${hijoId}`, { headers: authHeaders() })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.exito) {
-                        toastError(data.mensaje || 'No se pudo cargar la información.');
-                        renderHijo({ notas: [] }, hijoId);
-                        return;
-                    }
-                    renderHijo({ notas: data.notas || [] }, hijoId);
-                })
-                .catch(err => {
-                    console.error(err);
-                    toastError('Error al conectar con el servidor.');
-                    renderHijo({ notas: [] }, hijoId);
-                });
+            try {
+                const data = await window.apiGet('/api/grades?estudiante_id=' + hijoId);
+                if (!data.exito) toastError(data.mensaje || 'No se pudo cargar la información.');
+                renderHijo({ notas: (data.exito && data.notas) || [] }, hijoId);
+            } catch (err) {
+                console.error(err);
+                toastError('Error al conectar con el servidor.');
+                renderHijo({ notas: [] }, hijoId);
+            }
         }
 
         function renderHijo(payload, hijoId) {
@@ -436,7 +427,7 @@
             }
             const data = await window.apiGet('/api/attendance?estudiante_id=' + hijoId);
             if (!data.exito) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#c0392b;">${data.mensaje || 'Error'}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#b91c1c;">${window.escapeHtml(data.mensaje || 'No se pudieron cargar las asistencias.')}</td></tr>`;
                 return;
             }
             const rows = data.asistencias || [];
@@ -477,7 +468,7 @@
             const stats = document.getElementById('pagosStats');
             const tbody = document.querySelector('#tablaPagos tbody');
             const data = await window.apiGet('/api/payments');
-            if (!data.exito) { tbody.innerHTML = `<tr><td colspan="6">${data.mensaje}</td></tr>`; return; }
+            if (!data.exito) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#b91c1c;">${window.escapeHtml(data.mensaje || 'No se pudieron cargar las cuotas.')}</td></tr>`; return; }
             const t = data.totales;
             const fmt = (n) => '$ ' + Math.round(n).toLocaleString('es-AR');
             stats.innerHTML = `
@@ -490,21 +481,8 @@
                 ? '<tr><td colspan="6" style="text-align:center; color:#64748b;">No hay cuotas registradas.</td></tr>'
                 : data.pagos.map(p => {
                     const c = STATUS_PAGO_COLOR[p.status];
-                    const accion = p.status === 'PAGADO'
-                        ? `<a href="#" onclick="event.preventDefault(); toastInfo('Comprobante descargado.');" style="color:#3498db;"><i class="fas fa-file-download"></i> Recibo</a>`
-                        : `<button onclick="pagarCuota(${p.id})" style="background:${p.status === 'VENCIDO' ? '#ef4444' : '#3498db'}; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-weight:600; font-size:0.85rem;"><i class="fas fa-credit-card"></i> Pagar</button>`;
-                    return `<tr><td>${window.escapeHtml(p.estudiante)}</td><td>${window.escapeHtml(p.concepto)}</td><td>${window.formatFecha(p.vencimiento)}</td><td>${fmt(p.monto)}</td><td><span style="background:${c.bg}; color:${c.fg}; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">${c.label}</span></td><td>${accion}</td></tr>`;
+                    return `<tr><td>${window.escapeHtml(p.estudiante)}</td><td>${window.escapeHtml(p.concepto)}</td><td>${window.formatFecha(p.vencimiento)}</td><td>${fmt(p.monto)}</td><td><span style="background:${c.bg}; color:${c.fg}; padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:600;">${c.label}</span></td><td>${p.pagadoEn ? window.formatFecha(p.pagadoEn) : '—'}</td></tr>`;
                 }).join('');
-        }
-
-        async function pagarCuota(id) {
-            const res = await window.apiPost('/api/payments/' + id + '/pay');
-            if (res.exito) {
-                toastSuccess('Pago registrado correctamente.');
-                cargarPagos();
-            } else {
-                toastError(res.mensaje || 'No se pudo procesar el pago.');
-            }
         }
 
         /* ============================================================
@@ -527,92 +505,6 @@
                     <div class="campus-card-body">${window.escapeHtml(a.contenido)}</div>
                 </div>
             `).join('');
-        }
-
-        /* ============================================================
-           MENSAJES
-           ============================================================ */
-        let currentChatId = null;
-        const ROLE_LABEL = { ESTUDIANTE: 'Estudiante', DOCENTE: 'Docente', PADRE: 'Padre', ADMIN: 'Admin' };
-
-        async function cargarContactos() {
-            const [hilos, contactos] = await Promise.all([
-                window.apiGet('/api/messages/threads'),
-                window.apiGet('/api/messages/contacts'),
-            ]);
-            const list = document.getElementById('chatList');
-            const conts = document.getElementById('chatContacts');
-            if (hilos.exito && hilos.hilos.length) {
-                list.innerHTML = hilos.hilos.map(h => `
-                    <li class="chat-list-item" onclick="openChat(${h.contactId})" data-id="${h.contactId}">
-                        <div class="chat-list-name">${window.escapeHtml(h.contactNombre)} ${h.noLeidos ? `<span class="chat-list-unread">${h.noLeidos}</span>` : ''}</div>
-                        <div class="chat-list-role">${ROLE_LABEL[h.contactRol]}</div>
-                        <div class="chat-list-last">${window.escapeHtml(h.ultimoMensaje)}</div>
-                    </li>
-                `).join('');
-            } else {
-                list.innerHTML = '<li class="bell-empty">Sin conversaciones</li>';
-            }
-            if (contactos.exito) {
-                conts.innerHTML = contactos.contactos.map(c => `
-                    <li class="chat-list-item" onclick="openChat(${c.id})">
-                        <div class="chat-list-name">${window.escapeHtml(c.nombre)}</div>
-                        <div class="chat-list-role">${ROLE_LABEL[c.role]}</div>
-                    </li>
-                `).join('');
-            }
-        }
-
-        async function openChat(contactId) {
-            currentChatId = contactId;
-            document.querySelectorAll('#chatList .chat-list-item').forEach(el => {
-                el.classList.toggle('active', el.dataset.id == contactId);
-            });
-            const main = document.getElementById('chatMain');
-            main.innerHTML = '<div class="chat-empty">Cargando...</div>';
-            const data = await window.apiGet('/api/messages/thread/' + contactId);
-            if (!data.exito) { main.innerHTML = '<div class="chat-empty">Error</div>'; return; }
-            const msgsHtml = data.mensajes.map(m => `
-                <div class="chat-bubble ${m.deMi ? 'chat-bubble-mine' : 'chat-bubble-other'}">
-                    ${window.escapeHtml(m.contenido)}
-                    <div class="chat-bubble-meta">${window.formatFechaHora(m.createdAt)}</div>
-                </div>
-            `).join('');
-            main.innerHTML = `
-                <div class="chat-main-header"><i class="fas fa-user"></i> ${window.escapeHtml(data.contacto.nombre)} <span style="font-size:0.8rem; color:#94a3b8; font-weight:normal;">(${ROLE_LABEL[data.contacto.role]})</span></div>
-                <div class="chat-messages" id="chatMessages">${msgsHtml || '<div class="chat-empty">Sin mensajes — escribí el primero</div>'}</div>
-                <form class="chat-composer" onsubmit="enviarMensaje(event)">
-                    <textarea id="chatInput" rows="2" aria-label="Mensaje" placeholder="Escribí tu mensaje · Enter para enviar, Shift+Enter para otra línea" required></textarea>
-                    <button type="submit" aria-label="Enviar mensaje"><i class="fas fa-paper-plane" aria-hidden="true"></i></button>
-                </form>
-            `;
-            const mEl = document.getElementById('chatMessages');
-            mEl.scrollTop = mEl.scrollHeight;
-            window.refreshBell();
-        }
-
-        let enviandoMensaje = false;
-
-        async function enviarMensaje(e) {
-            e.preventDefault();
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            if (!text || !currentChatId || enviandoMensaje) return;
-            enviandoMensaje = true;
-            try {
-                const res = await window.apiPost('/api/messages', { receiverId: currentChatId, contenido: text });
-                if (res.exito) {
-                    input.value = '';
-                    await openChat(currentChatId);
-                    const nuevo = document.getElementById('chatInput');
-                    if (nuevo) nuevo.focus();
-                    cargarContactos();
-                } else {
-                    toastError(res.mensaje || 'No se pudo enviar.');
-                }
-            } finally {
-                enviandoMensaje = false;
-            }
         }
 
         function logout() { window.cerrarSesion(); }

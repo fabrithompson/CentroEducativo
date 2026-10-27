@@ -19,7 +19,10 @@ export const colores = {
   textoSuave: '#5a6775',
   textoInverso: '#ffffff',
 
-  ok: '#1b7f4f',
+  // El mismo verde que la web (componentes.css). El anterior, #1b7f4f, daba
+  // 4.43:1 sobre `okFondo`: por debajo del 4.5:1 que pide WCAG AA para el
+  // texto del estado "Pagada".
+  ok: '#187248',
   okFondo: '#e4f5ec',
   espera: '#8a5a00',
   esperaFondo: '#fdf3e0',

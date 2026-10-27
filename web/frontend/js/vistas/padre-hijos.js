@@ -26,6 +26,7 @@ import {
   render,
   tabla,
   textosDialogo,
+  turno,
   avisar,
 } from '../ui.js';
 
@@ -67,7 +68,7 @@ async function seccionFicha(alumnoId) {
         <div><dt>Nacimiento</dt><dd>${fecha(alumno.fechaNacimiento)}</dd></div>
         <div><dt>Nivel</dt><dd>${esc(alumno.curso?.nivel?.nombre ?? '—')}</dd></div>
         <div><dt>Curso</dt><dd>${esc(alumno.curso?.nombre ?? '—')} "${esc(alumno.curso?.division ?? '')}"</dd></div>
-        <div><dt>Turno</dt><dd>${esc(alumno.curso?.turno ?? '—')}</dd></div>
+        <div><dt>Turno</dt><dd>${esc(turno(alumno.curso?.turno))}</dd></div>
         <div><dt>Domicilio</dt><dd>${esc(alumno.domicilio)}, ${esc(alumno.localidad)}</dd></div>
         <div><dt>Teléfono</dt><dd>${esc(alumno.telefono ?? '—')}</dd></div>
         <div><dt>Estado</dt><dd>${badge(alumno.estado)}</dd></div>

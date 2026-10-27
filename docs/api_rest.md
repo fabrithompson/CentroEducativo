@@ -406,6 +406,26 @@ Criterios que hay que conocer para leer bien los números:
 | DELETE | `/api/grades/:id` | **Nuevo.** Mismos permisos |
 | POST | `/api/accesos/escanear` | Además de `qr`, acepta `legajo` y `codigo` para la entrada manual; el registro de auditoría la marca como tal |
 
+### 4.9 bis QA de cierre (27/10/2026)
+
+| Método | Ruta | Qué cambió |
+|---|---|---|
+| POST | `/api/public/contact` | **Nuevo.** Guarda la consulta de "Envianos un mensaje" (`nombre`, `email`, `mensaje`) en `ConsultaContacto`. Antes el formulario respondía "Mensaje enviado" sin mandar nada |
+| GET | `/api/admin/contact?estado=pendientes\|atendidas\|todas` | **Nuevo.** Consultas para el panel de administración |
+| POST | `/api/admin/contact/:id/atender` | **Nuevo.** `{ atendida }` marca o desmarca la consulta como atendida |
+| DELETE | `/api/admin/contact/:id` | **Nuevo** |
+| GET | `/api/admin/moderation/counts` | Suma `contacto`: consultas sin atender |
+| POST | `/api/public/inscriptions`, `opinions`, `employment`, `contact` | Diez envíos por hora y por IP en cada formulario. El CV de empleo tiene que ser PDF y pesar hasta 10 MB |
+| POST | `/api/payments/:id/pay` | **Sólo administración**, al confirmar la transferencia acreditada. Antes una familia marcaba su cuota como pagada con un clic, sin transferir; ahora recibe 403 con la indicación de pagar por transferencia |
+| GET | `/api/students/mi-cursado` | **Nuevo.** Para el estudiante: su curso, las materias con docente y carga horaria, y los deportes inscriptos con sus horarios. Reemplaza la grilla fija del panel |
+| GET | `/api/activities/:id/submissions` | Responde `maxScore` de la actividad |
+| POST | `/api/activities/submissions/:id/grade` | Rechaza una nota mayor al puntaje máximo de la actividad |
+
+Además, en todas las rutas: los errores de validación llegan **en español y con el
+nombre del campo** ("DNI: tiene que tener al menos 7 caracteres.", ver
+`config/zodEs.ts`); un registro duplicado de Prisma responde 409 y uno inexistente
+404 en lugar de 500; un archivo que supera el tope responde 413.
+
 ### 4.10 Tiempo real
 
 Toda escritura que termina bien (`status < 400`) publica un evento `cambio` por

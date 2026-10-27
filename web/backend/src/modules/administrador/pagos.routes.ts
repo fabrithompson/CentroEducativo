@@ -5,7 +5,7 @@ import { PaymentStatus, Role } from '@prisma/client';
 import { prisma } from '../../db/prisma';
 import { HttpError } from '../../utils/httpError';
 import { requireAuth, requireRole } from '../../middleware/auth';
-import { esHijoDelTutor, usuariosDeLosHijos } from '../shared/authz';
+import { usuariosDeLosHijos } from '../shared/authz';
 
 const router = Router();
 
@@ -63,17 +63,30 @@ router.get('/', requireAuth, requireRole(Role.PADRE, Role.ADMIN), async (req, re
 
 const paySchema = z.object({ id: z.coerce.number().int().positive() });
 
-router.post('/:id/pay', requireAuth, requireRole(Role.PADRE, Role.ADMIN), async (req, res, next) => {
+/**
+ * Registra que una cuota se cobró. Sólo administración, y sólo después de ver
+ * acreditada la transferencia.
+ *
+ * Antes la familia también podía llamarlo: el botón "Pagar" del panel marcaba
+ * la cuota como pagada con un clic, sin transferencia ni comprobante. Eso
+ * violaba la regla de negocio de la consigna —no se acepta efectivo, sólo
+ * transferencia con comprobante adjunto—, y además dejaba que cualquier
+ * familia "saldara" su deuda sin pagar.
+ */
+router.post('/:id/pay', requireAuth, (req, _res, next) => {
+  if (req.authUser?.role === Role.PADRE) {
+    next(HttpError.forbidden(
+      'Las cuotas se pagan únicamente por transferencia bancaria. Enviá el comprobante a administración: el pago se registra cuando se acredita.',
+    ));
+    return;
+  }
+  next();
+}, requireRole(Role.ADMIN), async (req, res, next) => {
   try {
     const { id } = paySchema.parse(req.params);
-    const me = req.authUser!;
 
     const payment = await prisma.payment.findUnique({ where: { id } });
     if (!payment) throw HttpError.notFound('Cuota no encontrada.');
-
-    if (me.role === Role.PADRE && !(await esHijoDelTutor(prisma, me.id, payment.estudianteId))) {
-      throw HttpError.forbidden('No podés pagar la cuota de un alumno no vinculado.');
-    }
 
     if (payment.status === PaymentStatus.PAGADO) {
       throw HttpError.conflict('La cuota ya fue pagada.');
@@ -81,11 +94,7 @@ router.post('/:id/pay', requireAuth, requireRole(Role.PADRE, Role.ADMIN), async 
 
     const updated = await prisma.payment.update({
       where: { id },
-      data: {
-        status: PaymentStatus.PAGADO,
-        pagadoEn: new Date(),
-        padreId: me.role === Role.PADRE ? me.id : payment.padreId,
-      },
+      data: { status: PaymentStatus.PAGADO, pagadoEn: new Date() },
     });
 
     await prisma.notification.create({

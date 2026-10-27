@@ -76,6 +76,20 @@ export function PantallaPago({ factura, onListo, onCancelar }: Props) {
   const monto = useMemo(() => calcularMonto(items), [items]);
   const todosMarcados = items.every((i) => i.seleccionado);
 
+  // Si ya cargó datos o adjuntó el comprobante, "Cancelar" pregunta antes de
+  // tirarlos: volver a sacar la foto del comprobante es lo más molesto del flujo.
+  function cancelar() {
+    const hayDatos = Boolean(archivo || bancoOrigen.trim() || numeroOperacion.trim());
+    if (!hayDatos) {
+      onCancelar();
+      return;
+    }
+    Alert.alert('Descartar el comprobante', 'Se pierden los datos que cargaste. ¿Querés salir igual?', [
+      { text: 'Seguir cargando', style: 'cancel' },
+      { text: 'Descartar', style: 'destructive', onPress: onCancelar },
+    ]);
+  }
+
   async function copiar(texto: string, queCosa: string) {
     await Clipboard.setStringAsync(texto);
     Alert.alert('Copiado', `${queCosa} copiado al portapapeles.`);
@@ -311,12 +325,15 @@ export function PantallaPago({ factura, onListo, onCancelar }: Props) {
         <Tarjeta>
           <Text style={estilos.tituloSeccion}>3. Cargá el comprobante</Text>
 
+          {/* Los topes son los del backend (facturacion.routes.ts). */}
           <Campo
             etiqueta="Fecha de la transferencia"
             valor={fechaTransferencia}
             onChange={setFecha}
             placeholder="AAAA-MM-DD"
             error={errores.fechaTransferencia}
+            maximo={10}
+            teclado="numbers-and-punctuation"
           />
 
           <Campo
@@ -325,6 +342,8 @@ export function PantallaPago({ factura, onListo, onCancelar }: Props) {
             onChange={setBanco}
             placeholder="Banco Nación"
             error={errores.bancoOrigen}
+            maximo={80}
+            mayusculas="words"
           />
 
           <Campo
@@ -333,6 +352,7 @@ export function PantallaPago({ factura, onListo, onCancelar }: Props) {
             onChange={setOperacion}
             placeholder="NAC-7781204"
             error={errores.numeroOperacion}
+            maximo={60}
           />
 
           <Text style={estilos.campoEtiqueta}>Foto o PDF del comprobante</Text>
@@ -377,7 +397,8 @@ export function PantallaPago({ factura, onListo, onCancelar }: Props) {
           <Boton
             titulo="Cancelar"
             variante="suave"
-            onPress={onCancelar}
+            onPress={cancelar}
+            deshabilitado={enviando}
             style={{ marginTop: espaciado.sm }}
           />
 
@@ -401,12 +422,18 @@ function Campo({
   onChange,
   placeholder,
   error,
+  maximo,
+  teclado = 'default',
+  mayusculas = 'none',
 }: {
   etiqueta: string;
   valor: string;
   onChange: (v: string) => void;
   placeholder?: string;
   error?: string;
+  maximo?: number;
+  teclado?: 'default' | 'numbers-and-punctuation';
+  mayusculas?: 'none' | 'words';
 }) {
   return (
     <View style={estilos.campo}>
@@ -417,7 +444,9 @@ function Campo({
         onChangeText={onChange}
         placeholder={placeholder}
         placeholderTextColor={colores.textoSuave}
-        autoCapitalize="none"
+        maxLength={maximo}
+        keyboardType={teclado}
+        autoCapitalize={mayusculas}
         autoCorrect={false}
         accessibilityLabel={etiqueta}
         accessibilityHint={error}

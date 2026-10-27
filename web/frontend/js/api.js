@@ -69,6 +69,18 @@ async function refrescar() {
   return refrescando;
 }
 
+/**
+ * Un error de validación llega con el texto genérico "Datos inválidos" y el
+ * motivo real campo por campo en `details` ("DNI: tiene que tener al menos 7
+ * caracteres."). Ninguna vista leía `details`, así que la persona veía sólo
+ * "Datos inválidos" sin saber qué corregir.
+ */
+function mensajeDeError(data) {
+  const detalles = data?.details ? Object.values(data.details).flat().filter(Boolean) : [];
+  if (detalles.length > 0) return detalles.join(' ');
+  return data?.message || data?.mensaje || 'No se pudo completar la operación.';
+}
+
 async function pedir(metodo, ruta, { body, query, esFormData = false } = {}) {
   let url = BASE + ruta;
 
@@ -124,11 +136,7 @@ async function pedir(metodo, ruta, { body, query, esFormData = false } = {}) {
   const data = await res.json();
 
   if (!res.ok) {
-    throw new ApiError(
-      res.status,
-      data?.message || data?.mensaje || 'No se pudo completar la operación.',
-      data?.details,
-    );
+    throw new ApiError(res.status, mensajeDeError(data), data?.details);
   }
 
   return data;
