@@ -14,7 +14,7 @@ la más cercana a quien escribe el código a la más lejana:
 
 ## 1. Linter: ESLint
 
-Configuración única para todo el monorepo en [`eslint.config.mjs`](../../eslint.config.mjs):
+Configuración única para todo el monorepo en [`eslint.config.mjs`](../eslint.config.mjs):
 TypeScript en el backend y la app móvil, JavaScript plano en el frontend, y Node
 en los scripts.
 
@@ -35,9 +35,9 @@ ser `const` en el TOTP de la app móvil, que se corrigió, y dos `ok ? a++ : b++
 en el scheduler, un modismo válido que se habilitó en la regla.
 
 **En el editor.** Al abrir el repositorio, VS Code sugiere instalar las
-extensiones de [`.vscode/extensions.json`](../../.vscode/extensions.json).
-[`.vscode/settings.json`](../../.vscode/settings.json) activa la corrección al
-guardar. [`.editorconfig`](../../.editorconfig) fija sangría, fin de línea y
+extensiones de [`.vscode/extensions.json`](../.vscode/extensions.json).
+[`.vscode/settings.json`](../.vscode/settings.json) activa la corrección al
+guardar. [`.editorconfig`](../.editorconfig) fija sangría, fin de línea y
 codificación para cualquier editor.
 
 ## 2. Pre-commit hooks: Husky
@@ -57,9 +57,9 @@ fallar.
 
 - **Protección de `main`**: no se puede pushear directo; todo entra por PR y
   sólo se mergea con los chequeos del CI en verde.
-- **[`CODEOWNERS`](../../.github/CODEOWNERS)**: GitHub pide revisión a los dos
+- **[`CODEOWNERS`](../.github/CODEOWNERS)**: GitHub pide revisión a los dos
   integrantes en cada PR.
-- **[Plantilla de PR](../../.github/pull_request_template.md)**: obliga a
+- **[Plantilla de PR](../.github/pull_request_template.md)**: obliga a
   vincular el issue (`Closes #N`) y trae la lista de revisión por pares.
 
 ## 4. Pruebas E2E: Selenium WebDriver
@@ -70,7 +70,7 @@ pnpm --filter backend test:e2e
 
 Levanta PostgreSQL (embebido en la máquina de desarrollo, service container en
 el CI), aplica las migraciones, carga el seed, arranca la API con el frontend y
-corre [`web/backend/e2e/`](../../web/backend/e2e/) con un navegador real en modo
+corre [`web/backend/e2e/`](../web/backend/e2e/) con un navegador real en modo
 headless: Edge en Windows y Chrome en el CI. Selenium Manager descarga el driver
 que corresponde a la versión del navegador.
 
@@ -79,7 +79,7 @@ de mergear, y Railway no despliega hasta que el CI termina.
 
 ## 5. SonarCloud
 
-El repositorio ya tiene [`sonar-project.properties`](../../sonar-project.properties)
+El repositorio ya tiene [`sonar-project.properties`](../sonar-project.properties)
 y el job `sonarcloud` en el CI. **Falta activarlo**, porque requiere iniciar
 sesión con la cuenta de GitHub del dueño del repositorio:
 
