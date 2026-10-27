@@ -280,8 +280,17 @@ Railpack detecta el workspace de pnpm y, por defecto, corre
 `railpack.json`, en la raíz, reemplaza los comandos del paso de instalación:
 
 ```json
-"install": { "commands": ["pnpm add -g node-gyp", "pnpm install --frozen-lockfile --prefer-offline --filter backend..."] }
+"install": { "commands": ["PATH:/opt/pnpm/bin", "pnpm add -g node-gyp", "pnpm install --frozen-lockfile --prefer-offline --filter backend..."] }
 ```
+
+La lista reemplaza **todos** los comandos que Railpack genera para ese paso,
+incluidos los que no muestra en el plan del log. Uno de ellos agrega
+`/opt/pnpm/bin` al `PATH` (la carpeta de binarios globales de pnpm 11; con pnpm
+10 o anterior es `/opt/pnpm`): sin él, `pnpm add -g` falla porque esa carpeta no
+está en el `PATH`. Así falló el primer build después del merge del #50, el
+27/10/2026; producción siguió con el despliegue anterior. Si se actualiza pnpm
+o Railpack, conviene revisar contra `core/providers/node/package_manager.go` del
+repositorio de Railpack qué comandos genera.
 
 `node-gyp` se mantiene porque lo necesita `bcrypt`; `backend...` instala el
 backend con sus dependencias (y las de la raíz, que pnpm agrega igual). Medido

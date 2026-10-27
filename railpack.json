@@ -3,6 +3,7 @@
   "steps": {
     "install": {
       "commands": [
+        "PATH:/opt/pnpm/bin",
         "pnpm add -g node-gyp",
         "pnpm install --frozen-lockfile --prefer-offline --filter backend..."
       ]
