@@ -1,6 +1,6 @@
 # Carnet Digital Escolar con QR Dinámico
 
-**Desafío de valor agregado** — Centro Educativo "TRANSFORMAR PARA EDUCAR"
+**Desafío de valor agregado** — Centro Educativo "EDUCAR PARA TRANSFORMAR"
 **Migración:** `20260916150000_carnet_digital_qr_y_accesos`
 **Versión de la API:** 0.5.0
 **Fecha:** 16/09/2026

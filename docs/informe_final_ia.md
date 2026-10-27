@@ -3,7 +3,7 @@
 **Trabajo Práctico Integrador**
 **Cátedra:** Metodología de Sistemas II
 **Carrera:** Tecnicatura Universitaria en Programación — TUP 2026
-**Proyecto:** Sistema integral del Centro Educativo "TRANSFORMAR PARA EDUCAR"
+**Proyecto:** Sistema integral del Centro Educativo "EDUCAR PARA TRANSFORMAR"
 **Equipo:** **Naft** — Nahuel Alem · Fabricio Ceniquel Thompson
 **Herramienta de IA utilizada:** Claude Code — modelo Opus 5 (intervenciones 1 a 34) y Opus 5.5 (desde la 35)
 **Fecha de cierre del informe:** 21 de septiembre de 2026

@@ -1,6 +1,6 @@
 # Aplicación Móvil — Portal de Familias
 
-**Proyecto:** Centro Educativo "TRANSFORMAR PARA EDUCAR"
+**Proyecto:** Centro Educativo "EDUCAR PARA TRANSFORMAR"
 **Paquete:** `mobile/` (workspace pnpm)
 **Fecha:** 16/09/2026 · actualizado el 29/09/2026
 **Plan de lo que falta:** `docs/plan_de_trabajo_mobile.md`
@@ -214,8 +214,10 @@ En un teléfono, TalkBack y VoiceOver son el modo normal de uso para mucha gente
 ## 8. Configuración
 
 La URL de la API sale de `app.json` → `extra.apiUrl`, que apunta al backend de
-producción (`https://backend-production-7a0d.up.railway.app`): la app abierta con
-Expo Go en un teléfono funciona sin levantar nada en la computadora.
+producción (`https://transformar-para-educar.up.railway.app`): la app abierta con
+Expo Go en un teléfono funciona sin levantar nada en la computadora. Hasta el
+27/10/2026 apuntaba a `backend-production-7a0d.up.railway.app`, el dominio
+anterior, que ya no responde: la app no podía conectarse.
 
 **Para desarrollar contra el backend local** hay que cambiar ese valor. En el
 emulador de Android `localhost` es el propio emulador: se usa

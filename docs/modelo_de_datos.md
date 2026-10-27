@@ -1,6 +1,6 @@
 # Modelo de Datos y Reglas de Negocio
 
-**Proyecto:** Centro Educativo "TRANSFORMAR PARA EDUCAR"
+**Proyecto:** Centro Educativo "EDUCAR PARA TRANSFORMAR"
 **Migración:** `20260915201500_dominio_academico_deportes_facturacion`
 **Fecha:** 15/09/2026
 

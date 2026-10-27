@@ -1,6 +1,6 @@
 # Vistas y Componentes de la Aplicación Web
 
-**Proyecto:** Centro Educativo "TRANSFORMAR PARA EDUCAR"
+**Proyecto:** Centro Educativo "EDUCAR PARA TRANSFORMAR"
 **Fecha:** 16/09/2026
 
 ---

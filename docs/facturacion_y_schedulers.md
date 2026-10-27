@@ -1,6 +1,6 @@
 # Facturación y Tareas Programadas
 
-**Proyecto:** Centro Educativo "TRANSFORMAR PARA EDUCAR"
+**Proyecto:** Centro Educativo "EDUCAR PARA TRANSFORMAR"
 **Versión de la API:** 0.4.0
 **Migración asociada:** `20260915223000_facturacion_y_tareas_programadas`
 **Fecha:** 15/09/2026

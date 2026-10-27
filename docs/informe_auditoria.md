@@ -1,6 +1,6 @@
 # Informe de Auditoría Técnica
 
-**Proyecto:** Centro Educativo "TRANSFORMAR PARA EDUCAR"
+**Proyecto:** Centro Educativo "EDUCAR PARA TRANSFORMAR"
 **Fecha de auditoría:** 15/09/2026
 **Commit auditado:** `29354aa` (rama `main`, árbol limpio)
 **Auditor:** Arquitectura / Liderazgo técnico
