@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Estudiante — Transformar Para Educar</title>
+    <title>Panel Estudiante — Educar para Transformar</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="css/componentes.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
         body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f4f6f9; }
         header { flex-shrink: 0; z-index: 100; }
@@ -29,7 +29,9 @@
         
         .form-controls { display: flex; gap: 15px; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .form-select { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; flex: 1; }
-        .btn-action { background: #3498db; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        /* #1d6fa5: 5.5:1 con blanco (el #3498db anterior daba 3.2:1). */
+        .btn-action { background: #1d6fa5; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-action:hover { background: #17537c; }
     </style>
 </head>
 <body class="panel-app">
@@ -47,7 +49,7 @@
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
                 <a href="index.html" class="logo" title="Ir a la página de inicio" style="display: flex; align-items: center; gap: 10px;">
                     <span class="logo-icon" aria-hidden="true">🎓</span>
-                    <h1 style="margin:0; font-size: 1.3rem;">Transformar Para Educar</h1>
+                    <h1 style="margin:0; font-size: 1.3rem;">Educar para Transformar</h1>
                 </a>
                 <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none;">
                     <li><a href="index.html#inicio">Inicio</a></li>

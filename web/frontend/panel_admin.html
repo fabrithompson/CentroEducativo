@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admin — Transformar Para Educar</title>
+    <title>Panel Admin — Educar para Transformar</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="css/componentes.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
         :root { --accent: #8b5cf6; }
         body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f4f6f9; }
@@ -31,8 +31,9 @@
         .data-table th { background-color: #f4f6f7; color: #0f172a; font-weight: 600; }
 
         .form-input, .form-select { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 0.92rem; width: 100%; }
-        .btn-action { background: #8b5cf6; color: #fff; border: none; padding: 8px 18px; border-radius: 5px; cursor: pointer; font-weight: 600; }
-        .btn-action:hover { background: #7c3aed; }
+        /* #7c3aed: 5.7:1 con blanco (el #8b5cf6 anterior daba 4.2:1). */
+        .btn-action { background: #7c3aed; color: #fff; border: none; padding: 8px 18px; border-radius: 5px; cursor: pointer; font-weight: 600; }
+        .btn-action:hover { background: #6d28d9; }
         .btn-danger { background: #ef4444; color: #fff; border: none; padding: 5px 11px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
         .btn-secondary { background: #64748b; color: #fff; border: none; padding: 5px 11px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
 
@@ -65,7 +66,7 @@
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px 20px;">
                 <a href="index.html" class="logo" title="Ir a la página de inicio" style="display: flex; align-items: center; gap: 10px;">
                     <span class="logo-icon" aria-hidden="true">🎓</span>
-                    <h1 style="margin:0; font-size: 1.3rem; color: #0f172a;">Transformar Para Educar — Admin</h1>
+                    <h1 style="margin:0; font-size: 1.3rem; color: #0f172a;">Educar para Transformar — Admin</h1>
                 </a>
                 <ul class="nav-links" style="display: flex; gap: 20px; align-items: center; list-style: none; margin: 0;">
                     <li><a href="index.html#inicio">Inicio</a></li>
@@ -175,7 +176,7 @@
                 </details>
 
                 <div style="display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
-                    <input type="text" id="filtroUsuarios" placeholder="Buscar por nombre / usuario / DNI / email..." oninput="cargarUsuarios()" class="form-input" style="flex:1; min-width: 220px;">
+                    <input type="text" id="filtroUsuarios" aria-label="Buscar usuarios por nombre, usuario, DNI o email" placeholder="Buscar por nombre / usuario / DNI / email..." oninput="cargarUsuarios()" class="form-input" style="flex:1; min-width: 220px;">
                     <select id="filtroRole" aria-label="Filtrar usuarios por rol" onchange="cargarUsuarios()" class="form-select" style="max-width: 200px;">
                         <option value="">Todos los roles</option>
                         <option value="ESTUDIANTE">Estudiantes</option>
@@ -597,10 +598,12 @@
                 `).join('');
         }
 
+        // Etiquetas (.badge de componentes.css) como en las vistas nuevas, en
+        // lugar de texto de color suelto.
         function estadoUsuario(u) {
-            if (u.isActive) return '<span style="color:#047857; font-weight:600;">Activo</span>';
-            if (u.pendienteAprobacion) return '<span style="color:#b45309; font-weight:600;">Pendiente de aprobación</span>';
-            return '<span style="color:#dc2626; font-weight:600;">Inactivo</span>';
+            if (u.isActive) return '<span class="badge badge--ok">Activo</span>';
+            if (u.pendienteAprobacion) return '<span class="badge badge--espera">Pendiente de aprobación</span>';
+            return '<span class="badge badge--neutro">Inactivo</span>';
         }
 
         // Un docente que espera aprobación se aprueba (le llega el aviso); un
@@ -893,7 +896,9 @@
            INSCRIPCIONES (moderación)
            ============================================================ */
         const STATUS_LABEL = { PENDIENTE: 'Pendiente', APROBADO: 'Aprobado', RECHAZADO: 'Rechazado' };
-        const STATUS_COLOR = { PENDIENTE: '#f59e0b', APROBADO: '#10b981', RECHAZADO: '#ef4444' };
+        const TONO_MODERACION = { PENDIENTE: 'espera', APROBADO: 'ok', RECHAZADO: 'alerta' };
+        const estadoModeracion = (estado) =>
+            '<span class="badge badge--' + (TONO_MODERACION[estado] || 'neutro') + '">' + (STATUS_LABEL[estado] || window.escapeHtml(estado)) + '</span>';
 
         async function cargarInscripciones() {
             const tbody = document.querySelector('#tablaInsc tbody');
@@ -914,7 +919,7 @@
                     <td>${window.escapeHtml(i.nombreEstudiante)}</td>
                     <td>${window.escapeHtml(i.nivel)}<br><span style="color:#64748b; font-size:0.82rem;">${window.escapeHtml(i.curso)}</span></td>
                     <td style="max-width:220px; font-size:0.85rem;">${window.escapeHtml(i.mensaje || '—')}</td>
-                    <td><span style="color:${STATUS_COLOR[i.status]}; font-weight:600;">${STATUS_LABEL[i.status]}</span></td>
+                    <td>${estadoModeracion(i.status)}</td>
                     <td style="font-size:0.82rem;">${fmtFechaCorta(i.createdAt)}</td>
                     <td>
                         ${i.status === 'PENDIENTE' ? `
@@ -979,7 +984,7 @@
                     <td>${window.escapeHtml(ROL_OPINION[o.rol] || o.rol)}</td>
                     <td style="max-width:300px; font-size:0.88rem;">"${window.escapeHtml(o.texto)}"</td>
                     <td style="color:#f59e0b;">${'★'.repeat(o.rating)}${'☆'.repeat(5 - o.rating)}</td>
-                    <td><span style="color:${STATUS_COLOR[o.status]}; font-weight:600;">${STATUS_LABEL[o.status]}</span></td>
+                    <td>${estadoModeracion(o.status)}</td>
                     <td style="font-size:0.82rem;">${fmtFechaCorta(o.createdAt)}</td>
                     <td>
                         ${o.status === 'PENDIENTE' ? `
@@ -1030,7 +1035,7 @@
                     <td>${window.escapeHtml(p.email)}</td>
                     <td>${window.escapeHtml(p.puesto)}</td>
                     <td>${p.cvUrl ? `<a href="${window.escapeHtml(p.cvUrl)}" target="_blank" rel="noopener" style="color:#6d28d9; font-weight:600;"><i class="fas fa-file-pdf" aria-hidden="true"></i> Ver CV</a>` : '<span style="color:#94a3b8;">Sin CV</span>'}</td>
-                    <td><span style="color:${STATUS_COLOR[p.status]}; font-weight:600;">${STATUS_LABEL[p.status]}</span></td>
+                    <td>${estadoModeracion(p.status)}</td>
                     <td style="font-size:0.82rem;">${fmtFechaCorta(p.createdAt)}</td>
                     <td>
                         ${p.status === 'PENDIENTE' ? `
@@ -1095,7 +1100,7 @@
                 return;
             }
             cont.innerHTML = _consultas.map(c => {
-                const asunto = encodeURIComponent('Respuesta a tu consulta — Transformar Para Educar');
+                const asunto = encodeURIComponent('Respuesta a tu consulta — Educar para Transformar');
                 return `
                 <article class="campus-card consulta${c.atendida ? ' consulta--atendida' : ''}">
                     <h3 class="campus-card-title">${esc(c.nombre)}</h3>
@@ -1210,9 +1215,9 @@
         }
 
         const ESTADO_CUOTA = {
-            PENDIENTE: ['Pendiente', '#b45309'],
-            VENCIDO: ['Vencida', '#dc2626'],
-            PAGADO: ['Pagada', '#047857'],
+            PENDIENTE: ['Pendiente', 'espera'],
+            VENCIDO: ['Vencida', 'alerta'],
+            PAGADO: ['Pagada', 'ok'],
         };
 
         async function cargarHistorialCuotas(idNueva) {
@@ -1228,7 +1233,7 @@
             tbody.innerHTML = data.cuotas.length === 0
                 ? '<tr><td colspan="8" style="text-align:center; color:#64748b;">Todavía no se cargó ninguna cuota.</td></tr>'
                 : data.cuotas.map(c => {
-                    const [texto, color] = ESTADO_CUOTA[c.status] || [c.status, '#334155'];
+                    const [texto, tono] = ESTADO_CUOTA[c.status] || [c.status, 'neutro'];
                     return `
                     <tr${c.id === idNueva ? ' style="background:#ecfdf5;"' : ''}>
                         <td>${window.formatFechaHora(c.cargadaEn)}</td>
@@ -1236,7 +1241,7 @@
                         <td>${esc(c.concepto)}</td>
                         <td style="text-align:right; white-space:nowrap;">${pesos(c.monto)}</td>
                         <td>${window.formatFecha(c.vencimiento)}</td>
-                        <td><span style="color:${color}; font-weight:600;">${texto}</span></td>
+                        <td><span class="badge badge--${tono}">${esc(texto)}</span></td>
                         <td>${c.responsable ? esc(c.responsable.nombre) : '<span style="color:#64748b;">Sin tutor vinculado</span>'}</td>
                         <td>${c.status === 'PAGADO' ? '—' : `<button type="button" class="btn-reactivar" onclick="registrarPagoCuota(${c.id})"><i class="fas fa-check" aria-hidden="true"></i> Registrar pago</button>`}</td>
                     </tr>`;
