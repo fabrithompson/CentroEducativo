@@ -13,6 +13,11 @@
         if (!c) {
             c = document.createElement('div');
             c.id = 'toast-container';
+            // Región viva: un lector de pantalla anuncia cada aviso nuevo.
+            // Sin esto, quien no ve la pantalla no se enteraba de que el
+            // formulario se había enviado ni de por qué había fallado.
+            c.setAttribute('role', 'status');
+            c.setAttribute('aria-live', 'polite');
             document.body.appendChild(c);
         }
         return c;
@@ -36,13 +41,15 @@
         const container = ensureContainer();
         const toast = document.createElement('div');
         toast.className = 'toast toast-' + type;
+        // Los errores interrumpen la lectura: se anuncian en el momento.
+        if (type === 'error') toast.setAttribute('role', 'alert');
         toast.innerHTML = `
-            <div class="toast-icon"><i class="fas ${ICONS[type] || ICONS.info}"></i></div>
+            <div class="toast-icon" aria-hidden="true"><i class="fas ${ICONS[type] || ICONS.info}"></i></div>
             <div class="toast-body">
                 <div class="toast-title">${TITLES[type] || TITLES.info}</div>
                 <div class="toast-message"></div>
             </div>
-            <button class="toast-close" aria-label="Cerrar">&times;</button>
+            <button type="button" class="toast-close" aria-label="Cerrar aviso">&times;</button>
         `;
         toast.querySelector('.toast-message').textContent = message;
 
@@ -64,7 +71,9 @@
 
     // Atajos cómodos
     window.toastSuccess = (m, d) => window.showToast(m, 'success', d);
-    window.toastError = (m, d) => window.showToast(m, 'error', d);
+    // Un error suele traer el motivo campo por campo: necesita más tiempo
+    // en pantalla que un "Listo".
+    window.toastError = (m, d) => window.showToast(m, 'error', d === undefined ? 7000 : d);
     window.toastWarning = (m, d) => window.showToast(m, 'warning', d);
     window.toastInfo = (m, d) => window.showToast(m, 'info', d);
 })();

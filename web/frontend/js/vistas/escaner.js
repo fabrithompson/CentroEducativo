@@ -25,7 +25,7 @@
  */
 
 import api from '../api.js';
-import { esc, estadoVacio, fechaHora, render, tabla } from '../ui.js';
+import { esc, estadoVacio, fechaHora, tabla } from '../ui.js';
 
 let configuracion = null;   // { punto, recorridoId, recorridoNombre }
 let stream = null;          // MediaStream de la cámara

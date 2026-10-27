@@ -105,6 +105,46 @@
         return new Date(iso).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     };
 
+    /**
+     * La fecha de hoy en la hora de Argentina, como "2026-10-26". No sale de
+     * `toISOString()` ni de `valueAsDate`, que trabajan en UTC: después de las
+     * 21 h ya es "mañana" y la asistencia o la nota quedaban con el día
+     * siguiente.
+     */
+    window.hoyLocal = function () {
+        const d = new Date();
+        const dos = (n) => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + dos(d.getMonth() + 1) + '-' + dos(d.getDate());
+    };
+
+    /**
+     * Deshabilita los botones de envío del formulario mientras se espera la
+     * respuesta. Devuelve la función que los vuelve a habilitar:
+     *
+     *   const liberar = window.bloquearEnvio(e);
+     *   try { ... } finally { liberar(); }
+     *
+     * Sin esto, un doble clic creaba el mismo usuario, anuncio o actividad dos
+     * veces.
+     */
+    window.bloquearEnvio = function (e) {
+        const origen = e && e.target ? e.target : null;
+        const form = origen && origen.closest ? origen.closest('form') : null;
+        const botones = form
+            ? [...form.querySelectorAll('button[type="submit"], button:not([type])')]
+            : (origen && origen.tagName === 'BUTTON' ? [origen] : []);
+        botones.forEach((b) => { b.disabled = true; });
+        if (form) form.setAttribute('aria-busy', 'true');
+        return function () {
+            botones.forEach((b) => { b.disabled = false; });
+            if (form) form.removeAttribute('aria-busy');
+        };
+    };
+
+    /** Rol de una cuenta como lo lee la gente ("DOCENTE" → "Docente"). */
+    const ETIQUETA_ROL = { ESTUDIANTE: 'Estudiante', DOCENTE: 'Docente', PADRE: 'Familia', ADMIN: 'Administración' };
+    window.etiquetaRol = (rol) => ETIQUETA_ROL[rol] || rol || '';
+
     window.escapeHtml = function (s) {
         if (s === null || s === undefined) return '';
         return String(s)
@@ -131,27 +171,34 @@
             ? `<span class="bell-badge">${count > 9 ? '9+' : count}</span>`
             : '';
 
+        // Cada aviso es un botón: antes eran <li> con click, a los que no se
+        // llegaba con Tab ni se podían activar con Enter.
         const itemsHtml = items.length === 0
             ? `<li class="bell-empty">Sin notificaciones</li>`
             : items.slice(0, 8).map(n => `
-                <li class="bell-item ${n.isRead ? '' : 'bell-unread'}${n.link ? ' bell-item--enlace' : ''}" data-id="${n.id}" data-link="${window.escapeHtml(n.link || '')}">
-                    <div class="bell-item-title">${window.escapeHtml(n.titulo)}</div>
-                    <div class="bell-item-body">${window.escapeHtml(n.contenido)}</div>
-                    <div class="bell-item-date">${window.formatFechaHora(n.createdAt)}</div>
+                <li>
+                    <button type="button" class="bell-item ${n.isRead ? '' : 'bell-unread'}${n.link ? ' bell-item--enlace' : ''}" data-id="${n.id}" data-link="${window.escapeHtml(n.link || '')}">
+                        <span class="bell-item-title">${n.isRead ? '' : '<span class="sr-only">Sin leer: </span>'}${window.escapeHtml(n.titulo)}</span>
+                        <span class="bell-item-body">${window.escapeHtml(n.contenido)}</span>
+                        <span class="bell-item-date">${window.formatFechaHora(n.createdAt)}</span>
+                    </button>
                 </li>
             `).join('');
 
-        const estabaAbierto = document.getElementById('bellDropdown')?.style.display === 'block';
+        const estabaAbierto = document.getElementById('bellDropdown')?.hidden === false;
+        const etiqueta = count > 0
+            ? `Notificaciones: ${count} sin leer`
+            : 'Notificaciones';
 
         cont.innerHTML = `
-            <button class="bell-button" id="bellButton" aria-label="Notificaciones">
-                <i class="fas fa-bell"></i>
-                ${badge}
+            <button type="button" class="bell-button" id="bellButton" aria-label="${etiqueta}" aria-expanded="false" aria-controls="bellDropdown">
+                <i class="fas fa-bell" aria-hidden="true"></i>
+                ${badge.replace('<span class="bell-badge">', '<span class="bell-badge" aria-hidden="true">')}
             </button>
-            <div class="bell-dropdown" id="bellDropdown" style="display:none;">
+            <div class="bell-dropdown" id="bellDropdown" hidden>
                 <div class="bell-header">
                     <strong>Notificaciones</strong>
-                    ${count > 0 ? '<button class="bell-mark-all" id="bellMarkAll">Marcar todo</button>' : ''}
+                    ${count > 0 ? '<button type="button" class="bell-mark-all" id="bellMarkAll">Marcar todo como leído</button>' : ''}
                 </div>
                 <ul class="bell-list">${itemsHtml}</ul>
             </div>
@@ -159,22 +206,26 @@
 
         const btn = document.getElementById('bellButton');
         const dd = document.getElementById('bellDropdown');
-        if (estabaAbierto) dd.style.display = 'block';
+        const abrir = (si) => {
+            dd.hidden = !si;
+            btn.setAttribute('aria-expanded', String(si));
+        };
+        if (estabaAbierto) abrir(true);
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+            abrir(dd.hidden);
         });
 
-        cont.querySelectorAll('.bell-item').forEach(li => {
-            li.addEventListener('click', () => {
-                const id = li.getAttribute('data-id');
-                const link = li.getAttribute('data-link');
+        cont.querySelectorAll('.bell-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const id = item.getAttribute('data-id');
+                const link = item.getAttribute('data-link');
                 window.apiPost('/api/notifications/' + id + '/read').then(() => {
-                    li.classList.remove('bell-unread');
+                    item.classList.remove('bell-unread');
                     refreshBell();
                 });
                 if (link) {
-                    dd.style.display = 'none';
+                    abrir(false);
                     seguirEnlace(link);
                 }
             });
@@ -189,10 +240,23 @@
         }
     }
 
+    function cerrarCampana(devolverFoco) {
+        const dd = document.getElementById('bellDropdown');
+        const btn = document.getElementById('bellButton');
+        if (!dd || dd.hidden) return;
+        dd.hidden = true;
+        if (btn) {
+            btn.setAttribute('aria-expanded', 'false');
+            if (devolverFoco) btn.focus();
+        }
+    }
+
     document.addEventListener('click', (e) => {
         const cont = document.getElementById('bellContainer');
-        const dd = document.getElementById('bellDropdown');
-        if (cont && dd && !cont.contains(e.target)) dd.style.display = 'none';
+        if (cont && !cont.contains(e.target)) cerrarCampana(false);
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') cerrarCampana(true);
     });
 
     function refreshBell() {
@@ -216,21 +280,25 @@
     function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
     }
-    const stored = localStorage.getItem('et_theme');
+    // El almacenamiento puede estar bloqueado (ventana privada, política del
+    // navegador): sin el try, el error cortaba campus.js entero.
+    let stored = null;
+    try { stored = localStorage.getItem('et_theme'); } catch (_) { /* sin almacenamiento */ }
     if (stored === 'dark' || stored === 'light') applyTheme(stored);
 
     function syncThemeButton() {
         const btn = document.getElementById('themeToggle');
         if (!btn) return;
-        const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-        btn.innerHTML = cur === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        const oscuro = document.documentElement.getAttribute('data-theme') === 'dark';
+        btn.innerHTML = oscuro ? '<i class="fas fa-sun" aria-hidden="true"></i>' : '<i class="fas fa-moon" aria-hidden="true"></i>';
+        btn.setAttribute('aria-label', oscuro ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
     }
 
     window.toggleTheme = function () {
         const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
         const next = current === 'dark' ? 'light' : 'dark';
         applyTheme(next);
-        localStorage.setItem('et_theme', next);
+        try { localStorage.setItem('et_theme', next); } catch (_) { /* sin almacenamiento */ }
         syncThemeButton();
     };
 
@@ -735,6 +803,7 @@
         _socket.on('new-message', (msg) => {
             window.refreshBell && window.refreshBell();
             if (typeof window.onIncomingMessage === 'function') window.onIncomingMessage(msg);
+            else chatAlRecibir(msg);
         });
         // "Cambió X" (ver backend, shared/eventos.ts). Sin datos: cada panel
         // vuelve a pedir lo que le toca.
@@ -809,33 +878,148 @@
     };
 
     /* ============================================================
+       Mensajes (compartido por los cuatro paneles)
+       Requiere en la página: #chatList, #chatContacts y #chatMain.
+       Antes cada panel tenía su propia copia de estas tres funciones,
+       con diferencias menores entre sí.
+       ============================================================ */
+    let chatActual = null;
+    let enviandoMensaje = false;
+
+    function itemConversacion(id, nombre, rol, extra) {
+        const esc = window.escapeHtml;
+        return `
+            <li>
+                <button type="button" class="chat-list-item${chatActual === id ? ' active' : ''}" data-id="${id}" onclick="openChat(${id})"${chatActual === id ? ' aria-current="true"' : ''}>
+                    <span class="chat-list-name">${esc(nombre)}${extra.noLeidos ? ` <span class="chat-list-unread">${extra.noLeidos}<span class="sr-only"> sin leer</span></span>` : ''}</span>
+                    <span class="chat-list-role">${esc(window.etiquetaRol(rol))}${extra.curso ? ' · ' + esc(extra.curso) : ''}</span>
+                    ${extra.ultimo ? `<span class="chat-list-last">${esc(extra.ultimo)}</span>` : ''}
+                </button>
+            </li>`;
+    }
+
+    window.cargarContactos = async function () {
+        const list = document.getElementById('chatList');
+        const conts = document.getElementById('chatContacts');
+        if (!list || !conts) return;
+        const [hilos, contactos] = await Promise.all([
+            window.apiGet('/api/messages/threads'),
+            window.apiGet('/api/messages/contacts'),
+        ]);
+        list.innerHTML = hilos.exito && hilos.hilos.length
+            ? hilos.hilos.map(h => itemConversacion(h.contactId, h.contactNombre, h.contactRol, { noLeidos: h.noLeidos, ultimo: h.ultimoMensaje })).join('')
+            : '<li class="bell-empty">Sin conversaciones</li>';
+        conts.innerHTML = contactos.exito && contactos.contactos.length
+            ? contactos.contactos.map(c => itemConversacion(c.id, c.nombre, c.role, { curso: c.curso })).join('')
+            : '<li class="bell-empty">No hay contactos disponibles</li>';
+    };
+
+    window.openChat = async function (contactId) {
+        const main = document.getElementById('chatMain');
+        if (!main) return;
+        chatActual = contactId;
+        document.querySelectorAll('#chatList .chat-list-item').forEach(el => {
+            const activo = Number(el.dataset.id) === contactId;
+            el.classList.toggle('active', activo);
+            if (activo) el.setAttribute('aria-current', 'true');
+            else el.removeAttribute('aria-current');
+        });
+        main.innerHTML = '<div class="chat-empty">Cargando…</div>';
+        const data = await window.apiGet('/api/messages/thread/' + contactId);
+        if (!data.exito) {
+            main.innerHTML = `<div class="chat-empty">${window.escapeHtml(data.mensaje || 'No se pudo abrir la conversación.')}</div>`;
+            return;
+        }
+        const esc = window.escapeHtml;
+        const msgsHtml = data.mensajes.map(m => `
+            <div class="chat-bubble ${m.deMi ? 'chat-bubble-mine' : 'chat-bubble-other'}">
+                <span class="sr-only">${m.deMi ? 'Vos' : esc(data.contacto.nombre)}: </span>${esc(m.contenido)}
+                <div class="chat-bubble-meta">${window.formatFechaHora(m.createdAt)}</div>
+            </div>
+        `).join('');
+        main.innerHTML = `
+            <div class="chat-main-header"><i class="fas fa-user" aria-hidden="true"></i> ${esc(data.contacto.nombre)} <span class="chat-main-rol">(${esc(window.etiquetaRol(data.contacto.role))})</span></div>
+            <div class="chat-messages" id="chatMessages" role="log" aria-live="polite">${msgsHtml || '<div class="chat-empty">Sin mensajes — escribí el primero</div>'}</div>
+            <form class="chat-composer" onsubmit="enviarMensaje(event)">
+                <textarea id="chatInput" rows="2" maxlength="2000" aria-label="Mensaje para ${esc(data.contacto.nombre)}" placeholder="Escribí tu mensaje · Enter para enviar, Shift+Enter para otra línea" required></textarea>
+                <button type="submit" aria-label="Enviar mensaje"><i class="fas fa-paper-plane" aria-hidden="true"></i></button>
+            </form>
+        `;
+        const mEl = document.getElementById('chatMessages');
+        mEl.scrollTop = mEl.scrollHeight;
+        window.refreshBell();
+    };
+
+    window.enviarMensaje = async function (e) {
+        e.preventDefault();
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if (!text || !chatActual || enviandoMensaje) return;
+        enviandoMensaje = true;
+        const liberar = window.bloquearEnvio(e);
+        try {
+            const res = await window.apiPost('/api/messages', { receiverId: chatActual, contenido: text });
+            if (res.exito) {
+                input.value = '';
+                await window.openChat(chatActual);
+                const nuevo = document.getElementById('chatInput');
+                if (nuevo) nuevo.focus();
+                window.cargarContactos();
+            } else {
+                window.toastError(res.mensaje || 'No se pudo enviar el mensaje.');
+            }
+        } finally {
+            enviandoMensaje = false;
+            liberar();
+        }
+    };
+
+    // Un mensaje nuevo: si es de la conversación abierta se muestra, y la
+    // lista de conversaciones se actualiza con el contador de no leídos.
+    function chatAlRecibir(msg) {
+        if (!document.getElementById('chatList')) return;
+        if (msg && chatActual === msg.from) window.openChat(msg.from);
+        window.cargarContactos();
+    }
+
+    /* ============================================================
        Foros (compartido docente + estudiante + admin)
        Requiere en la página: #forosLista, #foroDetalle.
        Y opcionalmente: form con id foroNuevo (campos materia/titulo/contenido).
        ============================================================ */
     const FORO_ROLE_COLOR = { ESTUDIANTE: '#10b981', DOCENTE: '#3498db', PADRE: '#f59e0b', ADMIN: '#8b5cf6' };
+    let foroAbierto = null;
 
     window.cargarForos = async function () {
         const cont = document.getElementById('forosLista');
         const det = document.getElementById('foroDetalle');
         if (det) det.innerHTML = '';
+        foroAbierto = null;
         if (!cont) return;
+        cont.hidden = false;
         const data = await window.apiGet('/api/forum');
-        if (!data.exito || !data.posts.length) {
-            cont.innerHTML = '<p style="color:#94a3b8; text-align:center;">Sin temas todavía. Abrí el primero.</p>';
+        if (!data.exito) {
+            cont.innerHTML = `<p class="texto-vacio">${window.escapeHtml(data.mensaje || 'No se pudieron cargar los temas.')}</p>`;
             return;
         }
+        if (!data.posts.length) {
+            cont.innerHTML = '<p class="texto-vacio">Sin temas todavía. Abrí el primero.</p>';
+            return;
+        }
+        const esc = window.escapeHtml;
+        // Cada tarjeta es un botón: antes era un <div onclick>, al que no se
+        // llegaba con el teclado.
         cont.innerHTML = data.posts.map(p => `
-            <div class="campus-card" style="cursor:pointer; border-left: 4px solid ${FORO_ROLE_COLOR[p.autorRol] || '#3498db'};" onclick="window.abrirForo(${p.id})">
-                <h4 class="campus-card-title">${p.isPinned ? '<i class="fas fa-thumbtack" style="color:#f59e0b;"></i> ' : ''}${window.escapeHtml(p.titulo)}</h4>
-                <div class="campus-card-meta">
-                    <span><i class="fas fa-book"></i> ${window.escapeHtml(p.materia)}</span>
-                    <span><i class="fas fa-user"></i> ${window.escapeHtml(p.autor)}</span>
-                    <span><i class="fas fa-comments"></i> ${p.replies} respuestas</span>
-                    <span><i class="fas fa-clock"></i> ${window.formatFecha(p.createdAt)}</span>
-                </div>
-                <div class="campus-card-body" style="max-height:60px; overflow:hidden; text-overflow:ellipsis;">${window.escapeHtml(p.contenido)}</div>
-            </div>
+            <button type="button" class="campus-card foro-tarjeta" style="--rol:${FORO_ROLE_COLOR[p.autorRol] || '#3498db'};" onclick="window.abrirForo(${p.id})">
+                <span class="campus-card-title">${p.isPinned ? '<i class="fas fa-thumbtack foro-fijado" aria-hidden="true"></i><span class="sr-only">Fijado: </span>' : ''}${esc(p.titulo)}</span>
+                <span class="campus-card-meta">
+                    <span><i class="fas fa-book" aria-hidden="true"></i> ${esc(p.materia)}</span>
+                    <span><i class="fas fa-user" aria-hidden="true"></i> ${esc(p.autor)}</span>
+                    <span><i class="fas fa-comments" aria-hidden="true"></i> ${p.replies} ${p.replies === 1 ? 'respuesta' : 'respuestas'}</span>
+                    <span><i class="fas fa-clock" aria-hidden="true"></i> ${window.formatFecha(p.createdAt)}</span>
+                </span>
+                <span class="campus-card-body foro-resumen">${esc(p.contenido)}</span>
+            </button>
         `).join('');
     };
 
@@ -844,73 +1028,98 @@
         const lista = document.getElementById('forosLista');
         if (!det) return;
         const data = await window.apiGet('/api/forum/' + id);
-        if (!data.exito) { window.toastError && window.toastError(data.mensaje || 'Error'); return; }
+        if (!data.exito) { window.toastError(data.mensaje || 'No se pudo abrir el tema.'); return; }
+        foroAbierto = id;
+        const esc = window.escapeHtml;
         const me = window.usuarioSesion();
         const puedoPin = me && (me.tipo === 'docente' || me.tipo === 'admin');
-        if (lista) lista.style.display = 'none';
+        if (lista) lista.hidden = true;
         det.innerHTML = `
-            <button onclick="window.cerrarForo()" style="background:#64748b; color:#fff; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; margin-bottom:14px;"><i class="fas fa-arrow-left"></i> Volver</button>
-            <div class="campus-card" style="border-left: 4px solid ${FORO_ROLE_COLOR[data.post.autorRol] || '#3498db'};">
-                <h3 class="campus-card-title">${data.post.isPinned ? '<i class="fas fa-thumbtack" style="color:#f59e0b;"></i> ' : ''}${window.escapeHtml(data.post.titulo)}</h3>
+            <button type="button" class="btn btn--suave btn--chico foro-volver" onclick="window.cerrarForo()"><i class="fas fa-arrow-left" aria-hidden="true"></i> Volver a los temas</button>
+            <article class="campus-card foro-tema" style="--rol:${FORO_ROLE_COLOR[data.post.autorRol] || '#3498db'};">
+                <h3 class="campus-card-title" tabindex="-1" id="foroTituloAbierto">${data.post.isPinned ? '<i class="fas fa-thumbtack foro-fijado" aria-hidden="true"></i><span class="sr-only">Fijado: </span>' : ''}${esc(data.post.titulo)}</h3>
                 <div class="campus-card-meta">
-                    <span><i class="fas fa-book"></i> ${window.escapeHtml(data.post.materia)}</span>
-                    <span><i class="fas fa-user"></i> ${window.escapeHtml(data.post.autor)} (${data.post.autorRol})</span>
-                    <span><i class="fas fa-clock"></i> ${window.formatFechaHora(data.post.createdAt)}</span>
+                    <span><i class="fas fa-book" aria-hidden="true"></i> ${esc(data.post.materia)}</span>
+                    <span><i class="fas fa-user" aria-hidden="true"></i> ${esc(data.post.autor)} (${esc(window.etiquetaRol(data.post.autorRol))})</span>
+                    <span><i class="fas fa-clock" aria-hidden="true"></i> ${window.formatFechaHora(data.post.createdAt)}</span>
                 </div>
-                <div class="campus-card-body">${window.escapeHtml(data.post.contenido)}</div>
-                ${puedoPin ? `<button onclick="window.pinForo(${data.post.id})" style="background:#f59e0b; color:#fff; border:none; padding:5px 11px; border-radius:4px; cursor:pointer; font-size:0.82rem; margin-top:10px;"><i class="fas fa-thumbtack"></i> ${data.post.isPinned ? 'Desfijar' : 'Fijar'}</button>` : ''}
-            </div>
+                <div class="campus-card-body">${esc(data.post.contenido)}</div>
+                ${puedoPin ? `<button type="button" class="btn btn--suave btn--chico foro-fijar" onclick="window.pinForo(${data.post.id})"><i class="fas fa-thumbtack" aria-hidden="true"></i> ${data.post.isPinned ? 'Desfijar' : 'Fijar arriba'}</button>` : ''}
+            </article>
 
-            <h4 style="margin: 20px 0 10px; color:#475569;">Respuestas (${data.respuestas.length})</h4>
-            ${data.respuestas.length === 0 ? '<p style="color:#94a3b8;">Sé el primero en responder.</p>' : ''}
+            <h4 class="foro-subtitulo">Respuestas (${data.respuestas.length})</h4>
+            ${data.respuestas.length === 0 ? '<p class="texto-vacio">Sé el primero en responder.</p>' : ''}
             ${data.respuestas.map(r => `
-                <div class="campus-card" style="margin-bottom:10px; border-left: 3px solid ${FORO_ROLE_COLOR[r.autorRol] || '#3498db'};">
-                    <div class="campus-card-meta" style="margin-bottom:6px;">
-                        <span><b>${window.escapeHtml(r.autor)}</b> (${r.autorRol})</span>
+                <div class="campus-card foro-respuesta" style="--rol:${FORO_ROLE_COLOR[r.autorRol] || '#3498db'};">
+                    <div class="campus-card-meta">
+                        <span><b>${esc(r.autor)}</b> (${esc(window.etiquetaRol(r.autorRol))})</span>
                         <span>${window.formatFechaHora(r.createdAt)}</span>
                     </div>
-                    <div>${window.escapeHtml(r.contenido)}</div>
+                    <div>${esc(r.contenido)}</div>
                 </div>
             `).join('')}
 
-            <form onsubmit="window.responderForo(event, ${data.post.id})" style="margin-top:18px;">
-                <textarea id="foroRespuesta" placeholder="Escribí tu respuesta..." rows="3" required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px;"></textarea>
-                <button type="submit" class="btn-action" style="margin-top:10px;"><i class="fas fa-paper-plane"></i> Responder</button>
+            <form class="foro-responder" onsubmit="window.responderForo(event, ${data.post.id})">
+                <label for="foroRespuesta" class="sr-only">Tu respuesta</label>
+                <textarea id="foroRespuesta" class="form-input" placeholder="Escribí tu respuesta..." rows="3" maxlength="5000" required></textarea>
+                <button type="submit" class="btn-action"><i class="fas fa-paper-plane" aria-hidden="true"></i> Responder</button>
             </form>
         `;
+        const titulo = document.getElementById('foroTituloAbierto');
+        if (titulo) titulo.focus();
     };
 
     window.cerrarForo = function () {
         const det = document.getElementById('foroDetalle');
         const lista = document.getElementById('forosLista');
         if (det) det.innerHTML = '';
-        if (lista) lista.style.display = '';
+        if (lista) lista.hidden = false;
+        const volverA = foroAbierto && lista ? lista.querySelector(`[onclick="window.abrirForo(${foroAbierto})"]`) : null;
+        foroAbierto = null;
+        if (volverA) volverA.focus();
     };
 
     window.responderForo = async function (e, id) {
         e.preventDefault();
         const text = document.getElementById('foroRespuesta').value.trim();
         if (!text) return;
-        const r = await window.apiPost('/api/forum/' + id + '/reply', { contenido: text });
-        if (r.exito) { window.toastSuccess && window.toastSuccess('Respuesta publicada.'); window.abrirForo(id); }
-        else window.toastError && window.toastError(r.mensaje || 'Error.');
+        const liberar = window.bloquearEnvio(e);
+        try {
+            const r = await window.apiPost('/api/forum/' + id + '/reply', { contenido: text });
+            if (r.exito) { window.toastSuccess('Respuesta publicada.'); window.abrirForo(id); }
+            else window.toastError(r.mensaje || 'No se pudo publicar la respuesta.');
+        } finally {
+            liberar();
+        }
     };
 
     window.pinForo = async function (id) {
         const r = await window.apiPost('/api/forum/' + id + '/pin');
-        if (r.exito) { window.toastSuccess && window.toastSuccess(r.isPinned ? 'Tema fijado.' : 'Tema desfijado.'); window.abrirForo(id); }
-        else window.toastError && window.toastError(r.mensaje || 'Error.');
+        if (r.exito) { window.toastSuccess(r.isPinned ? 'Tema fijado arriba.' : 'Tema desfijado.'); window.abrirForo(id); }
+        else window.toastError(r.mensaje || 'No se pudo cambiar el tema.');
     };
 
     window.crearTemaForo = async function (e) {
         e.preventDefault();
         const body = {
-            materia: document.getElementById('foroMateria').value,
-            titulo: document.getElementById('foroTitulo').value,
-            contenido: document.getElementById('foroContenido').value,
+            materia: document.getElementById('foroMateria').value.trim(),
+            titulo: document.getElementById('foroTitulo').value.trim(),
+            contenido: document.getElementById('foroContenido').value.trim(),
         };
-        const r = await window.apiPost('/api/forum', body);
-        if (r.exito) { window.toastSuccess && window.toastSuccess('Tema publicado.'); e.target.reset(); window.cargarForos(); }
-        else window.toastError && window.toastError(r.mensaje || 'Error.');
+        const liberar = window.bloquearEnvio(e);
+        try {
+            const r = await window.apiPost('/api/forum', body);
+            if (r.exito) {
+                window.toastSuccess('Tema publicado.');
+                e.target.reset();
+                const details = e.target.closest('details');
+                if (details) details.open = false;
+                window.cargarForos();
+            } else {
+                window.toastError(r.mensaje || 'No se pudo publicar el tema.');
+            }
+        } finally {
+            liberar();
+        }
     };
 })();

@@ -189,7 +189,13 @@ textarea:focus-visible,
   font-weight: 600;
   line-height: 1.5;
   white-space: nowrap;
-  text-transform: capitalize;
+}
+
+/* Mayúscula sólo la primera letra ("En revisión", "Sin atender"). Con
+   `capitalize` salía cada palabra en mayúscula, que no es como se escribe en
+   castellano. */
+.badge::first-letter {
+  text-transform: uppercase;
 }
 
 .badge--ok { background: var(--c-ok-bg); color: var(--c-ok); }
@@ -1289,3 +1295,137 @@ html[data-theme='dark'] .pestania--activa { color: #7dd3fc; border-bottom-color:
     min-height: 240px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Títulos de sección en los paneles
+   --------------------------------------------------------------------------
+   `.section-title` viene de styles.css, donde es el título centrado con barra
+   azul del portal. En los paneles cada uno lo redefine con su línea gris
+   abajo, pero heredaba el centrado y la barra: quedaban las dos decoraciones
+   juntas. Acá va alineado a la izquierda y sólo con la línea.
+   -------------------------------------------------------------------------- */
+
+body.panel-app .section-title {
+  text-align: left;
+}
+
+body.panel-app .section-title::after {
+  content: none;
+}
+
+/* Texto de "no hay nada" en listas que se arman a mano. */
+.texto-vacio {
+  color: var(--c-texto-suave);
+  text-align: center;
+  padding: 16px 0;
+}
+
+/* --------------------------------------------------------------------------
+   Campana de notificaciones y lista de conversaciones
+   --------------------------------------------------------------------------
+   Los avisos y las conversaciones pasaron de <li onclick> a <button>, para
+   que se lleguen con Tab y se activen con Enter. Se les saca el aspecto de
+   botón: tienen que verse igual que antes.
+   -------------------------------------------------------------------------- */
+
+button.bell-item,
+button.chat-list-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+button.bell-item > span,
+button.chat-list-item > span {
+  display: block;
+}
+
+button.bell-item.bell-unread { background: #eff6ff; }
+button.chat-list-item.active { background: #dbeafe; }
+
+html[data-theme='dark'] button.bell-item.bell-unread { background: #1e3a5f; }
+html[data-theme='dark'] button.chat-list-item.active { background: #1e3a8a; }
+
+.chat-main-rol {
+  font-size: 0.8rem;
+  color: var(--c-texto-suave);
+  font-weight: normal;
+}
+
+/* --------------------------------------------------------------------------
+   Foros
+   -------------------------------------------------------------------------- */
+
+.foro-tarjeta {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-left: 4px solid var(--rol, #3498db);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.foro-tarjeta:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1); }
+
+.foro-tarjeta > span { display: block; }
+.foro-tarjeta .campus-card-meta { display: flex; }
+
+.foro-resumen {
+  max-height: 3em;
+  overflow: hidden;
+}
+
+.foro-tema { border-left: 4px solid var(--rol, #3498db); }
+.foro-respuesta { border-left: 3px solid var(--rol, #3498db); margin-bottom: 10px; }
+.foro-fijado { color: #b45309; margin-right: 6px; }
+.foro-volver { margin-bottom: 14px; }
+.foro-fijar { margin-top: 10px; }
+
+.foro-subtitulo {
+  margin: 20px 0 10px;
+  color: var(--c-texto-suave);
+}
+
+.foro-responder {
+  margin-top: 18px;
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.foro-responder textarea { width: 100%; }
+
+/* --------------------------------------------------------------------------
+   Consultas del formulario de contacto (panel de administración)
+   -------------------------------------------------------------------------- */
+
+.consulta {
+  border-left: 4px solid #1f4e79;
+}
+
+.consulta--atendida {
+  border-left-color: var(--c-ok);
+  opacity: 0.85;
+}
+
+.consulta__mensaje {
+  white-space: pre-line;
+  margin: 8px 0 12px;
+}
+
+/* --------------------------------------------------------------------------
+   Mi cursado (panel del estudiante)
+   -------------------------------------------------------------------------- */
+
+.cursado-cabecera {
+  margin: 0 0 18px;
+  color: var(--c-texto-suave);
+}
+
+.cursado-cabecera strong { color: var(--c-texto); }

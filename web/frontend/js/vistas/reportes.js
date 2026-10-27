@@ -15,7 +15,6 @@ import {
   badge,
   dia,
   esc,
-  estadoVacio,
   exportarCSV,
   fecha,
   filtros,
