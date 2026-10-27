@@ -8,7 +8,7 @@ la más cercana a quien escribe el código a la más lejana:
 | Editor | ESLint (extensión de VS Code) | Mientras se escribe | Nada: subraya y corrige al guardar |
 | Commit local | Husky + lint-staged | `git commit` | El commit, si hay errores de lint, de formato o un mensaje fuera de Conventional Commits |
 | Pull request | GitHub Actions + protección de `main` | Cada push a un PR | El merge, si falla typecheck, lint, integración, móvil o E2E |
-| Análisis central | SonarCloud | Cada PR y cada push a `main` | El merge, si no pasa el quality gate (una vez activado) |
+| Análisis central | SonarCloud (análisis automático) | Cada PR y cada push a `main` | Marca el PR con el resultado del quality gate |
 
 ---
 
@@ -79,20 +79,29 @@ de mergear, y Railway no despliega hasta que el CI termina.
 
 ## 5. SonarCloud
 
-El repositorio ya tiene [`sonar-project.properties`](../sonar-project.properties)
-y el job `sonarcloud` en el CI. **Falta activarlo**, porque requiere iniciar
-sesión con la cuenta de GitHub del dueño del repositorio:
+**Activo desde el 27/10/2026, en modo análisis automático.** Organización
+`fabrithompson`, proyecto `fabrithompson_CentroEducativo`:
+<https://sonarcloud.io/project/overview?id=fabrithompson_CentroEducativo>.
 
-1. Entrar a <https://sonarcloud.io> → **Log in with GitHub** con `fabrithompson`.
-2. **+ → Analyze new project** → elegir `CentroEducativo`. Es gratis para
-   repositorios públicos. Si pide crear una organización, usar `fabrithompson`.
-3. En el proyecto: **Administration → Analysis Method** → desactivar
-   **Automatic Analysis**. Si queda activo, el análisis desde el CI falla.
-4. En la misma pantalla, **GitHub Actions** → copiar el token.
-5. En GitHub: **Settings → Secrets and variables → Actions → New repository
+- La app de SonarCloud está instalada en la cuenta de GitHub `fabrithompson`
+  con acceso **sólo** a este repositorio. SonarCloud analiza por su cuenta cada
+  push a `main` y a cada PR, y publica el resultado del quality gate como un
+  chequeo del PR. No hace falta ningún token ni secreto.
+- La configuración de ese modo está en
+  [`.sonarcloud.properties`](../.sonarcloud.properties): qué es código, qué es
+  prueba y qué se excluye (migraciones, dependencias, subidas).
+
+**El job `SonarCloud` del CI** queda preparado para el otro modo, el análisis
+desde el CI, y no corre mientras no exista el secreto `SONAR_TOKEN`. Termina en
+verde con un aviso. Para pasar a ese modo —por ejemplo, para sumar la cobertura
+de las pruebas, que el análisis automático no mide—:
+
+1. En SonarCloud: **Administration → Analysis Method** → desactivar
+   **Automatic Analysis**. Los dos modos no pueden convivir: si los dos están
+   activos, el análisis desde el CI falla.
+2. En la misma pantalla, **GitHub Actions** → copiar el token.
+3. En GitHub: **Settings → Secrets and variables → Actions → New repository
    secret** → nombre `SONAR_TOKEN`, valor: el token.
-6. Volver a correr el CI de cualquier PR. El job `SonarCloud` pasa a analizar,
-   y el quality gate aparece como chequeo del PR.
 
-Si la clave del proyecto o la organización que crea SonarCloud no coinciden con
-`sonar-project.properties`, hay que corregirlas en ese archivo.
+Ese modo lee [`sonar-project.properties`](../sonar-project.properties). Si se
+cambia qué se analiza, hay que cambiarlo en los dos archivos.
