@@ -73,6 +73,15 @@ export default tseslint.config(
     },
   },
 
+  // Pruebas y scripts de humo: leen el JSON de la API sin un tipo por
+  // respuesta, y ahí `any` es la herramienta adecuada. Un tipo exacto por cada
+  // respuesta duplicaría los del backend sin probar nada más. En el código de
+  // producción la regla sigue en advertencia.
+  {
+    files: ['web/backend/**/*.test.ts', 'web/backend/scripts/**/*.ts', 'web/backend/e2e/**/*.ts', 'mobile/**/*.test.ts'],
+    rules: { '@typescript-eslint/no-explicit-any': 'off' },
+  },
+
   // Frontend web: JavaScript plano en el navegador. Las vistas y la capa de
   // API son módulos ES; el resto se carga con <script> clásico y comparte el
   // ámbito global, así que sus funciones se llaman desde los `onclick` del
