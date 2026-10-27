@@ -661,7 +661,7 @@ async function dibujar(valores = {}) {
   if (form) {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      dibujar(leerFiltros(form));
+      void dibujar(leerFiltros(form));
     });
     form.addEventListener('reset', () => {
       setTimeout(() => dibujar({}), 0);
@@ -694,7 +694,7 @@ export async function iniciarReportes(idContenedor = 'vista-reportes') {
 
       const panel = document.getElementById('panel-reporte');
       panel.setAttribute('aria-labelledby', `tab-${reporteActivo}`);
-      dibujar({});
+      void dibujar({});
     });
   });
 

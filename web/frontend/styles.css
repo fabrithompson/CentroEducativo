@@ -29,9 +29,20 @@
     --text-color: var(--dark);
 }
 
+/* Fondo explícito: sin él, el lienzo lo decide el navegador, y con la
+   preferencia de tema oscuro del sistema algunos pintaban de negro las
+   secciones sin fondo propio (con títulos azul oscuro encima). */
 body {
     line-height: 1.6;
     color: var(--dark);
+    background: var(--white);
+}
+
+/* El menú del portal queda fijo arriba (.main-nav es sticky): sin este
+   margen, al saltar a una sección desde el menú su título quedaba tapado
+   por la barra. */
+html {
+    scroll-padding-top: 84px;
 }
 
 .container {
@@ -1641,3 +1652,302 @@ html[data-theme="dark"] [style*="color:#5f7072"] { color: #a3b1c2 !important; }
 html[data-theme="dark"] [style*="color: #0f172a"],
 html[data-theme="dark"] [style*="color: #1e293b"],
 html[data-theme="dark"] [style*="color: #2c3e50"] { color: #f1f5f9 !important; }
+
+/* ============================================================
+   Acabado visual del portal
+   ------------------------------------------------------------
+   Los formularios, las noticias, el contacto y el pie usaban el
+   aspecto por defecto del navegador: selects nativos, campos sin
+   foco visible (outline: none sin reemplazo), tarjetas planas. Acá
+   se les da el mismo lenguaje que el resto del sitio. Los colores
+   nuevos están medidos contra su fondo (AA).
+   ============================================================ */
+
+/* Radios, checkboxes y la selección de texto con el azul del sitio. */
+:root { accent-color: var(--secondary); }
+::selection { background: rgba(33, 124, 185, 0.22); }
+
+/* --- Campos de formulario ------------------------------------------- */
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    color: var(--dark);
+    font-family: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover {
+    border-color: #94a3b8;
+}
+
+/* Foco visible: antes se quitaba el contorno y sólo cambiaba el borde. */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--secondary);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(33, 124, 185, 0.22);
+}
+
+/* #64748b: 4.6:1 sobre el fondo del campo. */
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #64748b;
+}
+
+/* Un campo mal completado se marca después de tocarlo, no al cargar. */
+.form-group input:user-invalid,
+.form-group select:user-invalid,
+.form-group textarea:user-invalid {
+    border-color: #b91c1c;
+}
+
+.form-group select {
+    appearance: none;
+    padding-right: 42px;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+}
+
+.form-group select:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+/* Las tarjetas de formulario llevan el acento del sitio arriba y el botón
+   de envío ocupa el ancho, como en los modales de ingreso. */
+.form-inscription,
+.form-employment,
+.form-contact,
+.form-opinion {
+    border-top: 4px solid var(--secondary);
+}
+
+.form-inscription > .btn-primary,
+.form-employment > .btn-primary,
+.form-contact > .btn-primary,
+.form-opinion > .btn-primary {
+    width: 100%;
+    padding: 14px;
+}
+
+/* --- Botón principal -------------------------------------------------- */
+.btn-primary {
+    box-shadow: 0 2px 6px rgba(33, 124, 185, 0.28);
+}
+
+.btn-primary:hover {
+    background: #1a5f8f;
+    box-shadow: 0 6px 14px rgba(33, 124, 185, 0.32);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(33, 124, 185, 0.3);
+}
+
+.btn-primary:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 2px;
+}
+
+/* --- Noticias ------------------------------------------------------- */
+.news-card {
+    border-top: 4px solid var(--secondary);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.news-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(16, 24, 40, 0.12);
+}
+
+/* La fecha como etiqueta: #1a5f8f sobre #e8f2fa da 6.1:1. */
+.news-date {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #e8f2fa;
+    color: #1a5f8f;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.news-date::before {
+    content: "\f073";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    margin-right: 6px;
+}
+
+.read-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* La flecha gira cuando la nota está desplegada. */
+.read-more::after {
+    content: "\f078";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+.read-more[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+}
+
+/* --- Íconos en círculo: bienestar, misión y contacto ----------------------- */
+.wellbeing-item i,
+.mv-card i,
+.contact-info-card i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #e8f2fa;
+    font-size: 1.6rem;
+}
+
+.mv-card i { width: 48px; height: 48px; font-size: 1.2rem; }
+
+.contact-info-card,
+.wellbeing-item,
+.mv-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contact-info-card:hover,
+.wellbeing-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(16, 24, 40, 0.12);
+}
+
+/* --- Opiniones ------------------------------------------------------ */
+.opinion-card {
+    border-left: 4px solid var(--secondary);
+}
+
+.opinion-card p {
+    font-style: italic;
+    color: var(--gray);
+}
+
+/* El dorado anterior (#ffd700) daba 1.4:1 sobre blanco: las estrellas casi
+   no se veían. #b45309 da 5.0:1. */
+.opinion-rating {
+    color: #b45309;
+    letter-spacing: 2px;
+}
+
+.opiniones-vacio {
+    padding: 28px 16px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.opiniones-vacio::before {
+    content: "\f4ad";
+    display: block;
+    margin-bottom: 8px;
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 1.6rem;
+    color: #94a3b8;
+}
+
+/* --- Slider: flechas redondas sobre la foto ----------------------------- */
+.sliderprev, .slidernext {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sliderprev:hover, .slidernext:hover {
+    background: rgba(15, 23, 42, 0.75);
+}
+
+.sliderprev:focus-visible, .slidernext:focus-visible, .dot:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+}
+
+/* --- Pie de página -------------------------------------------------- */
+.footer-section h3 {
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.footer-section h3::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 36px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--secondary);
+}
+
+.footer-section p { margin-bottom: 8px; }
+.footer-section p i { width: 18px; margin-right: 6px; }
+
+/* #93c5fd sobre el azul del pie da 7.6:1. */
+.footer-section a:hover,
+.footer-section ul li a:hover {
+    color: #93c5fd;
+    text-decoration: underline;
+}
+
+footer .social-links { margin-top: 12px; }
+
+footer .social-links a {
+    width: 38px;
+    height: 38px;
+    margin: 0 8px 0 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    transition: background-color 0.2s ease;
+}
+
+footer .social-links a:hover {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+}
+
+.footer-bottom p { font-size: 0.85rem; opacity: 0.85; }
+
+/* --- Modo oscuro de lo de arriba ------------------------------------- */
+html[data-theme="dark"] .form-group input:focus,
+html[data-theme="dark"] .form-group select:focus,
+html[data-theme="dark"] .form-group textarea:focus { background-color: #0f172a !important; }
+html[data-theme="dark"] .form-group input::placeholder,
+html[data-theme="dark"] .form-group textarea::placeholder { color: #94a3b8; }
+html[data-theme="dark"] .news-date { background: rgba(96, 165, 250, 0.15); color: #93c5fd; }
+html[data-theme="dark"] .wellbeing-item i,
+html[data-theme="dark"] .mv-card i,
+html[data-theme="dark"] .contact-info-card i { background: rgba(96, 165, 250, 0.15); color: #93c5fd; }
+html[data-theme="dark"] .opinion-card p { color: #cbd5e1; }
+html[data-theme="dark"] .opinion-rating { color: #fbbf24; }
+html[data-theme="dark"] .opiniones-vacio { background: rgba(15, 23, 42, 0.4); border-color: #334155; color: #94a3b8; }
