@@ -45,46 +45,47 @@
         <div class="header-top">
             <div class="container">
                 <div class="contact-info">
-                    <span><i class="fas fa-phone"></i> (362) 442-5100</span>
-                    <span><i class="fas fa-envelope"></i> info@et.edu.ar</span>
+                    <a href="tel:+543624425100"><i class="fas fa-phone" aria-hidden="true"></i> (362) 442-5100</a>
+                    <a href="mailto:info@et.edu.ar"><i class="fas fa-envelope" aria-hidden="true"></i> info@et.edu.ar</a>
                 </div>
+                <!-- Sólo canales que existen: el colegio todavía no tiene cuentas
+                     en redes sociales, y un ícono que lleva a "#" sube al
+                     principio de la página sin avisar por qué. -->
                 <div class="social-links">
-                    <a href="#" aria-label="Facebook del centro educativo"><i class="fab fa-facebook"></i></a>
-                    <a href="#" aria-label="Instagram del centro educativo"><i class="fab fa-instagram"></i></a>
-                    <a href="#" aria-label="Twitter del centro educativo"><i class="fab fa-twitter"></i></a>
-                    <a href="#" aria-label="WhatsApp del centro educativo"><i class="fab fa-whatsapp"></i></a>
+                    <a href="https://wa.me/543624425100" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp del centro educativo (se abre en otra pestaña)"><i class="fab fa-whatsapp" aria-hidden="true"></i></a>
+                    <a href="mailto:info@et.edu.ar" aria-label="Escribir un email al centro educativo"><i class="fas fa-envelope" aria-hidden="true"></i></a>
                 </div>
             </div>
         </div>
-        <nav class="main-nav">
+        <nav class="main-nav" aria-label="Navegación principal">
             <div class="container">
                 <div class="logo">
-                    <span class="logo-icon">🎓</span>
+                    <span class="logo-icon" aria-hidden="true">🎓</span>
                     <h1>Transformar Para Educar</h1>
                 </div>
-                <ul class="nav-links">
+                <ul class="nav-links" id="menu-principal">
                     <li><a href="#nosotros">Quiénes Somos</a></li>
                     <li><a href="#niveles">Niveles Educativos</a></li>
                     <li><a href="#bienestar">Bienestar Estudiantil</a></li>
                     <li><a href="#noticias">Noticias</a></li>
                     <li><a href="#empleo">Empleo</a></li>
-                    <li><a href="#" onclick="toggleLandingTheme(); return false;" class="btn-theme-landing" id="themeToggleLanding" title="Cambiar tema"><i class="fas fa-moon"></i></a></li>
-                    <li class="user-menu" id="userMenu" style="display: none;">
-                        <a href="#" class="dropbtn"><i class="fas fa-user"></i> <span id="userName"></span> <i class="fas fa-chevron-down"></i></a>
+                    <li><button type="button" onclick="toggleLandingTheme()" class="btn-theme-landing" id="themeToggleLanding" aria-label="Cambiar a tema oscuro" title="Cambiar tema"><i class="fas fa-moon" aria-hidden="true"></i></button></li>
+                    <li class="user-menu" id="userMenu" hidden>
+                        <a href="#" class="dropbtn" onclick="return false;" aria-haspopup="true"><i class="fas fa-user" aria-hidden="true"></i> <span id="userName"></span> <i class="fas fa-chevron-down" aria-hidden="true"></i></a>
                         <div class="dropdown-content">
-                            <a href="#" onclick="showUserPanel()"><i class="fas fa-tachometer-alt"></i> Mi Panel</a>
-                            <a href="#" onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                            <a href="#" onclick="showUserPanel(); return false;"><i class="fas fa-tachometer-alt" aria-hidden="true"></i> Mi Panel</a>
+                            <a href="#" onclick="logout(); return false;" class="logout-btn"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar Sesión</a>
                         </div>
                     </li>
                     <li class="login-link" id="loginLink">
-                        <a href="#" onclick="openLoginModal()"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</a>
+                        <a href="#" onclick="openLoginModal(); return false;"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Iniciar sesión</a>
                     </li>
                 </ul>
-                <div class="hamburger">
+                <button type="button" class="hamburger" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu-principal">
                     <span></span>
                     <span></span>
                     <span></span>
-                </div>
+                </button>
             </div>
         </nav>
     </header>
@@ -106,14 +107,14 @@
                 <p>Formando personas integrales con valores y conocimientos</p>
                 <a href="#inscripcion" class="btn-primary">Solicitar Inscripción</a>
             </div>
-            <button class="sliderprev" onclick="moveSlide(-1)">&#10094;</button>
-            <button class="slidernext" onclick="moveSlide(1)">&#10095;</button>
+            <button type="button" class="sliderprev" onclick="moveSlide(-1)" aria-label="Foto anterior"><span aria-hidden="true">&#10094;</span></button>
+            <button type="button" class="slidernext" onclick="moveSlide(1)" aria-label="Foto siguiente"><span aria-hidden="true">&#10095;</span></button>
             <div class="dots-container">
-                <span class="dot active" onclick="currentSlide(0)"></span>
-                <span class="dot" onclick="currentSlide(1)"></span>
-                <span class="dot" onclick="currentSlide(2)"></span>
-                <span class="dot" onclick="currentSlide(3)"></span>
-                <span class="dot" onclick="currentSlide(4)"></span>
+                <button type="button" class="dot active" onclick="currentSlide(0)" aria-label="Ver foto 1" aria-current="true"></button>
+                <button type="button" class="dot" onclick="currentSlide(1)" aria-label="Ver foto 2"></button>
+                <button type="button" class="dot" onclick="currentSlide(2)" aria-label="Ver foto 3"></button>
+                <button type="button" class="dot" onclick="currentSlide(3)" aria-label="Ver foto 4"></button>
+                <button type="button" class="dot" onclick="currentSlide(4)" aria-label="Ver foto 5"></button>
             </div>
         </div>
     </section>
@@ -127,11 +128,11 @@
                     <p>Nuestro equipo de profesionales altamente capacitados trabaja diariamente para garantizar una educación de calidad que prepare a nuestros alumnos para los desafíos del futuro.</p>
                     <div class="mission-vision">
                         <div class="mv-card">
-                            <h3><i class="fas fa-bullseye"></i> Misión</h3>
+                            <h3><i class="fas fa-bullseye" aria-hidden="true"></i> Misión</h3>
                             <p>Proporcionar educación de calidad formando personas críticas, solidarias y preparadas para contribuir positivamente a la sociedad.</p>
                         </div>
                         <div class="mv-card">
-                            <h3><i class="fas fa-eye"></i> Visión</h3>
+                            <h3><i class="fas fa-eye" aria-hidden="true"></i> Visión</h3>
                             <p>Ser una institución educativa líder que forme ciudadanos éticos, creativos y competentes para un mundo en constante cambio.</p>
                         </div>
                     </div>
@@ -145,17 +146,17 @@
             <h2 class="section-title">Niveles Educativos</h2>
             <div class="levels-grid">
                 <div class="level-card">
-                    <i class="fas fa-child"></i>
+                    <i class="fas fa-child" aria-hidden="true"></i>
                     <h3>Educación Inicial</h3>
                     <p>Desde los 45 días hasta los 5 años. Jardín maternal y preescolar.</p>
                 </div>
                 <div class="level-card">
-                    <i class="fas fa-school"></i>
+                    <i class="fas fa-school" aria-hidden="true"></i>
                     <h3>Educación Primaria</h3>
                     <p>1° a 6° grado. Formación académica integral.</p>
                 </div>
                 <div class="level-card">
-                    <i class="fas fa-graduation-cap"></i>
+                    <i class="fas fa-graduation-cap" aria-hidden="true"></i>
                     <h3>Educación Secundaria</h3>
                     <p>1° a 5° año. Orientación en ciencias y humanidades.</p>
                 </div>
@@ -168,22 +169,22 @@
             <h2 class="section-title">Bienestar Estudiantil</h2>
             <div class="wellbeing-content">
                 <div class="wellbeing-item">
-                    <i class="fas fa-heart"></i>
+                    <i class="fas fa-heart" aria-hidden="true"></i>
                     <h3>Acompañamiento Psicológico</h3>
                     <p>Contamos con profesionales de psicología educativa para apoyar el desarrollo emocional de nuestros estudiantes.</p>
                 </div>
                 <div class="wellbeing-item">
-                    <i class="fas fa-users"></i>
+                    <i class="fas fa-users" aria-hidden="true"></i>
                     <h3>Trabajo Social</h3>
                     <p>Programa de contención familiar y apoyo a familias en situación de vulnerabilidad.</p>
                 </div>
                 <div class="wellbeing-item">
-                    <i class="fas fa-basketball-ball"></i>
+                    <i class="fas fa-basketball-ball" aria-hidden="true"></i>
                     <h3>Actividades Deportivas</h3>
                     <p>Club deportivo escolar con múltiples disciplinas y competencias intercolegiales.</p>
                 </div>
                 <div class="wellbeing-item">
-                    <i class="fas fa-palette"></i>
+                    <i class="fas fa-palette" aria-hidden="true"></i>
                     <h3>Actividades Culturales</h3>
                     <p>Talleres de arte, música, teatro y danzas para desarrollar la creatividad.</p>
                 </div>
@@ -195,23 +196,34 @@
         <div class="container">
             <h2 class="section-title">Noticias</h2>
             <div class="news-grid">
+                <!-- "Leer más" despliega el resto de la nota en la misma tarjeta.
+                     Antes era un enlace a "#" que sólo subía al principio. -->
                 <article class="news-card">
                     <div class="news-date">05/05/2026</div>
                     <h3>Comenzó el ciclo lectivo 2026</h3>
-                    <p>Les damos la bienvenida a todos los estudiantes y familias. ¡Un nuevo año de grandes aprendizamientos nos espera!</p>
-                    <a href="#" class="read-more">Leer más</a>
+                    <p>Les damos la bienvenida a todos los estudiantes y familias. ¡Un nuevo año de grandes aprendizajes nos espera!</p>
+                    <div class="news-mas" id="noticia-1-mas" hidden>
+                        <p>Las clases arrancan a las 7:30 en el turno mañana y a las 13:15 en el turno tarde. Durante la primera semana los equipos docentes de cada nivel reciben a las familias en las aulas para presentar el plan del año.</p>
+                    </div>
+                    <button type="button" class="read-more" aria-expanded="false" aria-controls="noticia-1-mas">Leer más</button>
                 </article>
                 <article class="news-card">
                     <div class="news-date">28/04/2026</div>
                     <h3>Jornada de orientación vocacional</h3>
                     <p>Se realizará una jornada especial para estudiantes de 5° año sobre opciones académicas y profesionales.</p>
-                    <a href="#" class="read-more">Leer más</a>
+                    <div class="news-mas" id="noticia-2-mas" hidden>
+                        <p>Participan universidades e institutos terciarios de Resistencia y Corrientes, con charlas sobre carreras, becas y salida laboral. La jornada se hace en el polideportivo y no requiere inscripción previa.</p>
+                    </div>
+                    <button type="button" class="read-more" aria-expanded="false" aria-controls="noticia-2-mas">Leer más</button>
                 </article>
                 <article class="news-card">
                     <div class="news-date">20/04/2026</div>
                     <h3>Festival de ciencias y tecnología</h3>
                     <p>Invitamos a toda la comunidad educativa a participar de nuestro festival anual de proyectos científicos.</p>
-                    <a href="#" class="read-more">Leer más</a>
+                    <div class="news-mas" id="noticia-3-mas" hidden>
+                        <p>Cada curso del nivel secundario presenta un proyecto en los laboratorios, y el nivel primario expone sus experimentos en las aulas. Las familias pueden recorrer las muestras durante toda la tarde.</p>
+                    </div>
+                    <button type="button" class="read-more" aria-expanded="false" aria-controls="noticia-3-mas">Leer más</button>
                 </article>
             </div>
         </div>
@@ -351,7 +363,7 @@
                 </div>
                 <div class="form-group">
                     <label for="email">Email *</label>
-                    <input type="email" id="email" name="email" required>
+                    <input type="email" id="email" name="email" required maxlength="120" autocomplete="email">
                 </div>
                 <div class="form-group">
                     <label for="telefono">Teléfono *</label>
@@ -388,7 +400,7 @@
                 </div>
                 <div class="form-group">
                     <label for="mensaje">Mensaje adicional</label>
-                    <textarea id="mensaje" name="mensaje" rows="4"></textarea>
+                    <textarea id="mensaje" name="mensaje" rows="4" maxlength="2000"></textarea>
                 </div>
                 <p class="aviso-datos">
                     <i class="fas fa-shield-halved" aria-hidden="true"></i>
@@ -404,16 +416,20 @@
     <section id="empleo" class="section">
         <div class="container">
             <h2 class="section-title">Empleo</h2>
-            <div class="employment-content" style="max-width: 640px; margin: 0 auto;">
-                <p style="text-align: center; margin-bottom: 20px;">Si estás interesado en formar parte de nuestro equipo docente y administrativo, puedes dejarnos tu CV.</p>
+            <div class="employment-content">
+                <p class="employment-intro">Si te interesa formar parte de nuestro equipo docente o administrativo, podés dejarnos tu CV.</p>
                 <form class="form-employment" id="employmentForm">
                     <div class="form-group">
                         <label for="cv-nombre">Nombre completo *</label>
-                        <input type="text" id="cv-nombre" name="cv-nombre" required>
+                        <input type="text" id="cv-nombre" name="cv-nombre" required
+                               maxlength="120" autocomplete="name"
+                               pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .\-]+"
+                               title="Solo se permiten letras, espacios, guiones y apóstrofes."
+                               oninput="this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .\-]/g, '')">
                     </div>
                     <div class="form-group">
                         <label for="cv-email">Email *</label>
-                        <input type="email" id="cv-email" name="cv-email" required>
+                        <input type="email" id="cv-email" name="cv-email" required maxlength="120" autocomplete="email">
                     </div>
                     <div class="form-group">
                         <label for="cv-puesto">Puesto de interés *</label>
@@ -426,11 +442,11 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="cv-archivo">Adjuntar CV (PDF)</label>
+                        <label for="cv-archivo">Adjuntar CV (PDF, hasta 10 MB)</label>
                         <div class="file-upload">
-                            <input type="file" id="cv-archivo" name="cv-archivo" accept=".pdf" onchange="updateFileName(this)">
+                            <input type="file" id="cv-archivo" name="cv-archivo" accept=".pdf,application/pdf" onchange="updateFileName(this)">
                             <label for="cv-archivo" class="file-label">
-                                <i class="fas fa-cloud-upload-alt"></i>
+                                <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
                                 <span id="fileName">Seleccionar archivo</span>
                             </label>
                         </div>
@@ -449,15 +465,15 @@
 
     <section id="opiniones" class="section bg-light">
         <div class="container">
-            <h2 class="section-title">Deja tu opinión</h2>
-            <p class="subtitle">Tu opinión nos importa. Comparte tu experiencia con nosotros (no requiere registro)</p>
+            <h2 class="section-title">Dejá tu opinión</h2>
+            <p class="subtitle">Tu opinión nos importa. Compartí tu experiencia con nosotros (no requiere registro).</p>
             <form class="form-opinion" id="opinionForm">
                 <div class="form-group">
                     <label for="opinion-nombre">Tu nombre</label>
-                    <input type="text" id="opinion-nombre" name="opinion-nombre">
+                    <input type="text" id="opinion-nombre" name="opinion-nombre" maxlength="80" autocomplete="name">
                 </div>
                 <div class="form-group">
-                    <label for="opinion-rol">¿Eres?</label>
+                    <label for="opinion-rol">¿Sos…?</label>
                     <select id="opinion-rol" name="opinion-rol">
                         <option value="padre">Padre/Madre</option>
                         <option value="estudiante">Estudiante</option>
@@ -467,18 +483,27 @@
                 </div>
                 <div class="form-group">
                     <label for="opinion-texto">Tu opinión *</label>
-                    <textarea id="opinion-texto" name="opinion-texto" rows="4" required></textarea>
+                    <textarea id="opinion-texto" name="opinion-texto" rows="4" required minlength="3" maxlength="2000"></textarea>
                 </div>
-                <div class="rating">
-                    <label>Tu valoración:</label>
+                <!-- Radios nativos detrás de las estrellas: se eligen con el
+                     teclado (flechas) y el navegador exige elegir una antes de
+                     enviar. Antes eran íconos sueltos que sólo andaban con el
+                     mouse, y si nadie tocaba ninguno se mandaban 5 estrellas. -->
+                <fieldset class="rating">
+                    <legend>Tu valoración *</legend>
                     <div class="stars">
-                        <i class="far fa-star" data-value="1"></i>
-                        <i class="far fa-star" data-value="2"></i>
-                        <i class="far fa-star" data-value="3"></i>
-                        <i class="far fa-star" data-value="4"></i>
-                        <i class="far fa-star" data-value="5"></i>
+                        <input type="radio" name="rating" id="estrella-1" value="1" class="sr-only" required>
+                        <label for="estrella-1" title="1 estrella"><i class="far fa-star" aria-hidden="true"></i><span class="sr-only">1 estrella</span></label>
+                        <input type="radio" name="rating" id="estrella-2" value="2" class="sr-only">
+                        <label for="estrella-2" title="2 estrellas"><i class="far fa-star" aria-hidden="true"></i><span class="sr-only">2 estrellas</span></label>
+                        <input type="radio" name="rating" id="estrella-3" value="3" class="sr-only">
+                        <label for="estrella-3" title="3 estrellas"><i class="far fa-star" aria-hidden="true"></i><span class="sr-only">3 estrellas</span></label>
+                        <input type="radio" name="rating" id="estrella-4" value="4" class="sr-only">
+                        <label for="estrella-4" title="4 estrellas"><i class="far fa-star" aria-hidden="true"></i><span class="sr-only">4 estrellas</span></label>
+                        <input type="radio" name="rating" id="estrella-5" value="5" class="sr-only">
+                        <label for="estrella-5" title="5 estrellas"><i class="far fa-star" aria-hidden="true"></i><span class="sr-only">5 estrellas</span></label>
                     </div>
-                </div>
+                </fieldset>
                 <p class="aviso-datos">
                     <i class="fas fa-shield-halved" aria-hidden="true"></i>
                     Tu opinión se publica en el sitio junto con el nombre que dejes, después de que administración la revise. Podés no poner nombre. Podés pedir acceso, corrección o baja de tus datos
@@ -487,72 +512,9 @@
                 </p>
                 <button type="submit" class="btn-primary">Enviar Opinión</button>
             </form>
-            <div class="opiniones-display">
+            <div class="opiniones-display" aria-live="polite">
                 <h3>Últimas opiniones</h3>
-                <p class="opiniones-vacio">Cargando opiniones...</p>
-            </div>
-        </div>
-    </section>
-
-    <section id="panel-usuario" class="section user-panel" style="display: none;">
-        <div class="container">
-            <div class="dashboard-header">
-                <h2 class="section-title">Mi Panel</h2>
-                <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
-            </div>
-            <div class="dashboard-grid">
-                <div class="dashboard-card user-info">
-                    <div class="card-icon"><i class="fas fa-user-circle"></i></div>
-                    <div class="card-content">
-                        <h3>Bienvenido, <span id="panelUserName"></span></h3>
-                        <p class="user-type" id="panelUserType"></p>
-                        <p class="user-email" id="panelUserEmail"></p>
-                    </div>
-                </div>
-                <div class="dashboard-card">
-                    <div class="card-icon"><i class="fas fa-calendar-alt"></i></div>
-                    <h3>Ciclo Lectivo</h3>
-                    <p class="card-value">2026</p>
-                    <p class="card-subtitle">Estado: Activo</p>
-                </div>
-                <div class="dashboard-card">
-                    <div class="card-icon"><i class="fas fa-envelope"></i></div>
-                    <h3>Mensajes</h3>
-                    <p class="card-value">0</p>
-                    <p class="card-subtitle">Sin leer</p>
-                </div>
-                <div class="dashboard-card">
-                    <div class="card-icon"><i class="fas fa-bell"></i></div>
-                    <h3>Noticias</h3>
-                    <p class="card-value">3</p>
-                    <p class="card-subtitle">Nuevas</p>
-                </div>
-            </div>
-            <div class="dashboard-sections">
-                <div class="dashboard-section">
-                    <h3><i class="fas fa-newspaper"></i> Últimas Noticias</h3>
-                    <div class="news-item">
-                        <span class="news-date">05/05/2026</span>
-                        <p>Comenzó el ciclo lectivo 2026 - Les damos la bienvenida a todos los estudiantes y familias.</p>
-                    </div>
-                    <div class="news-item">
-                        <span class="news-date">28/04/2026</span>
-                        <p>Jornada de orientación vocacional para estudiantes de 5° año.</p>
-                    </div>
-                    <div class="news-item">
-                        <span class="news-date">20/04/2026</span>
-                        <p>Festival de ciencias y tecnología - ¡Participa de nuestro festival anual!</p>
-                    </div>
-                </div>
-                <div class="dashboard-section">
-                    <h3><i class="fas fa-phone-alt"></i> Contacto Rápido</h3>
-                    <div class="contact-quick">
-                        <p><i class="fas fa-phone"></i> (362) 442-5100</p>
-                        <p><i class="fas fa-envelope"></i> info@et.edu.ar</p>
-                        <p><i class="fab fa-whatsapp"></i> +54 362 442-5100</p>
-                    </div>
-                    <a href="#contacto" class="btn-primary btn-small">Enviar Mensaje</a>
-                </div>
+                <p class="opiniones-vacio">Cargando opiniones…</p>
             </div>
         </div>
     </section>
@@ -562,40 +524,40 @@
             <h2 class="section-title">Contacto</h2>
             <div class="contact-grid">
                 <div class="contact-info-card">
-                    <i class="fas fa-map-marker-alt"></i>
+                    <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
                     <h3>Dirección</h3>
                     <p>Av. 9 de Julio 1234<br>Resistencia, Chaco</p>
                 </div>
                 <div class="contact-info-card">
-                    <i class="fas fa-phone"></i>
+                    <i class="fas fa-phone" aria-hidden="true"></i>
                     <h3>Teléfono</h3>
                     <p>(362) 442-5100<br>(362) 442-5101</p>
                 </div>
                 <div class="contact-info-card">
-                    <i class="fas fa-envelope"></i>
+                    <i class="fas fa-envelope" aria-hidden="true"></i>
                     <h3>Email</h3>
                     <p>info@et.edu.ar<br>admisiones@et.edu.ar</p>
                 </div>
                 <div class="contact-info-card">
-                    <i class="fab fa-whatsapp"></i>
+                    <i class="fab fa-whatsapp" aria-hidden="true"></i>
                     <h3>WhatsApp</h3>
                     <p>+54 362 442-5100</p>
-                    <a href="https://wa.me/543624425100" class="btn-whatsapp" target="_blank">Enviar mensaje</a>
+                    <a href="https://wa.me/543624425100" class="btn-whatsapp" target="_blank" rel="noopener noreferrer">Enviar mensaje</a>
                 </div>
             </div>
             <form class="form-contact" id="contactForm">
-                <h3>Envíanos un mensaje</h3>
+                <h3>Envianos un mensaje</h3>
                 <div class="form-group">
-                    <label for="contact-nombre">Nombre</label>
-                    <input type="text" id="contact-nombre" name="contact-nombre">
+                    <label for="contact-nombre">Nombre *</label>
+                    <input type="text" id="contact-nombre" name="contact-nombre" required minlength="2" maxlength="120" autocomplete="name">
                 </div>
                 <div class="form-group">
-                    <label for="contact-email">Email</label>
-                    <input type="email" id="contact-email" name="contact-email">
+                    <label for="contact-email">Email *</label>
+                    <input type="email" id="contact-email" name="contact-email" required maxlength="120" autocomplete="email">
                 </div>
                 <div class="form-group">
-                    <label for="contact-mensaje">Mensaje</label>
-                    <textarea id="contact-mensaje" name="contact-mensaje" rows="4"></textarea>
+                    <label for="contact-mensaje">Mensaje *</label>
+                    <textarea id="contact-mensaje" name="contact-mensaje" rows="4" required minlength="10" maxlength="2000"></textarea>
                 </div>
                 <p class="aviso-datos">
                     <i class="fas fa-shield-halved" aria-hidden="true"></i>
@@ -612,24 +574,49 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" onclick="closeModal()" aria-label="Cerrar">&times;</button>
-                <h2 id="modalTitle"><i class="fas fa-graduation-cap"></i> Iniciar Sesión</h2>
+                <h2 id="modalTitle"><i class="fas fa-graduation-cap" aria-hidden="true"></i> Iniciar sesión</h2>
                 <p class="modal-subtitle">Accedé al campus virtual con tu usuario institucional</p>
             </div>
             <div class="modal-body">
                 <form id="loginForm">
                     <div class="form-group">
-                        <label for="username"><i class="fas fa-user" style="color:var(--secondary); margin-right:6px;"></i> Usuario</label>
+                        <label for="username"><i class="fas fa-user label-icono" aria-hidden="true"></i> Usuario</label>
                         <input type="text" id="username" name="username" maxlength="50" placeholder="Ej: mlopez" autocomplete="username" autocapitalize="none" spellcheck="false" required>
                     </div>
                     <div class="form-group">
-                        <label for="password"><i class="fas fa-lock" style="color:var(--secondary); margin-right:6px;"></i> Contraseña</label>
-                        <input type="password" id="password" name="password" maxlength="72" placeholder="••••••" autocomplete="current-password" required>
+                        <label for="password"><i class="fas fa-lock label-icono" aria-hidden="true"></i> Contraseña</label>
+                        <input type="password" id="password" name="password" maxlength="72" placeholder="Tu contraseña" autocomplete="current-password" required>
                     </div>
-                    <button type="submit" class="btn-primary" style="width:100%; padding:14px;"><i class="fas fa-sign-in-alt"></i> Ingresar al Campus</button>
+                    <button type="submit" class="btn-primary btn-bloque"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Ingresar al Campus</button>
+                    <!-- restablecer.html manda a buscar este enlace cuando el
+                         que llegó por mail ya no sirve; antes no existía. -->
+                    <p class="modal-olvido"><a href="#" onclick="openForgotModal(); return false;">¿Olvidaste tu contraseña?</a></p>
                 </form>
             </div>
             <div class="modal-footer-link">
-                ¿No tenés cuenta? <a href="#" onclick="openRegisterModal()">Regístrate acá</a>
+                ¿No tenés cuenta? <a href="#" onclick="openRegisterModal(); return false;">Registrate acá</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="forgotModal" role="dialog" aria-modal="true" aria-labelledby="forgotTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" onclick="closeForgotModal()" aria-label="Cerrar">&times;</button>
+                <h2 id="forgotTitle"><i class="fas fa-key" aria-hidden="true"></i> Recuperar contraseña</h2>
+                <p class="modal-subtitle">Te mandamos un enlace para elegir una contraseña nueva</p>
+            </div>
+            <div class="modal-body">
+                <form id="forgotForm">
+                    <div class="form-group">
+                        <label for="forgot-email"><i class="fas fa-envelope label-icono" aria-hidden="true"></i> Email de tu cuenta</label>
+                        <input type="email" id="forgot-email" name="email" maxlength="100" placeholder="usuario@dominio.com" autocomplete="email" required>
+                    </div>
+                    <button type="submit" class="btn-primary btn-bloque"><i class="fas fa-paper-plane" aria-hidden="true"></i> Enviar enlace</button>
+                </form>
+            </div>
+            <div class="modal-footer-link">
+                ¿La recordaste? <a href="#" onclick="switchForgotToLogin(); return false;">Volver a iniciar sesión</a>
             </div>
         </div>
     </div>
@@ -638,14 +625,14 @@
         <div class="modal-content modal-wide">
             <div class="modal-header">
                 <button type="button" class="close" onclick="closeRegisterModal()" aria-label="Cerrar">&times;</button>
-                <h2 id="registerTitle"><i class="fas fa-user-plus"></i> Crear cuenta nueva</h2>
+                <h2 id="registerTitle"><i class="fas fa-user-plus" aria-hidden="true"></i> Crear cuenta nueva</h2>
                 <p class="modal-subtitle">Completá tus datos para sumarte a la comunidad educativa</p>
             </div>
             <div class="modal-body">
                 <form id="registerForm">
                     <div class="form-grid-2">
                         <div class="form-group full-width">
-                            <label for="reg-tipo"><i class="fas fa-id-badge" style="color:var(--secondary); margin-right:6px;"></i> Tipo de usuario *</label>
+                            <label for="reg-tipo"><i class="fas fa-id-badge label-icono" aria-hidden="true"></i> Tipo de usuario *</label>
                             <select id="reg-tipo" name="tipo" required onchange="updateRegisterFields()">
                                 <option value="">Seleccionar perfil...</option>
                                 <option value="docente">Docente / Autoridad / Personal</option>
@@ -655,24 +642,24 @@
                         </div>
 
                         <div class="form-group full-width">
-                            <label for="reg-nombre"><i class="fas fa-user" style="color:var(--secondary); margin-right:6px;"></i> Nombre completo *</label>
-                            <input type="text" id="reg-nombre" name="nombre" maxlength="100" placeholder="Apellido, Nombre" required>
+                            <label for="reg-nombre"><i class="fas fa-user label-icono" aria-hidden="true"></i> Nombre completo *</label>
+                            <input type="text" id="reg-nombre" name="nombre" maxlength="100" placeholder="Apellido, Nombre" autocomplete="name" required>
                         </div>
 
                         <div class="form-group">
-                            <label for="reg-email"><i class="fas fa-envelope" style="color:var(--secondary); margin-right:6px;"></i> Email *</label>
-                            <input type="email" id="reg-email" name="email" maxlength="100" placeholder="usuario@dominio.com" required>
+                            <label for="reg-email"><i class="fas fa-envelope label-icono" aria-hidden="true"></i> Email *</label>
+                            <input type="email" id="reg-email" name="email" maxlength="100" placeholder="usuario@dominio.com" autocomplete="email" required>
                             <small class="form-ayuda">Formato: usuario@dominio.com</small>
                         </div>
 
                         <div class="form-group" id="dni-group">
-                            <label for="reg-dni"><i class="fas fa-address-card" style="color:var(--secondary); margin-right:6px;"></i> DNI *</label>
-                            <input type="text" id="reg-dni" name="dni" required pattern="[0-9]{7,8}" placeholder="12345678" title="Debe contener entre 7 y 8 números enteros, sin puntos ni espacios.">
+                            <label for="reg-dni"><i class="fas fa-address-card label-icono" aria-hidden="true"></i> DNI *</label>
+                            <input type="text" id="reg-dni" name="dni" required pattern="[0-9]{7,8}" inputmode="numeric" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="12345678" title="Debe contener entre 7 y 8 números enteros, sin puntos ni espacios.">
                             <small class="form-ayuda">Sin puntos ni espacios</small>
                         </div>
 
-                        <div class="form-group" id="curso-group" style="display: none;">
-                            <label for="reg-curso"><i class="fas fa-school" style="color:var(--secondary); margin-right:6px;"></i> Curso / Año *</label>
+                        <div class="form-group" id="curso-group" hidden>
+                            <label for="reg-curso"><i class="fas fa-school label-icono" aria-hidden="true"></i> Curso / Año *</label>
                             <select id="reg-curso" name="curso">
                                 <option value="">Seleccionar curso...</option>
                                 <optgroup label="Educación Inicial">
@@ -699,22 +686,22 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="reg-usuario"><i class="fas fa-at" style="color:var(--secondary); margin-right:6px;"></i> Usuario *</label>
+                            <label for="reg-usuario"><i class="fas fa-at label-icono" aria-hidden="true"></i> Usuario *</label>
                             <input type="text" id="reg-usuario" name="usuario" minlength="3" maxlength="40" placeholder="nombredeusuario" autocomplete="username" autocapitalize="none" spellcheck="false" required>
                         </div>
 
                         <div class="form-group">
-                            <label for="reg-password"><i class="fas fa-lock" style="color:var(--secondary); margin-right:6px;"></i> Contraseña *</label>
+                            <label for="reg-password"><i class="fas fa-lock label-icono" aria-hidden="true"></i> Contraseña *</label>
                             <input type="password" id="reg-password" name="password" required minlength="8" maxlength="72" placeholder="Mínimo 8, con letras y números" autocomplete="new-password" aria-describedby="reg-password-ayuda">
                             <small class="form-ayuda" id="reg-password-ayuda">Al menos 8 caracteres, combinando letras y números.</small>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn-primary" style="width:100%; padding:14px; margin-top:10px;"><i class="fas fa-user-check"></i> Crear mi cuenta</button>
+                    <button type="submit" class="btn-primary btn-bloque"><i class="fas fa-user-check" aria-hidden="true"></i> Crear mi cuenta</button>
                 </form>
             </div>
             <div class="modal-footer-link">
-                ¿Ya tenés cuenta? <a href="#" onclick="switchToLogin()">Iniciá sesión acá</a>
+                ¿Ya tenés cuenta? <a href="#" onclick="switchToLogin(); return false;">Iniciá sesión acá</a>
             </div>
         </div>
     </div>
@@ -738,12 +725,10 @@
                 </div>
                 <div class="footer-section">
                     <h3>Contacto</h3>
-                    <p><i class="fas fa-phone"></i> (362) 442-5100</p>
-                    <p><i class="fas fa-envelope"></i> info@et.edu.ar</p>
+                    <p><a href="tel:+543624425100"><i class="fas fa-phone" aria-hidden="true"></i> (362) 442-5100</a></p>
+                    <p><a href="mailto:info@et.edu.ar"><i class="fas fa-envelope" aria-hidden="true"></i> info@et.edu.ar</a></p>
                     <div class="social-links">
-                        <a href="#" aria-label="Facebook del centro educativo"><i class="fab fa-facebook"></i></a>
-                        <a href="#" aria-label="Instagram del centro educativo"><i class="fab fa-instagram"></i></a>
-                        <a href="#" aria-label="WhatsApp del centro educativo"><i class="fab fa-whatsapp"></i></a>
+                        <a href="https://wa.me/543624425100" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp del centro educativo (se abre en otra pestaña)"><i class="fab fa-whatsapp" aria-hidden="true"></i></a>
                     </div>
                 </div>
             </div>
