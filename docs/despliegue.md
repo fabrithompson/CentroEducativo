@@ -270,6 +270,32 @@ Queda afuera a propósito lo que no entra en la imagen del backend: `mobile/`,
 > acaba de subir **no está corriendo**, aunque el servicio figure como Online y
 > responda con normalidad.
 
+### 1.5 El build instala sólo el backend (#38)
+
+Railpack detecta el workspace de pnpm y, por defecto, corre
+`pnpm install --frozen-lockfile` en la raíz: instala también la app móvil
+(Expo, React Native, Metro), que el servicio nunca ejecuta. La imagen pesaba
+431 MB y subirla llevaba unos 20 s de cada despliegue.
+
+`railpack.json`, en la raíz, reemplaza los comandos del paso de instalación:
+
+```json
+"install": { "commands": ["pnpm add -g node-gyp", "pnpm install --frozen-lockfile --prefer-offline --filter backend..."] }
+```
+
+`node-gyp` se mantiene porque lo necesita `bcrypt`; `backend...` instala el
+backend con sus dependencias (y las de la raíz, que pnpm agrega igual). Medido
+el 27/10/2026 en dos clones limpios del repositorio: la instalación completa
+trae **807 paquetes** —los mismos que informa el build de Railway— y la filtrada
+**397**, sin ninguno de Expo ni de React Native; `pnpm build` genera
+`web/backend/dist/index.js` igual. El peso nuevo de la imagen se ve en el log
+del primer build después del merge.
+
+`/railpack.json` también se agregó a `watchPatterns` en `.railway/railway.ts`,
+para que un cambio sólo en ese archivo dispare el despliegue. Ese archivo es la
+definición de infraestructura: **el cambio no corre hasta aplicarlo** con
+`railway config apply`.
+
 
 ---
 
