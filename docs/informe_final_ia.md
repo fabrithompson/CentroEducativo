@@ -17,7 +17,7 @@ desarrollo del Trabajo Práctico Integrador, sobre un sistema compuesto por tres
 aplicaciones —portal web institucional, sistema de gestión y aplicación móvil—
 que comparten un backend y una base de datos únicos.
 
-El trabajo se organizó en **37 intervenciones asistidas por IA**, todas
+El trabajo se organizó en **38 intervenciones asistidas por IA**, todas
 registradas en `docs/bitacora_ia.md`. El producto resultante comprende 39
 modelos de datos, 140 endpoints REST, 12 migraciones y 382 pruebas automatizadas
 más 3 de extremo a extremo con Selenium, **validadas contra una instancia real de
@@ -1094,7 +1094,7 @@ está justamente en la precisión con que se enuncian sus límites.
 
 | Anexo | Documento | Contenido |
 |---|---|---|
-| A | `docs/bitacora_ia.md` | Bitácora completa: 37 intervenciones con prompts y comandos |
+| A | `docs/bitacora_ia.md` | Bitácora completa: 38 intervenciones con prompts y comandos |
 | B | `docs/plan_de_trabajo.md` | Cronograma, hitos y matriz de riesgos |
 | B.1 | `docs/plan_de_trabajo_mobile.md` | Plan de trabajo de la aplicación móvil |
 | B.2 | `docs/patrones_de_diseno.md` | Patrones de diseño, con archivo y línea |
