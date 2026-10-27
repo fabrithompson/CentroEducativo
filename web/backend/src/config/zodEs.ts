@@ -24,7 +24,9 @@ const ETIQUETAS: Record<string, string> = {
   localidad: 'Localidad',
   provincia: 'Provincia',
   usuario: 'Usuario',
-  password: 'Contraseña',
+  // Es la etiqueta del campo que ve la persona, no una credencial: SonarCloud
+  // la toma por una contraseña escrita en el código (regla S2068).
+  password: 'Contraseña', // NOSONAR
   actual: 'Contraseña actual',
   nueva: 'Contraseña nueva',
   tipo: 'Tipo',

@@ -594,14 +594,14 @@ ul {
     margin-bottom: 15px;
 }
 
+/* `font` primero: el atajo pisa cualquier propiedad de fuente anterior. */
 .read-more {
-    color: var(--secondary);
+    font: inherit;
     font-weight: 600;
+    color: var(--secondary);
     background: none;
     border: none;
     padding: 4px 0;
-    font: inherit;
-    font-weight: 600;
     cursor: pointer;
     min-height: 24px;
 }
