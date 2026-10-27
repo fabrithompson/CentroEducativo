@@ -1606,7 +1606,7 @@ body.panel-app .chat-sidebar details > summary::-webkit-details-marker { display
 body.panel-app .view-section details > summary::after,
 body.panel-app .chat-sidebar details > summary::after {
   content: '\f078';
-  font-family: 'Font Awesome 6 Free';
+  font-family: 'Font Awesome 6 Free', sans-serif;
   font-weight: 900;
   font-size: 0.75rem;
   margin-left: auto;

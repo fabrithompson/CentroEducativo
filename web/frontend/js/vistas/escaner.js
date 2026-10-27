@@ -270,8 +270,9 @@ async function crearLector() {
     try {
       const formatos = await window.BarcodeDetector.getSupportedFormats?.();
       if (!formatos || formatos.includes('qr_code')) {
-        const Detector = window.BarcodeDetector;
-        const detector = new Detector({ formats: ['qr_code'] });
+        // BarcodeDetector es una clase nativa del navegador (Shape Detection API);
+        // Sonar no la reconoce como constructor.
+        const detector = new window.BarcodeDetector({ formats: ['qr_code'] }); // NOSONAR
         return async (video) => {
           const codigos = await detector.detect(video);
           return codigos.length > 0 ? codigos[0].rawValue : null;

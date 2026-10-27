@@ -1784,7 +1784,7 @@ html[data-theme="dark"] [style*="color: #2c3e50"] { color: #f1f5f9 !important; }
 
 .news-date::before {
     content: "\f073";
-    font-family: "Font Awesome 6 Free";
+    font-family: "Font Awesome 6 Free", sans-serif;
     font-weight: 900;
     margin-right: 6px;
 }
@@ -1798,7 +1798,7 @@ html[data-theme="dark"] [style*="color: #2c3e50"] { color: #f1f5f9 !important; }
 /* La flecha gira cuando la nota está desplegada. */
 .read-more::after {
     content: "\f078";
-    font-family: "Font Awesome 6 Free";
+    font-family: "Font Awesome 6 Free", sans-serif;
     font-weight: 900;
     font-size: 0.75rem;
     transition: transform 0.2s ease;
@@ -1864,7 +1864,7 @@ html[data-theme="dark"] [style*="color: #2c3e50"] { color: #f1f5f9 !important; }
     content: "\f4ad";
     display: block;
     margin-bottom: 8px;
-    font-family: "Font Awesome 6 Free";
+    font-family: "Font Awesome 6 Free", sans-serif;
     font-weight: 900;
     font-size: 1.6rem;
     color: #94a3b8;
