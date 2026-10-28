@@ -132,7 +132,7 @@ revierte sola.
 > **Cómo verificar que ya corre, sin esperar al próximo cambio de esquema.**
 > Después de un despliegue, `railway ssh --service backend -- sh -c 'cd
 > web/backend && ./node_modules/.bin/prisma migrate status'` tiene que informar
-> las 11 migraciones aplicadas. Si dice "have not yet been applied", el pre-deploy
+> las 13 migraciones aplicadas. Si dice "have not yet been applied", el pre-deploy
 > sigue sin correr y hay que aplicarlas a mano — sección 6.
 >
 > **Un detalle que costó horas.** `railway ssh` entra al despliegue *más
@@ -403,8 +403,8 @@ los demás. Ver `web/backend/src/config/env.ts`.
 | Job | Qué hace |
 |---|---|
 | Typecheck | `tsc` del backend, las semillas y la app móvil |
-| Pruebas de integración (PostgreSQL) | las 12 migraciones sobre PostgreSQL 18 real —la versión de producción—, el seed, las 17 verificaciones de reglas en el motor y las 295 pruebas del backend |
-| Pruebas de la app móvil | las 70 pruebas del dominio de la app |
+| Pruebas de integración (PostgreSQL) | las 13 migraciones sobre PostgreSQL 18 real —la versión de producción—, el seed, las 17 verificaciones de reglas en el motor y las 306 pruebas del backend |
+| Pruebas de la app móvil | las 74 pruebas del dominio de la app |
 | Lint (ESLint) | las reglas de `eslint.config.mjs` |
 | Pruebas E2E (Selenium) | la pila completa con Chrome; **sólo en los PR**, para no demorar el despliegue después del merge |
 | SonarCloud | análisis estático; se activa con el secreto `SONAR_TOKEN` |

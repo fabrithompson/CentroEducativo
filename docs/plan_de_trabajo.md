@@ -297,15 +297,16 @@ hará y si hay algún bloqueo. Lo acordado se refleja en el tablero de GitHub Pr
 
 | Nivel | Alcance | Cantidad |
 |---|---|---|
-| Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 295 |
-| De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **295** |
+| Unitarias de dominio | Reglas puras: horarios, importes, fechas de vencimiento, estado de rastreo, criptografía del carnet | Incluidas en las 306 |
+| De integración del backend | Servicios, autorización por rol y persistencia contra PostgreSQL real | **306** |
 | Del motor de base de datos | Verifican que el motor **rechace efectivamente** el tercer deporte, el cruce de horarios, el quinto recorrido, el comprobante sin archivo, el tutor que no es padre y la reutilización de un código QR | **17** |
-| De la aplicación móvil | Selección de ítems a pagar, formato de importes y fechas, y equivalencia de la implementación propia de HMAC-SHA256 contra `node:crypto` en 300 casos aleatorios. Todas de dominio: el cliente HTTP todavía no tiene pruebas (ver `docs/plan_de_trabajo_mobile.md`) | **70** |
-| **Total** | | **382** |
+| De la aplicación móvil | Selección de ítems a pagar, formato de importes y fechas, y equivalencia de la implementación propia de HMAC-SHA256 contra `node:crypto` en 300 casos aleatorios. Todas de dominio: el cliente HTTP todavía no tiene pruebas (ver `docs/plan_de_trabajo_mobile.md`) | **74** |
+| **Total** | | **397** |
+| De extremo a extremo | Selenium con Chrome contra la pila completa: un padre sólo ve a sus propios hijos (RF-03) | 3, fuera del total |
 | De humo por HTTP | Recorridos completos contra PostgreSQL real: ABM académico, autenticación —incluidas dos cuentas en el mismo navegador—, retención de datos y los circuitos de la web (bajas y reactivaciones, cuotas, anuncios, notas, escáner) | 4 recorridos, fuera del total |
 
 **Entorno de pruebas.** La suite levanta una instancia real de PostgreSQL 15
-mediante `embedded-postgres`, aplica las doce migraciones, carga las semillas y
+mediante `embedded-postgres`, aplica las trece migraciones, carga las semillas y
 corre las pruebas contra esa base. No se usan dobles de prueba para la
 persistencia: lo que se verifica es el comportamiento del motor, no una
 imitación. Existe además un `docker-compose.yml` con `postgres:15-alpine` para
@@ -365,21 +366,21 @@ produjo código que hubo que corregir o reemplazar.
 
 ---
 
-## 12. Estado de avance al 19/09/2026
+## 12. Estado de avance al 28/10/2026
 
 | Métrica | Valor |
 |---|---|
 | Requerimientos funcionales cubiertos | **8 de 8 en el backend.** RF-08 no tiene todavía pantalla en la app móvil: el rastreo está planificado para los sprints 4 y 5 en `docs/plan_de_trabajo_mobile.md` |
-| Modelos de datos | 39 |
+| Modelos de datos | 40 |
 | Enumeraciones | 25 |
-| Migraciones aplicadas | 12 |
-| Endpoints REST | 141 |
+| Migraciones aplicadas | 13 |
+| Endpoints REST | 160 |
 | Módulos de dominio | 15 |
-| Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`) | 17 734 |
+| Líneas de TypeScript en el backend (`src/`, `prisma/`, `scripts/`, `e2e/`) | 21 335 |
 | Vistas web | 4 paneles (administración, docente, tutor, estudiante) más el portal público |
 | Pantallas móviles | 5 (ingreso, dashboard, finanzas, pago por transferencia, carnet) |
-| Pruebas automatizadas | **382**, todas en verde |
-| Base de datos de verificación | PostgreSQL 15.18 real |
+| Pruebas automatizadas | **397**, todas en verde, más 3 de extremo a extremo con Selenium |
+| Base de datos de verificación | PostgreSQL 18 en el CI, la versión de producción (15.18 embebido en desarrollo) |
 
 **Verificado desde la versión 2.0 de este documento:**
 

@@ -411,7 +411,7 @@ se contó cada una, debajo de la tabla.)*
 | Líneas de código (backend) | 21 335 en 100 archivos |
 | Líneas de código (frontend) | 14 649 en 23 archivos |
 | Líneas de código (móvil) | 4 579 en 20 archivos |
-| Líneas de documentación técnica | 6 001 (20 documentos) |
+| Líneas de documentación técnica | 6 002 (20 documentos) |
 | Líneas de SQL en migraciones | 1 646 |
 
 **Cómo se contó.** Sobre los archivos versionados en git. Para líneas, archivos,
@@ -732,7 +732,7 @@ escala es cualitativa: **Alto / Medio / Bajo**.
 | 2 | **Tiempo** | Medio. Distribuido de forma pareja entre diseño, escritura y depuración. | **Alto, pero redistribuido.** La escritura casi desaparece; la revisión crece. | El tiempo se concentró en verificar reglas de negocio y en diseñar restricciones de base de datos. | El tiempo total baja; su composición cambia radicalmente. |
 | 3 | **Comprensión del problema** | **Alto.** Escribir obliga a entender. | **Bajo, si no se interviene.** Produce soluciones plausibles sin comprender el dominio. | Las 8 reglas críticas debieron explicitarse una por una; ninguna se infirió. | Insustituible el conocimiento humano del negocio. |
 | 4 | **Detección de errores** | Medio. Depende de la experiencia y de la atención del revisor. | **Alto en lo sintáctico, bajo en lo semántico.** | La IA detectó `label for` roto y controles sin etiqueta; no habría detectado el fallo del vínculo padre–hijo sin leer la consigna. | Complementarios: la herramienta ve patrones, la persona ve propósito. |
-| 5 | **Documentación** | Bajo. Es lo primero que se posterga. | **Alto.** Genera documentación extensa y consistente sin costo marginal. | 6 001 líneas de documentación técnica en 20 documentos, más comentarios que explican el *porqué* de cada decisión. | Ventaja significativa, con la reserva de que la documentación debe verificarse. |
+| 5 | **Documentación** | Bajo. Es lo primero que se posterga. | **Alto.** Genera documentación extensa y consistente sin costo marginal. | 6 002 líneas de documentación técnica en 20 documentos, más comentarios que explican el *porqué* de cada decisión. | Ventaja significativa, con la reserva de que la documentación debe verificarse. |
 | 6 | **Aprendizaje del equipo** | **Alto.** El error propio enseña. | **Medio, y condicionado.** Enseña si se revisa; si se acepta sin leer, no enseña nada. | Conceptos incorporados: índices únicos parciales, TOTP, niveles de aislamiento transaccional. | Depende enteramente de la disciplina de revisión. |
 | 7 | **Integración** | Medio. Los contratos entre componentes se documentan mal y se rompen seguido. | **Alto.** Mantiene coherencia entre capas y clientes. | El mismo endpoint sirve a web y móvil sin variantes; los tipos de Prisma validan cada consulta en compilación. | Ventaja de la IA, potenciada por el tipado estricto. |
 | 8 | **Seguridad** | Medio. Se aplican buenas prácticas conocidas. | **Alto en mecanismos, bajo en criterio.** Implementa correctamente lo que se le pide; no advierte lo que falta. | Implementó TOTP y hash de tokens sin errores; los dos defectos graves del sistema fueron de *autorización*, es decir, de reglas. | La criptografía se delega; la política de acceso, no. |
@@ -768,7 +768,7 @@ capas, los mismos esquemas de validación y el mismo tratamiento de errores es
 trabajo mecánico en el que nos cansamos y cometemos inconsistencias. La
 herramienta no se cansa, y esa es toda su ventaja aquí.
 
-**Documentación técnica.** Reconocemos que las 6 001 líneas de documentación no
+**Documentación técnica.** Reconocemos que las 6 002 líneas de documentación no
 las habríamos escrito. Es el primer entregable que posponemos bajo presión de
 entrega, y su ausencia es exactamente lo que vuelve inmantenible un proyecto seis
 meses más tarde.
