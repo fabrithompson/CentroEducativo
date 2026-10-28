@@ -146,8 +146,9 @@ PostgreSQL 15.18. Se ejecutan con `pnpm --filter backend test:integracion`.
 **La primera corrida falló:** un carácter `∈` en un comentario de la migración del dominio la
 volvía dependiente del encoding, y en una base creada con locale de Windows (WIN1252) abortó
 con `has no equivalent in encoding WIN1252`. Se corrigieron los 4 caracteres fuera de Latin-1 y
-se forzó `--encoding=UTF8` en la base de pruebas. Tras eso pasó todo en verde: en la última
-corrida, las 11 migraciones, el seed, las 17 pruebas del motor y los 271 tests del backend.
+se forzó `--encoding=UTF8` en la base de pruebas. Tras eso pasó todo en verde, y hoy lo repite
+el CI en cada PR contra PostgreSQL 18: en su última corrida sobre `main`, del 27/10/2026, las
+13 migraciones, el seed, las 17 pruebas del motor y los 306 tests del backend.
 
 ---
 
