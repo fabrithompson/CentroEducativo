@@ -200,7 +200,7 @@ Ya no están en esta lista:
                     └───────────┬────────────┘
                     ┌───────────▼────────────┐
                     │      PostgreSQL        │
-                    │ 39 tablas · 6 triggers │
+                    │ 40 tablas · 6 triggers │
                     │ 7 funciones · 12 CHECK │
                     └────────────────────────┘
 ```
@@ -221,7 +221,7 @@ guarda copia local de los datos. El panel web del tutor y la app móvil consumen
 .
 ├── web/
 │   ├── backend/              API REST (Node + Express + TypeScript + Prisma)
-│   │   ├── prisma/           Esquema, 12 migraciones y semillas
+│   │   ├── prisma/           Esquema, 13 migraciones y semillas
 │   │   ├── scripts/          PostgreSQL embebido y verificación de integración
 │   │   └── src/
 │   │       ├── modules/      15 módulos de dominio
@@ -245,7 +245,7 @@ guarda copia local de los datos. El panel web del tutor y la app móvil consumen
 
 ## 6. Base de datos
 
-**39 tablas · 25 enumeraciones · 12 migraciones · 7 funciones PL/pgSQL ·
+**40 tablas · 25 enumeraciones · 13 migraciones · 7 funciones PL/pgSQL ·
 6 disparadores · 12 restricciones CHECK.**
 
 ### 6.1 MER — Modelo Entidad-Relación
@@ -467,11 +467,13 @@ Todas son **aditivas**: ninguna contiene `DROP` ni `ALTER ... DROP COLUMN`.
 
 ## 7. API REST
 
-**140 endpoints.** Detalle completo en [`docs/api_rest.md`](docs/api_rest.md).
+**160 endpoints.** Las rutas y los roles de los módulos de dominio están en
+[`docs/api_rest.md`](docs/api_rest.md).
 
 | Módulo | Endpoints | Responsabilidad |
 |---|---|---|
 | `facturacion` | 13 | Cuotas, ítems, comprobantes, validación |
+| `academico` | 12 | ABM de niveles, cursos y materias |
 | `deportes` | 8 | Catálogo, horarios, inscripción con tope de 2 |
 | `padres` | 8 | `/mis-hijos/...` — acceso restringido del tutor |
 | `alumnos` | 7 | ABM y matriculación |
@@ -481,7 +483,7 @@ Todas son **aditivas**: ninguna contiene `DROP` ni `ALTER ... DROP COLUMN`.
 | `credenciales` | 6 | Emisión, revocación y escaneo del QR |
 | `transporte` | 6 | Avisos (RF-07) y rastreo (RF-08) |
 | `auth` | 3 | Recuperación de contraseña |
-| Campus heredado | 69 | Foro, notas, asistencia, moderación, mensajería |
+| Campus heredado | 77 | Foro, notas, asistencia, moderación, mensajería |
 
 **Autorización.** Cada ruta declara los roles admitidos. Los tutores atraviesan
 además un filtro que verifica el vínculo en `TutorAlumno` **en cada petición**,
@@ -531,7 +533,7 @@ cp web/backend/.env.example web/backend/.env   # completar DATABASE_URL y los se
 ### Base de datos
 
 ```bash
-pnpm --filter backend prisma:deploy      # aplica las 12 migraciones
+pnpm --filter backend prisma:deploy      # aplica las 13 migraciones
 pnpm --filter backend prisma:seed        # dominio + usuarios de demostración
 ```
 
@@ -566,14 +568,15 @@ pnpm start     # node dist/index.js
 
 ## 10. Pruebas
 
-**382 pruebas automatizadas**, y corren solas en cada PR
-(`.github/workflows/ci.yml`).
+**397 pruebas automatizadas**, más 3 de extremo a extremo con Selenium, y corren
+solas en cada PR (`.github/workflows/ci.yml`).
 
 | Suite | Cantidad | Comando |
 |---|---|---|
-| Backend | 295 | `pnpm --filter backend test` |
+| Backend | 306 | `pnpm --filter backend test` |
 | Reglas del motor | 17 | incluidas en `test:integracion` |
-| Móvil | 70 | `pnpm --filter mobile test` |
+| Móvil | 74 | `pnpm --filter mobile test` |
+| Extremo a extremo con Selenium (RF-03: un padre sólo ve a sus hijos) | 3 | `pnpm --filter backend test:e2e` |
 | Pruebas de humo por HTTP contra PostgreSQL real | 4 recorridos (académico, autenticación con dos cuentas, retención y web) | `pnpm --filter backend test:humo` |
 
 ```bash
@@ -581,7 +584,7 @@ pnpm --filter backend test:integracion
 ```
 
 Ese comando levanta **PostgreSQL 15 real** con `embedded-postgres` —sin
-necesidad de Docker—, aplica las 12 migraciones, carga las semillas y corre la
+necesidad de Docker—, aplica las 13 migraciones, carga las semillas y corre la
 suite contra esa base.
 
 **No se usan dobles de prueba para la persistencia.** Las 17 pruebas del motor
@@ -602,7 +605,7 @@ reutilización de un código QR.
 | [`informe_final_ia.md`](docs/informe_final_ia.md) | Informe académico sobre el uso de IA — los 5 puntos de la consigna |
 | [`bitacora_ia.md`](docs/bitacora_ia.md) | Registro de cada intervención asistida por IA |
 | [`modelo_de_datos.md`](docs/modelo_de_datos.md) | Decisiones del esquema y validación contra PostgreSQL |
-| [`api_rest.md`](docs/api_rest.md) | Los 140 endpoints |
+| [`api_rest.md`](docs/api_rest.md) | Rutas, roles y autorización de los módulos de dominio |
 | [`frontend.md`](docs/frontend.md) | Portal, backoffice y accesibilidad |
 | [`aplicacion_movil.md`](docs/aplicacion_movil.md) | Arquitectura de la app de tutores |
 | [`facturacion_y_schedulers.md`](docs/facturacion_y_schedulers.md) | Circuito de cobranza y tareas programadas |

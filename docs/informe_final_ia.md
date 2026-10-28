@@ -17,9 +17,9 @@ desarrollo del Trabajo Práctico Integrador, sobre un sistema compuesto por tres
 aplicaciones —portal web institucional, sistema de gestión y aplicación móvil—
 que comparten un backend y una base de datos únicos.
 
-El trabajo se organizó en **43 intervenciones asistidas por IA**, todas
-registradas en `docs/bitacora_ia.md`. El producto resultante comprende 39
-modelos de datos, 140 endpoints REST, 12 migraciones y 382 pruebas automatizadas
+El trabajo se organizó en **44 intervenciones asistidas por IA**, todas
+registradas en `docs/bitacora_ia.md`. El producto resultante comprende 40
+modelos de datos, 160 endpoints REST, 13 migraciones y 397 pruebas automatizadas
 más 3 de extremo a extremo con Selenium, **validadas contra una instancia real de
 PostgreSQL** (15 embebido en desarrollo; 18 en el CI, igual que producción).
 
@@ -50,7 +50,7 @@ una misma base de datos relacional:
                  └──────────────┬───────┴──────────────────────┘
                                 │ HTTPS · JSON · JWT
                      ┌──────────▼───────────┐
-                     │   API REST v0.5.0    │
+                     │   API REST v0.6.0    │
                      │  Node + Express + TS │
                      │  ┌────────────────┐  │
                      │  │ routes         │  │  ← validación (Zod) y permisos
@@ -392,26 +392,60 @@ sistema le rechazaría después.
 
 ### Síntesis cuantitativa
 
-*(Recontada el 21/09/2026 sobre el repositorio, no sobre la memoria del equipo;
-intervenciones actualizadas al 27/10/2026; migraciones y pruebas, al 30/09/2026. Los recuentos
-de líneas y archivos incluyen los archivos de prueba.)*
+*(Recontada el 28/10/2026 sobre el repositorio —`main` después del PR #53—, no
+sobre la memoria del equipo. Todas las cifras son a esa fecha; las intervenciones
+son las 43 registradas hasta el 27/10/2026 más la 44, que hizo este recuento. Cómo
+se contó cada una, debajo de la tabla.)*
 
 | Métrica | Valor |
 |---|---|
-| Intervenciones registradas | 43 |
-| Modelos de datos | 39 |
+| Intervenciones registradas | 44 |
+| Modelos de datos | 40 |
 | Enumeraciones | 25 |
-| Endpoints REST | 140 |
-| Migraciones | 12, aplicadas en producción (la 12.ª, del 29/09, por el pre-deploy) |
+| Endpoints REST | 160 |
+| Migraciones | 13, aplicadas en producción (la 13.ª, del 26/10, por el pre-deploy del 27/10) |
 | Funciones y disparadores en PostgreSQL | 7 y 6 (verificados en ejecución) |
 | Restricciones `CHECK` | 12 |
-| Pruebas automatizadas | 382 (295 backend, 70 móvil, 17 sobre el motor) |
-| Archivos de prueba | 23 |
-| Líneas de código (backend) | 18 931 en 91 archivos |
-| Líneas de código (frontend) | 12 638 en 22 archivos |
-| Líneas de código (móvil) | 4 452 en 18 archivos |
-| Líneas de documentación técnica | 4 577 (13 documentos) |
-| Líneas de SQL en migraciones | 1 605 |
+| Pruebas automatizadas | 397 (306 backend, 74 móvil, 17 sobre el motor), más 3 de extremo a extremo con Selenium |
+| Archivos de prueba | 26 (25 `*.test.ts` y 1 `*.e2e.ts`) |
+| Líneas de código (backend) | 21 335 en 100 archivos |
+| Líneas de código (frontend) | 14 649 en 23 archivos |
+| Líneas de código (móvil) | 4 579 en 20 archivos |
+| Líneas de documentación técnica | 6 003 (20 documentos) |
+| Líneas de SQL en migraciones | 1 646 |
+
+**Cómo se contó.** Sobre los archivos versionados en git. Para líneas, archivos,
+modelos y objetos SQL se usó el mismo método del recuento anterior (intervención
+34), que se reprodujo exacto sobre el código del 21/09 antes de aplicarlo al actual.
+
+- **Intervenciones:** filas de la tabla de `docs/bitacora_ia.md`.
+- **Modelos y enumeraciones:** declaraciones `model` y `enum` de
+  `web/backend/prisma/schema.prisma`. Los 40 modelos coinciden con las 40 tablas
+  que la prueba de integración cuenta en el catálogo de PostgreSQL.
+- **Endpoints:** llamadas `get`, `post`, `put`, `patch` y `delete` sobre cada
+  `Router()` de `web/backend/src/modules`, con el nombre que tenga en cada archivo
+  —`router` en casi todos; `publicRouter` y `adminRouter`, `credenciales` y
+  `accesos`, `avisos` y `transporte` en los tres que la intervención 34 no pudo
+  contar—. No incluye `GET /api`, `GET /health` ni la página del portal. Con este
+  método el código del 17/09 da exactamente los 140 que decía este informe, y el
+  del 30/09 ya daba 155: la cifra era correcta al escribirse y quedó vieja.
+- **Migraciones:** carpetas de `web/backend/prisma/migrations`. Que la 13.ª está
+  aplicada en producción consta en el log del despliegue del 27/10 en Railway,
+  y el despliegue vigente informa «No pending migrations to apply».
+- **Funciones, disparadores y `CHECK`:** sentencias `CREATE FUNCTION`,
+  `CREATE TRIGGER` y `CHECK (` en el SQL de las migraciones; ninguna migración
+  posterior las borra.
+- **Pruebas:** totales del CI, porque las del backend y las del motor necesitan
+  PostgreSQL. Backend, motor y móvil, de la corrida sobre `main` del 27/10/2026;
+  Selenium, de la del PR #53 de la misma noche, porque ese job corre sólo en los
+  PR. Las 74 de la app móvil se corrieron además en local, con el mismo resultado.
+- **Archivos de prueba:** los `*.test.ts` de `web/backend` y `mobile`, más el de
+  extremo a extremo.
+- **Líneas:** `wc -l`, con los archivos de prueba incluidos. Backend: los `.ts`
+  de `web/backend` (`src`, `prisma`, `scripts` y `e2e`). Frontend: los `.html`,
+  `.css` y `.js` de `web/frontend`. Móvil: los `.ts` y `.tsx` de `mobile`.
+  Documentación: todos los `.md` de `docs/`, con `metricas/`, este informe y la
+  bitácora. SQL: los `migration.sql`.
 
 ---
 
@@ -698,12 +732,12 @@ escala es cualitativa: **Alto / Medio / Bajo**.
 | 2 | **Tiempo** | Medio. Distribuido de forma pareja entre diseño, escritura y depuración. | **Alto, pero redistribuido.** La escritura casi desaparece; la revisión crece. | El tiempo se concentró en verificar reglas de negocio y en diseñar restricciones de base de datos. | El tiempo total baja; su composición cambia radicalmente. |
 | 3 | **Comprensión del problema** | **Alto.** Escribir obliga a entender. | **Bajo, si no se interviene.** Produce soluciones plausibles sin comprender el dominio. | Las 8 reglas críticas debieron explicitarse una por una; ninguna se infirió. | Insustituible el conocimiento humano del negocio. |
 | 4 | **Detección de errores** | Medio. Depende de la experiencia y de la atención del revisor. | **Alto en lo sintáctico, bajo en lo semántico.** | La IA detectó `label for` roto y controles sin etiqueta; no habría detectado el fallo del vínculo padre–hijo sin leer la consigna. | Complementarios: la herramienta ve patrones, la persona ve propósito. |
-| 5 | **Documentación** | Bajo. Es lo primero que se posterga. | **Alto.** Genera documentación extensa y consistente sin costo marginal. | 3 100 líneas de documentación técnica en nueve archivos, más comentarios que explican el *porqué* de cada decisión. | Ventaja significativa, con la reserva de que la documentación debe verificarse. |
+| 5 | **Documentación** | Bajo. Es lo primero que se posterga. | **Alto.** Genera documentación extensa y consistente sin costo marginal. | 6 003 líneas de documentación técnica en 20 documentos, más comentarios que explican el *porqué* de cada decisión. | Ventaja significativa, con la reserva de que la documentación debe verificarse. |
 | 6 | **Aprendizaje del equipo** | **Alto.** El error propio enseña. | **Medio, y condicionado.** Enseña si se revisa; si se acepta sin leer, no enseña nada. | Conceptos incorporados: índices únicos parciales, TOTP, niveles de aislamiento transaccional. | Depende enteramente de la disciplina de revisión. |
 | 7 | **Integración** | Medio. Los contratos entre componentes se documentan mal y se rompen seguido. | **Alto.** Mantiene coherencia entre capas y clientes. | El mismo endpoint sirve a web y móvil sin variantes; los tipos de Prisma validan cada consulta en compilación. | Ventaja de la IA, potenciada por el tipado estricto. |
 | 8 | **Seguridad** | Medio. Se aplican buenas prácticas conocidas. | **Alto en mecanismos, bajo en criterio.** Implementa correctamente lo que se le pide; no advierte lo que falta. | Implementó TOTP y hash de tokens sin errores; los dos defectos graves del sistema fueron de *autorización*, es decir, de reglas. | La criptografía se delega; la política de acceso, no. |
 | 9 | **Mantenimiento** | Medio. Código escrito por quien lo mantiene, pero poco documentado. | **Alto, si el código se entiende.** Bien estructurado y comentado; peligroso si nadie lo leyó. | Separación en capas, módulos puros sin dependencias, advertencias explícitas sobre parámetros que deben coincidir entre paquetes. | El mantenimiento mejora sólo si la revisión fue real. |
-| 10 | **Calidad general** | Medio. Homogénea y previsible. | **Alto en forma, variable en fondo.** | 382 pruebas, tipado estricto sin errores y ejecución contra PostgreSQL real desde la octava intervención; pero la configuración de despliegue estuvo días sin efecto y ninguna de esas verificaciones lo detectó. | La calidad formal es superior; la funcional se demuestra ejecutando, y el entorno de ejecución también hay que medirlo. |
+| 10 | **Calidad general** | Medio. Homogénea y previsible. | **Alto en forma, variable en fondo.** | 397 pruebas, tipado estricto sin errores y ejecución contra PostgreSQL real desde la octava intervención; pero la configuración de despliegue estuvo días sin efecto y ninguna de esas verificaciones lo detectó. | La calidad formal es superior; la funcional se demuestra ejecutando, y el entorno de ejecución también hay que medirlo. |
 
 ### Lectura global
 
@@ -734,7 +768,7 @@ capas, los mismos esquemas de validación y el mismo tratamiento de errores es
 trabajo mecánico en el que nos cansamos y cometemos inconsistencias. La
 herramienta no se cansa, y esa es toda su ventaja aquí.
 
-**Documentación técnica.** Reconocemos que las más de 3 300 líneas de documentación no
+**Documentación técnica.** Reconocemos que las 6 003 líneas de documentación no
 las habríamos escrito. Es el primer entregable que posponemos bajo presión de
 entrega, y su ausencia es exactamente lo que vuelve inmantenible un proyecto seis
 meses más tarde.
@@ -904,7 +938,7 @@ alguien que las revisó una por una.
 La bitácora, con sus columnas «¿Funcionó?» y «Modificaciones realizadas», es en
 parte un mecanismo de control sobre eso: obliga a declarar qué se revisó
 efectivamente y qué hubo que corregir. Reconocemos que completarla con honestidad
-—admitiendo veinticuatro «Parcialmente» y dos «No» sobre cuarenta y tres
+—admitiendo veinticuatro «Parcialmente» y dos «No» sobre cuarenta y cuatro
 intervenciones— fue incómodo, y que la tentación de uniformar todo en «Sí»
 existió.
 
@@ -980,7 +1014,7 @@ el trabajo en torno a esa asimetría —delegar la forma, retener el propósito�
 es una precaución temporal sino el modo correcto de usar la herramienta.
 
 **Segundo: la verificación es la unidad de valor.** El aporte más sólido de este
-proyecto no son las casi 19 000 líneas de backend sino las 382 pruebas, y en
+proyecto no son las más de 21 000 líneas de backend sino las 397 pruebas, y en
 particular aquellas que demuestran algo no obvio: que nuestra implementación
 criptográfica coincide con la de Node en 300 casos aleatorios; que la tarea de
 fin de mes se dispara exactamente doce veces por año; que un tutor sin hijos
@@ -1008,8 +1042,8 @@ restantes conservan algún valor.
 ## Conclusión general
 
 El uso de inteligencia artificial en este Trabajo Práctico Integrador nos
-permitió construir, en cuarenta y tres intervenciones, un sistema de tres
-aplicaciones con 39 modelos de datos, 140 endpoints, 12 migraciones y 382
+permitió construir, en cuarenta y cuatro intervenciones, un sistema de tres
+aplicaciones con 40 modelos de datos, 160 endpoints, 13 migraciones y 397
 pruebas automatizadas.
 Ese volumen no habría sido alcanzable con desarrollo tradicional en el tiempo
 disponible.
@@ -1030,19 +1064,21 @@ hacia donde siempre debió estar: entender qué se está construyendo y por qué
 
 Las entregas anteriores de este informe declaraban como pendiente la ejecución
 del sistema contra una base de datos real. **Esa validación se completó el 16 de
-septiembre de 2026 y su resultado es el siguiente:**
+septiembre de 2026** con PostgreSQL 15.18 embebido, y hoy la repite el CI en cada
+PR contra PostgreSQL 18, la versión de producción. **Su resultado en la última
+corrida sobre `main`, del 27 de octubre de 2026, es el siguiente:**
 
 | Verificación | Resultado |
 |---|---|
-| Aplicación de las 11 migraciones (`prisma migrate deploy`) | ✅ Correcta |
+| Aplicación de las 13 migraciones (`prisma migrate deploy`) | ✅ Correcta |
 | Creación de las 40 tablas del modelo | ✅ Verificada por consulta al catálogo |
 | Compilación de las 7 funciones PL/pgSQL | ✅ Verificada |
 | Registro de los 6 disparadores | ✅ Verificado |
 | Índice único parcial del tope de deportes | ✅ Verificado, con su cláusula `WHERE` |
 | Carga del seed de demostración | ✅ Correcta |
 | Reglas de negocio rechazadas por el motor | ✅ **17 de 17** |
-| Suite completa del backend | ✅ **240 de 240** |
-| Motor utilizado | PostgreSQL 15.18 |
+| Suite completa del backend | ✅ **306 de 306** |
+| Motor utilizado | PostgreSQL 18 en el CI (15.18 embebido en desarrollo) |
 
 Las diecisiete pruebas de reglas verifican que el motor **efectivamente rechace** lo
 que declaramos imposible: un tercer deporte activo, un `slot` fuera de {1,2}, un
@@ -1094,7 +1130,7 @@ está justamente en la precisión con que se enuncian sus límites.
 
 | Anexo | Documento | Contenido |
 |---|---|---|
-| A | `docs/bitacora_ia.md` | Bitácora completa: 43 intervenciones con prompts y comandos |
+| A | `docs/bitacora_ia.md` | Bitácora completa: 44 intervenciones con prompts y comandos |
 | B | `docs/plan_de_trabajo.md` | Cronograma, hitos y matriz de riesgos |
 | B.1 | `docs/plan_de_trabajo_mobile.md` | Plan de trabajo de la aplicación móvil |
 | B.2 | `docs/patrones_de_diseno.md` | Patrones de diseño, con archivo y línea |
