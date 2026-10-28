@@ -106,7 +106,8 @@ varios despliegues del frontend, descrito en §1.4—. Ahora vigila `/.railway/*
 > apply`. La corrección de los `watchPatterns` de arriba viajó en un commit y
 > estuvo un rato en el repositorio mientras Railway seguía vigilando el archivo
 > borrado. Un cambio de infraestructura no está hecho hasta que `config plan`
-> informe «0 to change».
+> deje de listarlo (siempre queda la línea de `restartPolicyType`, que se
+> explica abajo).
 
 **Dos rarezas de la herramienta, para no perder la tarde con ellas.**
 
@@ -312,13 +313,31 @@ backend con sus dependencias (y las de la raíz, que pnpm agrega igual). Medido
 el 27/10/2026 en dos clones limpios del repositorio: la instalación completa
 trae **807 paquetes** —los mismos que informa el build de Railway— y la filtrada
 **397**, sin ninguno de Expo ni de React Native; `pnpm build` genera
-`web/backend/dist/index.js` igual. El peso nuevo de la imagen se ve en el log
-del primer build después del merge.
+`web/backend/dist/index.js` igual.
+
+Medido en Railway el mismo día, con el campo `image push` del log del build
+(`railway logs --build <id> --json`), comparando el último build anterior al
+cambio con el primero que arrancó después:
+
+| | Paquetes | Imagen | Subida de la imagen |
+|---|---|---|---|
+| Antes (`75a5c5e5`) | 807 | 468,8 MB | 13,8 s |
+| Después (`38008a27`) | 397 | 350,2 MB | 7,7 s |
+
+Son 118,6 MB menos (−25 %) y la subida tarda casi la mitad. Los 431 MB del
+issue #38 venían de un build anterior; la comparación válida es la de esta
+tabla, con dos builds del mismo día.
 
 `/railpack.json` también se agregó a `watchPatterns` en `.railway/railway.ts`,
-para que un cambio sólo en ese archivo dispare el despliegue. Ese archivo es la
-definición de infraestructura: **el cambio no corre hasta aplicarlo** con
-`railway config apply`.
+para que un cambio sólo en ese archivo dispare el despliegue. Se aplicó con
+`railway config apply` el 27/10/2026; hasta entonces los merges del #51 y del
+#52 quedaron SKIPPED y hubo que desplegarlos a mano.
+
+> **Aplicar un cambio de `build` o `deploy` redespliega el servicio en el
+> acto**, con el último commit de la rama. `config plan` no lo dice; el plan
+> fijado con `config plan --out <archivo>` sí, como `"deployEffect": "deploy"`
+> en cada cambio. Conviene aplicar con un `main` ya probado, y fijar el plan
+> para aplicar exactamente lo que se revisó: `config apply --plan <archivo>`.
 
 
 ---
