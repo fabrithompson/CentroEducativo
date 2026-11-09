@@ -249,5 +249,7 @@ export const http = {
   get: <T>(ruta: string, query?: OpcionesPeticion['query']) => pedir<T>('GET', ruta, { query }),
   post: <T>(ruta: string, body?: unknown) => pedir<T>('POST', ruta, { body }),
   postSinAuth: <T>(ruta: string, body?: unknown) => pedir<T>('POST', ruta, { body, sinAuth: true }),
+  patch: <T>(ruta: string, body?: unknown) => pedir<T>('PATCH', ruta, { body }),
+  del: <T>(ruta: string) => pedir<T>('DELETE', ruta),
   subir: <T>(ruta: string, formData: FormData) => pedir<T>('POST', ruta, { formData }),
 };

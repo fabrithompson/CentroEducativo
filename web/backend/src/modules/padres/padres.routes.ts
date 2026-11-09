@@ -120,7 +120,17 @@ router.get('/mis-hijos/:alumnoId', cargarHijo, async (_req, res, next) => {
     const alumno = await prisma.alumno.findUnique({
       where: { id: hijoId(res) },
       include: {
-        curso: { include: { nivel: true, materias: { include: { profesor: true } } } },
+        curso: {
+          include: {
+            nivel: true,
+            materias: {
+              where: { activo: true },
+              orderBy: { nombre: 'asc' },
+              // Profesor por materia (consigna, Parte 2) y la grilla de la materia.
+              include: { profesor: true, horarios: { orderBy: [{ diaSemana: 'asc' }, { horaInicio: 'asc' }] } },
+            },
+          },
+        },
         user: { select: { id: true, usuario: true, email: true } },
       },
     });

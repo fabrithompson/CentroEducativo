@@ -2,7 +2,7 @@
   "name": "mobile",
   "version": "0.1.0",
   "private": true,
-  "description": "Aplicación móvil de tutores — Educar para Transformar.",
+  "description": "Aplicación móvil de familias, estudiantes, docentes y administración — Educar para Transformar.",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",

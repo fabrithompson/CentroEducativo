@@ -22,8 +22,12 @@ export interface Sesion {
   usuario: { id: number; nombre: string; tipo: string; token: string };
 }
 
+/**
+ * Un alumno que la cuenta puede ver. Para un padre, cada hijo vinculado; para
+ * un estudiante, él mismo (`vinculoId` nulo y `parentesco` "PROPIO").
+ */
 export interface Hijo {
-  vinculoId: number;
+  vinculoId: number | null;
   parentesco: string | null;
   esResponsableFacturacion: boolean;
   alumno: {
@@ -202,6 +206,148 @@ export interface RegistroAcceso {
   comedor: { nombre: string } | null;
 }
 
+// ------------------------------------------------------------------
+// Materias, inscripciones y servicios
+// ------------------------------------------------------------------
+
+export interface FranjaHoraria {
+  id: number;
+  diaSemana: string;
+  horaInicio: number;
+  horaFin: number;
+  aula?: string | null;
+}
+
+export interface MateriaDelCurso {
+  id: number;
+  nombre: string;
+  cargaHoraria: number;
+  profesor: { apellido: string; nombres: string; email?: string | null } | null;
+  horarios: FranjaHoraria[];
+}
+
+export interface FichaAlumno {
+  exito: boolean;
+  alumno: Hijo['alumno'] & { curso: (NonNullable<Hijo['alumno']['curso']> & { materias: MateriaDelCurso[] }) | null };
+}
+
+export interface DeporteDisponible {
+  id: number;
+  nombre: string;
+  descripcion: string | null;
+  arancelMensual: number;
+  profesorResponsable: { apellido: string; nombres: string };
+  horarios: HorarioDeporte[];
+  inscribible: boolean;
+  motivo: string | null;
+}
+
+export interface Recorrido {
+  id: number;
+  codigo: string;
+  nombre: string;
+  zonas: string;
+  arancelMensual: number;
+  horaSalidaTexto?: string;
+  horaRegresoTexto?: string;
+}
+
+export interface PlanComedor {
+  id: number;
+  nombre: string;
+  diasPorSemana: number;
+  arancelMensual: number;
+  horaServicioTexto?: string;
+}
+
+export type TurnoTransporte = 'IDA' | 'VUELTA' | 'IDA_Y_VUELTA';
+
+export interface SolicitudCursado {
+  nombreTutor: string;
+  emailTutor: string;
+  telefonoTutor: string;
+  nombreEstudiante: string;
+  nivel: string;
+  curso: string;
+  mensaje?: string | null;
+}
+
+// ------------------------------------------------------------------
+// Personal: docente y administración
+// ------------------------------------------------------------------
+
+export interface ReporteDocente {
+  exito: boolean;
+  profesor: { id: number; legajo: string; apellido: string; nombres: string; especialidad: string | null };
+  totales: { niveles: number; cursos: number; materias: number; horasSemanales: number };
+  niveles: {
+    nivel: string;
+    cursos: {
+      curso: string;
+      turno: string;
+      materias: {
+        id: number;
+        nombre: string;
+        cargaHoraria: number;
+        horarios: { diaSemana: string; desde: string; hasta: string; aula: string | null }[];
+      }[];
+    }[];
+  }[];
+  deportes: { id: number; nombre: string; horarios: { diaSemana: string; desde: string; hasta: string; nivel: string; lugar: string }[] }[];
+}
+
+export interface NivelConCuota {
+  id: number;
+  nombre: string;
+  orden: number;
+  /** Llega como `Decimal` serializado: a veces número, a veces texto. */
+  cuotaMensual: number | string;
+  activo: boolean;
+}
+
+export interface DeporteDelCatalogo {
+  id: number;
+  nombre: string;
+  arancelMensual: number;
+  activo: boolean;
+  profesorResponsable: { apellido: string; nombres: string };
+}
+
+export interface ComprobantePendiente {
+  id: number;
+  monto: number;
+  fechaTransferencia: string;
+  bancoOrigen: string;
+  numeroOperacion: string;
+  archivoUrl: string;
+  cargadoEl: string;
+  subidoPor: { nombre: string; email: string } | null;
+  factura: {
+    id: number;
+    numero: string;
+    periodo: string;
+    total: number;
+    montoPagado: number;
+    saldo: number;
+    estado: string;
+    alumno: string;
+    legajo: string;
+    curso: string;
+  };
+  coincideConSaldo: boolean;
+}
+
+export type PuntoControl = 'TRANSPORTE' | 'COMEDOR';
+
+export interface ResultadoEscaneo {
+  exito: boolean;
+  permitido: boolean;
+  resultado: string;
+  mensaje: string;
+  alumno: { id: number; legajo: string; nombre: string; curso: string } | null;
+  detalle?: string;
+}
+
 // ==================================================================
 // Llamadas
 // ==================================================================
@@ -219,6 +365,78 @@ export const api = {
       http.postSinAuth<{ exito: boolean; mensaje: string }>('/auth/forgot-password', { email }),
 
     yo: () => http.get<{ exito: boolean; usuario: { id: number; nombre: string; role: string } }>('/auth/me'),
+
+    /** Módulo 1 de la consigna: cambiar la contraseña con la sesión iniciada. */
+    cambiarClave: (actual: string, nueva: string) =>
+      http.post<{ exito: boolean; mensaje: string }>('/auth/change-password', { actual, nueva }),
+  },
+
+  /**
+   * Inscripción a deportes, transporte y comedor. El backend valida el tope de
+   * 2 deportes, los choques de horario y que el alumno sea hijo del tutor.
+   */
+  inscripciones: {
+    deportesDisponibles: (alumnoId: number) =>
+      http.get<{ exito: boolean; deportes: DeporteDisponible[] }>(`/deportes/alumno/${alumnoId}/disponibles`),
+
+    inscribirDeporte: (alumnoId: number, deporteId: number) =>
+      http.post<{ exito: boolean; mensaje: string }>('/deportes/inscripciones', { alumnoId, deporteId }),
+
+    bajaDeporte: (inscripcionId: number) =>
+      http.del<{ exito: boolean; mensaje: string }>(`/deportes/inscripciones/${inscripcionId}`),
+
+    recorridos: (anio: number, mes: number) =>
+      http.get<{ exito: boolean; recorridos: Recorrido[] }>('/servicios/transporte/recorridos', { anio, mes }),
+
+    contratarTransporte: (datos: { alumnoId: number; recorridoId: number; turno: TurnoTransporte; anio: number; mes: number }) =>
+      http.post<{ exito: boolean; mensaje: string }>('/servicios/transporte', datos),
+
+    bajaTransporte: (inscripcionId: number) =>
+      http.del<{ exito: boolean; mensaje: string }>(`/servicios/transporte/${inscripcionId}`),
+
+    planesComedor: (anio: number, mes: number) =>
+      http.get<{ exito: boolean; planes: PlanComedor[] }>('/servicios/comedor/planes', { anio, mes }),
+
+    contratarComedor: (datos: { alumnoId: number; comedorId: number; anio: number; mes: number }) =>
+      http.post<{ exito: boolean; mensaje: string }>('/servicios/comedor', datos),
+
+    bajaComedor: (inscripcionId: number) =>
+      http.del<{ exito: boolean; mensaje: string }>(`/servicios/comedor/${inscripcionId}`),
+
+    /** "Inscribir a su hijo al cursado": la solicitud la aprueba Administración. */
+    solicitarCursado: (datos: SolicitudCursado) =>
+      http.postSinAuth<{ exito: boolean; mensaje: string }>('/public/inscriptions', datos),
+  },
+
+  docente: {
+    misCursos: () => http.get<ReporteDocente>('/profesores/yo/cursos'),
+  },
+
+  admin: {
+    niveles: () => http.get<{ exito: boolean; niveles: NivelConCuota[] }>('/academico/niveles'),
+    cuotaNivel: (id: number, cuotaMensual: number) =>
+      http.patch<{ exito: boolean; mensaje: string }>(`/academico/niveles/${id}`, { cuotaMensual }),
+
+    deportes: () => http.get<{ exito: boolean; deportes: DeporteDelCatalogo[] }>('/deportes'),
+    arancelDeporte: (id: number, arancelMensual: number) =>
+      http.patch<{ exito: boolean; mensaje: string }>(`/deportes/${id}`, { arancelMensual }),
+    arancelRecorrido: (id: number, arancelMensual: number) =>
+      http.patch<{ exito: boolean; mensaje: string }>(`/servicios/transporte/recorridos/${id}`, { arancelMensual }),
+    arancelComedor: (id: number, arancelMensual: number) =>
+      http.patch<{ exito: boolean; mensaje: string }>(`/servicios/comedor/planes/${id}`, { arancelMensual }),
+
+    comprobantesPendientes: () =>
+      http.get<{ exito: boolean; cantidad: number; montoTotal: number; comprobantes: ComprobantePendiente[] }>(
+        '/facturacion/comprobantes/pendientes',
+      ),
+    validarComprobante: (id: number, aprobar: boolean, motivoRechazo?: string) =>
+      http.post<{ exito: boolean; mensaje: string }>(`/facturacion/comprobantes/${id}/validar`, { aprobar, motivoRechazo }),
+  },
+
+  /** Control de acceso con el carnet: lo usan docentes y administración. */
+  accesos: {
+    escanear: (datos: { qr?: string; legajo?: string; codigo?: string; punto: PuntoControl; recorridoId?: number }) =>
+      http.post<ResultadoEscaneo>('/accesos/escanear', { ...datos, dispositivo: 'app-movil' }),
   },
 
   /**
@@ -229,8 +447,8 @@ export const api = {
   padres: {
     misHijos: () => http.get<{ exito: boolean; hijos: Hijo[] }>('/padres/mis-hijos'),
 
-    ficha: (alumnoId: number) =>
-      http.get<{ exito: boolean; alumno: Hijo['alumno'] }>(`/padres/mis-hijos/${alumnoId}`),
+    /** Ficha del alumno con sus materias, el profesor de cada una y la grilla. */
+    ficha: (alumnoId: number) => http.get<FichaAlumno>(`/padres/mis-hijos/${alumnoId}`),
 
     deportes: (alumnoId: number) =>
       http.get<RespuestaDeportes>(`/padres/mis-hijos/${alumnoId}/deportes`),

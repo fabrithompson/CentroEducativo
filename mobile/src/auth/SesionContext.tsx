@@ -11,6 +11,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import { alCaerLaSesion, borrarSesion, guardarSesion, leerToken, leerUsuario } from '../api/client';
 import api from '../api/endpoints';
+import { rolDe } from '../dominio/roles';
 
 export interface Usuario {
   id: number;
@@ -58,8 +59,9 @@ export function ProveedorSesion({ children }: { children: React.ReactNode }) {
   const ingresar = useCallback(async (nombreUsuario: string, password: string) => {
     const respuesta = await api.auth.login(nombreUsuario.trim(), password);
 
-    // La app es de tutores. Si entra un docente o un alumno, no tiene qué ver acá.
-    if (respuesta.usuario.tipo !== 'padre') {
+    // La app es de los cuatro roles del sistema, como la web: cada uno ve sus
+    // módulos (`dominio/roles.ts`). Sólo se frena un rol que la app no conoce.
+    if (rolDe(respuesta.usuario.tipo) === null) {
       // El login ya dejó una cookie de refresco para esa cuenta: se cierra en
       // el servidor también, para no dejarla viva siete días en el teléfono.
       try {
@@ -69,7 +71,7 @@ export function ProveedorSesion({ children }: { children: React.ReactNode }) {
       }
       await borrarSesion();
       throw new Error(
-        'Esta aplicación es para madres, padres y tutores. Si sos docente o estudiante, ingresá por el campus web.',
+        'Tu cuenta no tiene un rol habilitado para la aplicación. Consultá en secretaría.',
       );
     }
 

@@ -29,6 +29,12 @@
           "cameraPermission": "La app usa la cámara para que puedas fotografiar el comprobante de transferencia."
         }
       ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "La app usa la cámara para leer el QR del carnet en el micro y en el comedor, y para fotografiar comprobantes de transferencia."
+        }
+      ],
       "expo-secure-store",
       "expo-status-bar"
     ],
