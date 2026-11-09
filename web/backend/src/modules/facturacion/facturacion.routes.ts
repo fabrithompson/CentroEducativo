@@ -165,6 +165,15 @@ router.get('/facturas/:id/comprobante', requireAuth, async (req, res, next) => {
       total: aNumero(f.total),
       montoPagado: aNumero(f.montoPagado),
       estado: f.estado,
+      pagos: f.comprobantes
+        .filter((c) => c.estado === 'APROBADO')
+        .sort((a, b) => a.fechaTransferencia.getTime() - b.fechaTransferencia.getTime())
+        .map((c) => ({
+          fechaTransferencia: c.fechaTransferencia,
+          bancoOrigen: c.bancoOrigen,
+          numeroOperacion: c.numeroOperacion,
+          monto: aNumero(c.monto),
+        })),
     });
 
     res.type('html').send(html);

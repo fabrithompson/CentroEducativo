@@ -279,6 +279,15 @@ export const api = {
 
   facturacion: {
     /**
+     * HTML del comprobante de la cuota: conceptos, total, pagado, saldo y las
+     * transferencias ya acreditadas. Es el mismo documento que abre la web y
+     * que viaja adjunto en el mail mensual. El backend verifica el vínculo con
+     * el alumno antes de devolverlo.
+     */
+    comprobanteHtml: (facturaId: number) =>
+      http.get<string>(`/facturacion/facturas/${facturaId}/comprobante`),
+
+    /**
      * Sube el comprobante de transferencia.
      *
      * El archivo va como `multipart/form-data` con el shape que espera React

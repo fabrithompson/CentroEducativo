@@ -226,9 +226,10 @@ async function seccionCuenta(alumnoId) {
       clave: 'acciones', titulo: 'Acciones',
       render: (f) => `
         <div class="acciones-fila">
-          <a class="btn btn--suave btn--chico" href="${esc(api.facturacion.urlComprobante(f.id))}" target="_blank" rel="noopener">
+          <button type="button" class="btn btn--suave btn--chico" data-ver-comprobante="${f.id}" data-numero="${esc(f.numero)}"
+                  aria-label="Ver el comprobante ${esc(f.numero)} en una pestaña nueva">
             <i class="fas fa-file-lines" aria-hidden="true"></i> Ver
-          </a>
+          </button>
           ${f.saldo > 0 && f.estado !== 'ANULADA'
             ? `<button type="button" class="btn btn--primario btn--chico" data-pagar="${f.id}" data-numero="${esc(f.numero)}" data-saldo="${f.saldo}">
                  <i class="fas fa-upload" aria-hidden="true"></i> Subir comprobante
@@ -478,6 +479,61 @@ async function dibujarSeccion() {
       abrirDialogoComprobante(btn.dataset.pagar, btn.dataset.numero, Number(btn.dataset.saldo)),
     );
   });
+
+  panel.querySelectorAll('[data-ver-comprobante]').forEach((btn) => {
+    btn.addEventListener('click', () => void verComprobante(btn.dataset.verComprobante, btn.dataset.numero));
+  });
+}
+
+/**
+ * Abre el comprobante de la cuota en una pestaña nueva.
+ *
+ * Antes era un enlace común (`<a href target="_blank">`), pero la ruta exige el
+ * token en el header `Authorization` y un enlace no lo manda: la pestaña
+ * mostraba `{"message":"Falta el token de acceso."}`. Ahora el HTML se pide con
+ * el cliente de la API —que agrega el token y lo renueva si venció— y se
+ * escribe en la pestaña nueva, que se abrió en blanco.
+ *
+ * La pestaña se abre antes del pedido, dentro del clic: abierta después del
+ * `await`, el navegador la tomaría por una ventana emergente y la bloquearía.
+ * Si igual la bloquea (un bloqueador estricto, o un navegador embebido), el
+ * comprobante se descarga como archivo: la familia no se queda sin él.
+ */
+async function verComprobante(facturaId, numero) {
+  const ventana = window.open('', '_blank');
+  if (ventana) {
+    ventana.opener = null;
+    ventana.document.title = 'Comprobante';
+    ventana.document.body.textContent = 'Cargando el comprobante…';
+  }
+
+  try {
+    const html = await api.facturacion.comprobanteHtml(facturaId);
+
+    if (ventana) {
+      // Se escribe el documento en la pestaña en blanco en vez de navegarla a
+      // un `blob:`: funciona igual en todos los navegadores y no depende de
+      // que dejen abrir esas URL en primer plano.
+      ventana.document.open();
+      ventana.document.write(html);
+      ventana.document.close();
+      return;
+    }
+
+    const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = `comprobante-${numero}.html`;
+    document.body.append(enlace);
+    enlace.click();
+    enlace.remove();
+    // La descarga ya arrancó: el Blob se puede soltar.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    avisar('El navegador no dejó abrir una pestaña nueva, así que descargamos el comprobante. Abrilo para verlo o imprimirlo.');
+  } catch (err) {
+    ventana?.close();
+    avisar(err?.message ?? 'No se pudo abrir el comprobante.', 'error');
+  }
 }
 
 /** Punto de entrada. Lo llama el panel del tutor al abrir la vista. */

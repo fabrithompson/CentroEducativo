@@ -31,6 +31,14 @@ export interface ItemPlantilla {
   subtotal: number;
 }
 
+/** Una transferencia ya aprobada por Administración. */
+export interface PagoPlantilla {
+  fechaTransferencia: Date;
+  bancoOrigen: string;
+  numeroOperacion: string;
+  monto: number;
+}
+
 export interface DatosFactura {
   numero: string;
   periodo: Periodo;
@@ -47,6 +55,14 @@ export interface DatosFactura {
   total: number;
   montoPagado: number;
   estado: string;
+  /**
+   * Transferencias aprobadas. Con ellas el documento sirve como comprobante de
+   * pago: una factura puede saldarse en varias, y cada una figura con su banco
+   * y su número de operación. Las pendientes o rechazadas no van: todavía no
+   * son plata acreditada. El mail mensual no las pasa, porque la factura recién
+   * emitida no tiene pagos.
+   */
+  pagos?: PagoPlantilla[];
 }
 
 const ETIQUETA_TIPO: Record<string, string> = {
@@ -93,6 +109,33 @@ export function facturaHtml(f: DatosFactura): string {
 
   const saldo = f.total - f.montoPagado;
 
+  const pagos = f.pagos ?? [];
+  const seccionPagos =
+    pagos.length === 0
+      ? ''
+      : `
+  <h2 class="titulo-seccion">Transferencias acreditadas</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th><th>Banco de origen</th><th>N° de operación</th><th class="num">Importe</th>
+      </tr>
+    </thead>
+    <tbody>${pagos
+      .map(
+        (p) => `
+      <tr>
+        <td>${formatearFecha(p.fechaTransferencia)}</td>
+        <td>${esc(p.bancoOrigen)}</td>
+        <td>${esc(p.numeroOperacion)}</td>
+        <td class="num">${formatearMoneda(p.monto)}</td>
+      </tr>`,
+      )
+      .join('')}
+    </tbody>
+  </table>
+`;
+
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -121,6 +164,7 @@ export function facturaHtml(f: DatosFactura): string {
   .pago { margin-top: 28px; background: #f3f6fa; border: 1px solid #d3dce8; padding: 14px; font-size: 13px; }
   .pago h3 { margin: 0 0 8px; font-size: 14px; color: #1f4e79; }
   .pie { margin-top: 28px; font-size: 11px; color: #777; border-top: 1px solid #ddd; padding-top: 10px; }
+  .titulo-seccion { margin: 28px 0 0; font-size: 14px; color: #1f4e79; }
 </style>
 </head>
 <body>
@@ -177,7 +221,7 @@ export function facturaHtml(f: DatosFactura): string {
     ${f.montoPagado > 0 ? `<tr><td>Pagado</td><td class="num">${formatearMoneda(f.montoPagado)}</td></tr>` : ''}
     ${saldo > 0 && f.montoPagado > 0 ? `<tr class="saldo"><td>Saldo pendiente</td><td class="num">${formatearMoneda(saldo)}</td></tr>` : ''}
   </table>
-
+${seccionPagos}
   <div class="pago">
     <h3>Cómo abonar</h3>
     <p>

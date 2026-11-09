@@ -15,6 +15,7 @@
 | Lenguaje | TypeScript estricto, con `noUncheckedIndexedAccess` |
 | Almacenamiento de sesión | `expo-secure-store` |
 | Cámara y archivos | `expo-image-picker`, `expo-document-picker` |
+| Comprobante en PDF | `expo-print` (vista previa de impresión del sistema) |
 | Navegación | **Estado propio, sin React Navigation** |
 
 Expo era la recomendación de la auditoría (decisión #1): comparte TypeScript con
@@ -190,6 +191,33 @@ Tres bloques:
 3. **Carga del comprobante**: cámara, galería o PDF. Con validación previa de
    formato antes de gastar una subida.
 
+### Comprobante de pago
+
+La consigna pide que el sistema "emita un comprobante de pago". Cada cuota tiene
+un botón **Ver comprobante**. Abre el documento que emite el backend
+(`GET /api/facturacion/facturas/:id/comprobante`): el mismo que abre la web y
+que va adjunto en el mail mensual. La app no arma su propia versión.
+
+El documento trae los conceptos, el total, lo pagado, el saldo, el estado y una
+sección **Transferencias acreditadas** con la fecha, el banco, el número de
+operación y el importe de cada transferencia aprobada. Una cuota saldada en dos
+transferencias muestra las dos. Las pendientes o rechazadas no figuran, porque
+todavía no son plata acreditada. Por eso, recién después de que Administración
+valida el pago, el comprobante funciona como constancia.
+
+Se abre con `expo-print`, en la vista previa de impresión del teléfono. Desde
+ahí se guarda como PDF, se comparte o se imprime, sin que la app tenga que
+escribir archivos. En iOS, cerrar esa hoja sin imprimir rechaza la promesa con
+"Printing did not complete". `dominio/errores.ts` lo reconoce
+(`esImpresionCancelada`, con pruebas) para no mostrarlo como un error.
+
+En la web, el botón **Ver** de "Estado de cuenta" tampoco funcionaba. Era un
+enlace común a la ruta, y la ruta exige el token en el header `Authorization`,
+que un enlace no manda: la pestaña mostraba `{"message":"Falta el token de
+acceso."}`. Ahora el HTML se pide con el cliente de la API y se escribe en la
+pestaña nueva. Si el navegador bloquea esa pestaña, el comprobante se descarga
+como archivo.
+
 ---
 
 ## 6. Integración sin duplicar lógica de negocio
@@ -275,14 +303,16 @@ pnpm --filter mobile typecheck
 | Cálculo de monto y selección de ítems | ✅ **27 tests** |
 | Formato de importes, fechas y vencimientos | ✅ **19 tests** |
 | Rango de meses del filtro por período | ✅ **20 tests** |
-| Mensajes de error del cliente | ✅ **4 tests** |
+| Mensajes de error del cliente y cancelación de la impresión | ✅ **6 tests** |
 | Código TOTP del carnet contra `node:crypto` | ✅ **24 tests** |
 | Validación del comprobante | ✅ incluida arriba |
 | Clasificación en solapas | ✅ incluida arriba |
-| Suite del paquete móvil | ✅ **94 tests en verde**, todos de dominio |
+| Suite del paquete móvil | ✅ **96 tests en verde**, todos de dominio |
 | Cliente HTTP (`api/client.ts`) | ❌ **Sin pruebas automáticas** |
-| Suite del monorepo | ✅ **400 tests** (306 backend + 94 móvil, al 09/11/2026) |
-| Bundle de Android armado por Metro | ✅ 1057 módulos, sin errores (09/11/2026) |
+| Suite del monorepo | ✅ **405 tests** (309 backend + 96 móvil, al 09/11/2026) |
+| Bundle de Android armado por Metro | ✅ sin errores, con `expo-print` (09/11/2026) |
+| Comprobante con transferencias acreditadas | ✅ Probado en la web contra el servidor de QA local: la cuota de agosto del seed lista sus dos transferencias |
+| "Ver comprobante" en el teléfono | ❌ **No verificado** |
 | Render en emulador o dispositivo | ❌ **No verificado** |
 | Llamadas contra el backend en ejecución | ❌ **No verificado** |
 | Subida real de un comprobante | ❌ **No verificado** |

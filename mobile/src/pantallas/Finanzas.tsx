@@ -4,6 +4,7 @@
  * Tres vistas en una pantalla:
  *   1. Cuotas por solapa: pendientes, vencidas, pagadas, con filtro opcional
  *      por período (facturas y comprobantes asociados en un rango de meses).
+ *      Cada cuota abre su comprobante para guardarlo como PDF o compartirlo.
  *   2. Historial de deuda discriminado por ítem.
  *   3. Formulario de pago por transferencia (en `PagoTransferencia.tsx`).
  *
@@ -18,9 +19,11 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import * as Print from 'expo-print';
 
 import api, { type FacturaDetallada, type Hijo, type RespuestaDeuda } from '../api/endpoints';
+import { esImpresionCancelada } from '../dominio/errores';
 import {
   contarPorSolapa,
   deudaTotal,
@@ -380,11 +383,35 @@ function Flecha({
 
 function TarjetaCuota({ factura, onPagar }: { factura: FacturaDetallada; onPagar: () => void }) {
   const [abierta, setAbierta] = useState(false);
+  const [abriendo, setAbriendo] = useState(false);
 
   const resumen = aResumen(factura);
 
   const pct = porcentajePagado(resumen);
   const puedePagar = factura.saldo > 0 && factura.estado !== 'ANULADA';
+
+  /**
+   * El comprobante es el HTML que emite el backend —el mismo de la web y del
+   * mail mensual—, con las transferencias ya acreditadas. Se abre con la vista
+   * previa de impresión del sistema: desde ahí se guarda como PDF o se
+   * comparte, sin que la app tenga que armar el documento por su cuenta.
+   */
+  async function verComprobante() {
+    setAbriendo(true);
+    try {
+      const html = await api.facturacion.comprobanteHtml(factura.id);
+      await Print.printAsync({ html });
+    } catch (err) {
+      if (!esImpresionCancelada(err)) {
+        Alert.alert(
+          'No pudimos abrir el comprobante',
+          err instanceof Error ? err.message : 'Intentá de nuevo en unos minutos.',
+        );
+      }
+    } finally {
+      setAbriendo(false);
+    }
+  }
 
   return (
     <Tarjeta>
@@ -480,6 +507,15 @@ function TarjetaCuota({ factura, onPagar }: { factura: FacturaDetallada; onPagar
           style={{ marginTop: espaciado.md }}
         />
       ) : null}
+
+      <Boton
+        titulo="Ver comprobante"
+        variante="suave"
+        cargando={abriendo}
+        onPress={() => void verComprobante()}
+        accesibilidad={`Ver el comprobante de la cuota de ${periodo(factura.anio, factura.mes)} para guardarlo o compartirlo`}
+        style={{ marginTop: puedePagar ? espaciado.sm : espaciado.md }}
+      />
     </Tarjeta>
   );
 }
