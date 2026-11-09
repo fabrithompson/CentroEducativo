@@ -43,9 +43,23 @@ export interface DatosSolicitudCursado {
   curso: string;
 }
 
+/**
+ * Un "@", algo antes y un dominio con un punto que no esté en un extremo. Sin
+ * expresión regular: la versión con regex podía tardar de más con entradas
+ * largas por el backtracking (SonarCloud, typescript:S8786).
+ */
+function pareceCorreo(texto: string): boolean {
+  const correo = texto.trim();
+  if (correo === '' || /\s/.test(correo)) return false;
+  const partes = correo.split('@');
+  if (partes.length !== 2) return false;
+  const [usuario, dominio] = partes as [string, string];
+  return usuario.length > 0 && dominio.indexOf('.') > 0 && !dominio.endsWith('.');
+}
+
 export function validarSolicitudCursado(d: DatosSolicitudCursado): string | null {
   if (d.nombreTutor.trim().length < 2) return 'Completá tu nombre.';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.emailTutor.trim())) return 'Revisá el correo: no parece válido.';
+  if (!pareceCorreo(d.emailTutor)) return 'Revisá el correo: no parece válido.';
   if (d.telefonoTutor.replace(/\D/g, '').length < 6) return 'Completá un teléfono de contacto.';
   if (d.nombreEstudiante.trim().length < 2) return 'Completá el nombre y apellido del estudiante.';
   if (!d.nivel) return 'Elegí el nivel.';

@@ -166,7 +166,7 @@ function cablearAranceles(panel) {
         avisar('Escribí un importe mayor que cero, por ejemplo 104.000 o 104000,50.', 'error');
         return;
       }
-      ejecutar(form.querySelector('button'), () => GUARDAR_ARANCEL[tipo](Number(id), valor), pintar);
+      void ejecutar(form.querySelector('button'), () => GUARDAR_ARANCEL[tipo](Number(id), valor), pintar);
     });
   });
 }
@@ -329,7 +329,7 @@ function cablearDeportes(panel) {
       avisar('El arancel tiene que ser un importe mayor que cero.', 'error');
       return;
     }
-    ejecutar(
+    void ejecutar(
       form.querySelector('button[type=submit]'),
       () =>
         api.deportes.crear({
@@ -472,7 +472,7 @@ function cablearInscripciones(panel) {
       destino.querySelectorAll('[data-elegir]').forEach((b) => {
         b.addEventListener('click', () => {
           alumnoElegido = items.find((a) => a.id === Number(b.dataset.elegir));
-          pintar();
+          void pintar();
         });
       });
     } catch (err) {
@@ -486,7 +486,7 @@ function cablearInscripciones(panel) {
   panel.querySelector('#btn-inscribir-dep')?.addEventListener('click', (e) => {
     const deporteId = Number(panel.querySelector('#ins-deporte')?.value);
     if (!deporteId) return;
-    ejecutar(e.currentTarget, () => api.deportes.inscribir(id, deporteId), pintar);
+    void ejecutar(e.currentTarget, () => api.deportes.inscribir(id, deporteId), pintar);
   });
   panel.querySelectorAll('[data-baja-dep]').forEach((b) =>
     b.addEventListener('click', () => ejecutar(b, () => api.deportes.darDeBaja(Number(b.dataset.bajaDep)), pintar)),
@@ -502,7 +502,7 @@ function cablearInscripciones(panel) {
   formTr?.addEventListener('submit', (e) => {
     e.preventDefault();
     const d = new FormData(formTr);
-    ejecutar(
+    void ejecutar(
       formTr.querySelector('button'),
       () => api.servicios.contratarTransporte({ alumnoId: id, recorridoId: Number(d.get('recorridoId')), turno: d.get('turno'), ...leerPeriodo(formTr) }),
       pintar,
@@ -513,7 +513,7 @@ function cablearInscripciones(panel) {
   formCo?.addEventListener('submit', (e) => {
     e.preventDefault();
     const d = new FormData(formCo);
-    ejecutar(
+    void ejecutar(
       formCo.querySelector('button'),
       () => api.servicios.contratarComedor({ alumnoId: id, comedorId: Number(d.get('comedorId')), ...leerPeriodo(formCo) }),
       pintar,

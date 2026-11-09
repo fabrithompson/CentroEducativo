@@ -695,21 +695,21 @@ function cablearInscripciones(panel) {
   panel.querySelectorAll('[data-baja-deporte]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (!(await confirmar(`Se da de baja de ${btn.dataset.nombre} y se libera el cupo.`, 'Dar de baja'))) return;
-      ejecutar(btn, () => api.deportes.darDeBaja(Number(btn.dataset.bajaDeporte)));
+      void ejecutar(btn, () => api.deportes.darDeBaja(Number(btn.dataset.bajaDeporte)));
     });
   });
 
   panel.querySelectorAll('[data-baja-transporte]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (!(await confirmar('Deja de usar el transporte este mes.', 'Dar de baja'))) return;
-      ejecutar(btn, () => api.servicios.bajaTransporte(Number(btn.dataset.bajaTransporte)));
+      void ejecutar(btn, () => api.servicios.bajaTransporte(Number(btn.dataset.bajaTransporte)));
     });
   });
 
   panel.querySelectorAll('[data-baja-comedor]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (!(await confirmar('Deja el comedor este mes.', 'Dar de baja'))) return;
-      ejecutar(btn, () => api.servicios.bajaComedor(Number(btn.dataset.bajaComedor)));
+      void ejecutar(btn, () => api.servicios.bajaComedor(Number(btn.dataset.bajaComedor)));
     });
   });
 
@@ -717,7 +717,7 @@ function cablearInscripciones(panel) {
   formTransporte?.addEventListener('submit', (e) => {
     e.preventDefault();
     const datos = new FormData(formTransporte);
-    ejecutar(formTransporte.querySelector('button[type=submit]'), () =>
+    void ejecutar(formTransporte.querySelector('button[type=submit]'), () =>
       api.servicios.contratarTransporte({
         alumnoId: hijoActivo,
         recorridoId: Number(datos.get('recorridoId')),
@@ -731,7 +731,7 @@ function cablearInscripciones(panel) {
   formComedor?.addEventListener('submit', (e) => {
     e.preventDefault();
     const datos = new FormData(formComedor);
-    ejecutar(formComedor.querySelector('button[type=submit]'), () =>
+    void ejecutar(formComedor.querySelector('button[type=submit]'), () =>
       api.servicios.contratarComedor({
         alumnoId: hijoActivo,
         comedorId: Number(datos.get('comedorId')),
