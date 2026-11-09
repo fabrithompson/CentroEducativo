@@ -78,7 +78,7 @@ Las versiones son las de `mobile/package.json`.
 
 | Elemento | Elección |
 |---|---|
-| Framework | **Expo SDK 57** (`expo ~57.0.23`) · **React Native 0.86.3** · **React 19.2.3** |
+| Framework | **Expo SDK 58** (`expo ~58.0.23`) · **React Native 0.88.1** · **React 19.3.0** |
 | Lenguaje | TypeScript en modo estricto (`typescript ^6.0.3`) |
 | Sesión | `expo-secure-store` |
 | Cámara y archivos | `expo-camera`, `expo-image-picker`, `expo-document-picker` |

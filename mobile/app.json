@@ -17,7 +17,9 @@
     },
     "android": {
       "package": "ar.edu.educarparatransformar.tutores",
-      "adaptiveIcon": { "backgroundColor": "#1f4e79" }
+      "adaptiveIcon": {
+        "backgroundColor": "#1f4e79"
+      }
     },
     "plugins": [
       [
@@ -27,7 +29,8 @@
           "cameraPermission": "La app usa la cámara para que puedas fotografiar el comprobante de transferencia."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-status-bar"
     ],
     "extra": {
       "apiUrl": "https://transformar-para-educar.up.railway.app"

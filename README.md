@@ -169,7 +169,7 @@ Ya no están en esta lista:
 | ORM | Prisma | 6 |
 | Base de datos | PostgreSQL | 15 |
 | Frontend web | HTML5 · CSS3 · JavaScript con módulos ES | — |
-| App móvil | Expo · React Native | SDK 57 · 0.86.3 |
+| App móvil | Expo · React Native | SDK 58 · 0.88.1 |
 | Validación | Zod | 3 |
 | Autenticación | JWT (acceso + refresco) · bcrypt | — |
 | Pruebas | Ejecutor nativo de Node sobre PostgreSQL real | — |

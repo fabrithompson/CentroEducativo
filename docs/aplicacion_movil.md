@@ -11,7 +11,7 @@
 
 | Elemento | Elección |
 |---|---|
-| Framework | **Expo SDK 57** (`~57.0.23`) + React Native 0.86.3 · React 19.2.3 |
+| Framework | **Expo SDK 58** (`~58.0.23`) + React Native 0.88.1 · React 19.3.0 |
 | Lenguaje | TypeScript estricto, con `noUncheckedIndexedAccess` |
 | Almacenamiento de sesión | `expo-secure-store` |
 | Cámara y archivos | `expo-image-picker`, `expo-document-picker` |
@@ -292,6 +292,25 @@ pnpm --filter mobile start     # o: pnpm mobile:dev
 pnpm --filter mobile test
 pnpm --filter mobile typecheck
 ```
+
+**La versión de Expo Go manda.** La tienda instala solo el Expo Go del SDK más
+nuevo, y en iPhone no se puede bajar uno anterior. Si el teléfono muestra
+*"Project is incompatible with this version of Expo Go"*, hay que actualizar el
+proyecto al SDK que pide. Pasó el 09/11/2026, del 57 al 58. Se hace desde
+`mobile/`:
+
+```bash
+pnpm exec expo install expo@^58.0.0 --fix   # sube expo y alinea el resto
+pnpm exec expo install --check               # tiene que decir "up to date"
+pnpm peers check                             # sin peers sin cumplir
+```
+
+En esa actualización, `@expo/dom-webview` quedó en la versión 57 dentro del
+lockfile. Es un *peer* opcional de `expo`, que acepta cualquier versión, pero
+`@expo/log-box@58` pide la 58. Se resolvió instalándolo con
+`expo install @expo/dom-webview`, que lo deja como dependencia directa con la
+versión del SDK. Después de actualizar conviene arrancar Metro con
+`--clear`.
 
 ---
 
