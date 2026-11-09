@@ -48,7 +48,7 @@ function franja(
 const FUTBOL_MARTES = franja(1, 'Fútbol', 'MARTES', '17:00', '18:30');
 const BASQUET_MARTES = franja(2, 'Básquet', 'MARTES', '17:00', '18:30');
 const VOLEY_LUNES = franja(3, 'Vóley', 'LUNES', '17:00', '18:30');
-const HANDBALL_MARTES_TARDE = franja(4, 'Handball', 'MARTES', '18:30', '20:00');
+const ARTES_MARCIALES_MARTES_TARDE = franja(4, 'Artes Marciales', 'MARTES', '18:30', '20:00');
 
 // ------------------------------------------------------------------
 // Conversión de horas
@@ -97,9 +97,9 @@ test('el mismo horario en días distintos no se solapa', () => {
 });
 
 test('actividades consecutivas no se solapan (extremos semiabiertos)', () => {
-  // Fútbol termina 18:30, Handball arranca 18:30: el alumno llega justo.
-  assert.ok(!haySolapamiento(FUTBOL_MARTES, HANDBALL_MARTES_TARDE));
-  assert.ok(!haySolapamiento(HANDBALL_MARTES_TARDE, FUTBOL_MARTES));
+  // Fútbol termina 18:30, Artes Marciales arranca 18:30: el alumno llega justo.
+  assert.ok(!haySolapamiento(FUTBOL_MARTES, ARTES_MARCIALES_MARTES_TARDE));
+  assert.ok(!haySolapamiento(ARTES_MARCIALES_MARTES_TARDE, FUTBOL_MARTES));
 });
 
 test('un solapamiento parcial cuenta como conflicto', () => {
@@ -117,7 +117,7 @@ test('una actividad contenida dentro de otra cuenta como conflicto', () => {
 test('haySolapamiento es simétrico', () => {
   const casos: [FranjaDeDeporte, FranjaDeDeporte][] = [
     [FUTBOL_MARTES, BASQUET_MARTES],
-    [FUTBOL_MARTES, HANDBALL_MARTES_TARDE],
+    [FUTBOL_MARTES, ARTES_MARCIALES_MARTES_TARDE],
     [FUTBOL_MARTES, VOLEY_LUNES],
   ];
   for (const [a, b] of casos) {
@@ -143,10 +143,10 @@ test('detectarConflictos ignora el mismo deporte contra sí mismo', () => {
 });
 
 test('detectarConflictos evalúa todas las sesiones semanales del deporte', () => {
-  // Hockey cursa miércoles y viernes; Vóley, lunes y miércoles. Cruzan el miércoles.
+  // Danza cursa miércoles y viernes; Vóley, lunes y miércoles. Cruzan el miércoles.
   const hockey = [
-    franja(7, 'Hockey', 'MIERCOLES', '17:00', '18:30'),
-    franja(7, 'Hockey', 'VIERNES', '17:00', '18:30'),
+    franja(7, 'Danza', 'MIERCOLES', '17:00', '18:30'),
+    franja(7, 'Danza', 'VIERNES', '17:00', '18:30'),
   ];
   const voley = [
     franja(3, 'Vóley', 'LUNES', '17:00', '18:30'),
@@ -160,7 +160,7 @@ test('detectarConflictos evalúa todas las sesiones semanales del deporte', () =
 
 test('detectarConflictos acumula cruces contra varios deportes ya cursados', () => {
   const nuevo = [franja(8, 'Atletismo', 'MARTES', '17:30', '19:00')];
-  const existentes = [FUTBOL_MARTES, HANDBALL_MARTES_TARDE];
+  const existentes = [FUTBOL_MARTES, ARTES_MARCIALES_MARTES_TARDE];
 
   const conflictos = detectarConflictos(nuevo, existentes);
   assert.equal(conflictos.length, 2);

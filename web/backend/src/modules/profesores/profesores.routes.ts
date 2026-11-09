@@ -31,7 +31,25 @@ import {
   quitarMateria,
 } from './profesores.service';
 
+import { HttpError } from '../../utils/httpError';
+import { reportePorDocente } from '../reportes/gestion.service';
+
 const router = Router();
+
+/**
+ * GET /api/profesores/yo/cursos — el reporte por docente del que pregunta:
+ * cursos a cargo por nivel, con las materias y sus horarios, y los deportes de
+ * los que es responsable. Es el mismo reporte que ve el administrador.
+ */
+router.get('/yo/cursos', requireAuth, requireRole(Role.DOCENTE), async (req, res, next) => {
+  try {
+    const profesor = await prisma.profesor.findUnique({ where: { userId: req.authUser!.id }, select: { id: true } });
+    if (!profesor) throw HttpError.notFound('Tu cuenta no tiene un legajo de profesor asociado. Avisá en secretaría.');
+    res.json({ exito: true, reporte: 'por-docente', ...(await reportePorDocente(prisma, profesor.id)) });
+  } catch (err) {
+    next(err);
+  }
+});
 
 const idParam = z.object({ id: z.coerce.number().int().positive() });
 

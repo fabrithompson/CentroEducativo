@@ -26,6 +26,7 @@ import {
   NIVELES,
   PROFESORES,
   RECORRIDOS,
+  armarGrilla,
 } from './seed-dominio.ts';
 import {
   MAX_DEPORTES_POR_ALUMNO,
@@ -78,6 +79,34 @@ test('hay exactamente 3 niveles educativos', () => {
 
 test('hay exactamente 8 deportes oficiales', () => {
   assert.equal(DEPORTES.length, 8);
+});
+
+test('los deportes son exactamente los 8 que enumera la consigna', () => {
+  const delPdf = ['Atletismo', 'Natación', 'Fútbol', 'Artes Marciales', 'Vóley', 'Danza', 'Básquet', 'Ajedrez'];
+  assert.deepEqual(DEPORTES.map((d) => d.nombre).sort(), [...delPdf].sort());
+});
+
+test('la grilla da a cada materia un bloque cada dos horas cátedra', () => {
+  const grilla = armarGrilla();
+  for (const m of MATERIAS) {
+    const propios = grilla.filter((h) => h.nivel === m.nivel && h.curso === m.curso && h.materia === m.nombre);
+    assert.equal(propios.length, Math.ceil(m.horas / 2), `${m.nombre} de ${m.curso}`);
+  }
+});
+
+test('en la grilla no se pisan dos materias del mismo curso ni del mismo docente', () => {
+  const grilla = armarGrilla();
+  const vistos = new Set<string>();
+  for (const h of grilla) {
+    const porCurso = `curso|${h.nivel}|${h.curso}|${h.dia}|${h.desde}`;
+    assert.ok(!vistos.has(porCurso), `choque de curso: ${porCurso}`);
+    vistos.add(porCurso);
+    if (h.profesor) {
+      const porDocente = `docente|${h.profesor}|${h.dia}|${h.desde}`;
+      assert.ok(!vistos.has(porDocente), `choque de docente: ${porDocente}`);
+      vistos.add(porDocente);
+    }
+  }
 });
 
 test('hay exactamente 4 recorridos de transporte, con códigos R1 a R4', () => {

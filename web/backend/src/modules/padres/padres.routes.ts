@@ -2,9 +2,18 @@
  * Controlador REST del portal de tutores: `/api/padres/...`
  *
  * Toda ruta de este router cumple dos condiciones, sin excepción:
- *   1. Exige rol PADRE (`requireRole` a nivel de router).
+ *   1. Exige rol PADRE o ESTUDIANTE (`requireRole` a nivel de router).
  *   2. Si recibe un `:alumnoId`, lo pasa por `assertPuedeVerAlumno`, que
- *      verifica el vínculo en `TutorAlumno` antes de devolver un solo dato.
+ *      verifica el vínculo en `TutorAlumno` antes de devolver un solo dato
+ *      (y, para un estudiante, que el alumno sea él mismo).
+ *
+ * El estudiante usa estas mismas rutas para ver lo suyo: su ficha, deportes,
+ * servicios, cuotas y deuda. La consigna pide que cada rol acceda a "las
+ * funcionalidades correspondientes a su rol", y la app móvil es de padres y
+ * estudiantes. Para él, `/mis-hijos` devuelve una lista con su propia ficha,
+ * con la misma forma, así la app y la web no necesitan un camino aparte. Todo
+ * lo que escribe (pagar, inscribir) vive en otros routers y sigue reservado a
+ * PADRE y ADMIN.
  *
  * El middleware `cargarHijo` centraliza esa verificación: ningún handler de
  * abajo consulta la base con un `alumnoId` que no haya pasado por él. Es
@@ -26,8 +35,8 @@ import { serviciosDeAlumno } from '../servicios/servicios.service';
 
 const router = Router();
 
-// Todo el router es exclusivo de tutores autenticados.
-router.use(requireAuth, requireRole(Role.PADRE));
+// Todo el router es de tutores y de estudiantes autenticados.
+router.use(requireAuth, requireRole(Role.PADRE, Role.ESTUDIANTE));
 
 const alumnoParam = z.object({ alumnoId: z.coerce.number().int().positive() });
 
@@ -59,17 +68,31 @@ const hijoId = (res: { locals: Record<string, unknown> }): number => res.locals.
 // GET /api/padres/mis-hijos
 // ------------------------------------------------------------------
 
+const incluirFichaAlumno = {
+  curso: { include: { nivel: { select: { id: true, nombre: true } } } },
+  user: { select: { id: true, usuario: true } },
+} as const;
+
 router.get('/mis-hijos', async (req, res, next) => {
   try {
+    if (req.authUser!.role === Role.ESTUDIANTE) {
+      const propio = await prisma.alumno.findUnique({
+        where: { userId: req.authUser!.id },
+        include: incluirFichaAlumno,
+      });
+      res.json({
+        exito: true,
+        hijos: propio
+          ? [{ vinculoId: null, parentesco: 'PROPIO', esResponsableFacturacion: false, alumno: propio }]
+          : [],
+      });
+      return;
+    }
+
     const vinculos = await prisma.tutorAlumno.findMany({
       where: { tutorId: req.authUser!.id },
       include: {
-        alumno: {
-          include: {
-            curso: { include: { nivel: { select: { id: true, nombre: true } } } },
-            user: { select: { id: true, usuario: true } },
-          },
-        },
+        alumno: { include: incluirFichaAlumno },
       },
       orderBy: { alumno: { apellido: 'asc' } },
     });

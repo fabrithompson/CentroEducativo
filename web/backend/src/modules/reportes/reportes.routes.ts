@@ -26,6 +26,13 @@ import {
   reporteMorosidad,
   reportePagos,
 } from './reportes.service';
+import {
+  docentesPorNivel,
+  pagosPorDeporte,
+  pagosPorRecorrido,
+  reportePorAlumno,
+  reportePorDocente,
+} from './gestion.service';
 
 const router = Router();
 
@@ -164,6 +171,66 @@ router.get('/morosidad', async (req, res, next) => {
     const reporte = await reporteMorosidad(prisma, filtros);
 
     res.json({ exito: true, reporte: 'morosidad', ...reporte });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ------------------------------------------------------------------
+// Parte 2 — Por alumno, por docente y docentes por nivel
+// ------------------------------------------------------------------
+
+const idParam = z.object({ id: z.coerce.number().int().positive() });
+const periodoQuerySchema = z.object({
+  anio: z.coerce.number().int().min(2025).max(2100).default(ahora.getFullYear()),
+  mes: z.coerce.number().int().min(1).max(12).default(ahora.getMonth() + 1),
+});
+
+router.get('/alumno/:id', async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    const reporte = await reportePorAlumno(prisma, id, periodoQuerySchema.parse(req.query));
+    res.json({ exito: true, reporte: 'por-alumno', ...reporte });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/docente/:id', async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    res.json({ exito: true, reporte: 'por-docente', ...(await reportePorDocente(prisma, id)) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/docentes-por-nivel', async (req, res, next) => {
+  try {
+    const filtros = z.object({ nivelId: z.coerce.number().int().positive().optional() }).parse(req.query);
+    res.json({ exito: true, reporte: 'docentes-por-nivel', ...(await docentesPorNivel(prisma, filtros)) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ------------------------------------------------------------------
+// Parte 3 — Pagos por deporte (nivel, horario, profesor) y por recorrido
+// ------------------------------------------------------------------
+
+router.get('/pagos-por-deporte', async (req, res, next) => {
+  try {
+    const filtros = deporteQuerySchema.merge(periodoQuerySchema).parse(req.query);
+    res.json({ exito: true, reporte: 'pagos-por-deporte', ...(await pagosPorDeporte(prisma, filtros)) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/pagos-por-recorrido', async (req, res, next) => {
+  try {
+    const filtros = transporteQuerySchema.parse(req.query);
+    res.json({ exito: true, reporte: 'pagos-por-recorrido', ...(await pagosPorRecorrido(prisma, filtros)) });
   } catch (err) {
     next(err);
   }

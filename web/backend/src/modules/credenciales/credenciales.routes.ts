@@ -41,7 +41,9 @@ const alumnoParam = z.object({ alumnoId: z.coerce.number().int().positive() });
 credenciales.get(
   '/alumno/:alumnoId',
   requireAuth,
-  requireRole(Role.PADRE, Role.ADMIN),
+  // El carnet es del alumno: él lo muestra al subir al micro o entrar al
+  // comedor. `assertPuedeVerAlumno` lo limita a su propia credencial.
+  requireRole(Role.PADRE, Role.ESTUDIANTE, Role.ADMIN),
   async (req, res, next) => {
     try {
       const { alumnoId } = alumnoParam.parse(req.params);
@@ -105,7 +107,7 @@ credenciales.get(
 credenciales.post(
   '/alumno/:alumnoId/reemitir',
   requireAuth,
-  requireRole(Role.PADRE, Role.ADMIN),
+  requireRole(Role.PADRE, Role.ESTUDIANTE, Role.ADMIN),
   rateLimit({ max: 5, ventanaMs: 60 * 60 * 1000, mensaje: 'Demasiadas reemisiones. Probá más tarde.' }),
   async (req, res, next) => {
     try {

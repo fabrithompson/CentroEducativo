@@ -17,6 +17,7 @@
 import { EstadoAlumno, EstadoProfesor, Prisma, Turno, type PrismaClient } from '@prisma/client';
 
 import { HttpError } from '../../utils/httpError';
+import { seleccionHorarioMateria, verificarGrillaConDocente } from './grilla.service';
 
 // ==================================================================
 // Niveles
@@ -283,6 +284,10 @@ const seleccionMateria = {
     },
   },
   profesor: { select: { id: true, apellido: true, nombres: true, especialidad: true } },
+  horarios: {
+    select: seleccionHorarioMateria,
+    orderBy: [{ diaSemana: 'asc' as const }, { horaInicio: 'asc' as const }],
+  },
 } satisfies Prisma.MateriaSelect;
 
 export interface FiltrosMateria {
@@ -391,6 +396,18 @@ export async function actualizarMateria(
     }
 
     if (input.profesorId) await validarProfesor(tx, input.profesorId);
+
+    // La grilla viaja con la materia: con otro docente o en otro curso, sus
+    // horarios podrían chocar con clases que ya existen.
+    if (input.profesorId && input.profesorId !== materia.profesorId) {
+      await verificarGrillaConDocente(tx, id, input.profesorId);
+    }
+    if (input.cursoId && input.cursoId !== materia.cursoId) {
+      const horarios = await tx.horarioMateria.count({ where: { materiaId: id } });
+      if (horarios > 0) {
+        throw HttpError.conflict('La materia tiene horarios cargados: quitalos antes de pasarla a otro curso.');
+      }
+    }
 
     return tx.materia.update({ where: { id }, data: input, select: seleccionMateria });
   });
