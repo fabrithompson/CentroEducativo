@@ -1,9 +1,28 @@
-# Aplicación Móvil — Portal de Familias
+# Aplicación Móvil — Familias, estudiantes, docentes y administración
 
 **Proyecto:** Centro Educativo "EDUCAR PARA TRANSFORMAR"
 **Paquete:** `mobile/` (workspace pnpm)
 **Fecha:** 16/09/2026 · actualizado el 09/11/2026
 **Plan de lo que falta:** `docs/plan_de_trabajo_mobile.md`
+
+---
+
+## 0. Roles y módulos
+
+La app es de los cuatro roles del sistema, igual que la web, y cada uno ve los
+módulos de la Parte 3 de la consigna que le tocan (`src/dominio/roles.ts`, con
+pruebas). Hasta el 09/11/2026 sólo dejaba entrar a padres; la consigna no lo
+dice y se corrigió (ver `plan_de_trabajo_mobile.md` §1.1).
+
+| Rol | Pestañas |
+|---|---|
+| Padre | Inicio (ficha, materias con profesor y horarios, deportes, servicios, asistencia) · Inscribir (deportes, transporte por mes, comedor, cursado) · Carnet · Finanzas (cuotas, filtro por período, deuda por ítem, pago, comprobante) · Cuenta |
+| Estudiante | Inicio · Carnet · Cuotas (lectura: pagar es de los padres) · Cuenta |
+| Docente | Escanear carnet (cámara o carga manual) · Mis cursos (por nivel, con horarios) · Cuenta |
+| Administración | Aranceles (cuota por nivel, deportes, recorridos, comedor) · Pagos (aprobar o rechazar comprobantes) · Escanear · Cuenta |
+
+"Cuenta" es común a todos: cambiar la contraseña y cerrar sesión. El backend
+vuelve a verificar cada permiso: la app sólo decide qué se muestra.
 
 ---
 
@@ -326,9 +345,13 @@ versión del SDK. Después de actualizar conviene arrancar Metro con
 | Código TOTP del carnet contra `node:crypto` | ✅ **24 tests** |
 | Validación del comprobante | ✅ incluida arriba |
 | Clasificación en solapas | ✅ incluida arriba |
-| Suite del paquete móvil | ✅ **96 tests en verde**, todos de dominio |
+| Roles y pestañas por rol | ✅ **9 tests** |
+| Formularios (contraseña, importes, solicitud de cursado) | ✅ **7 tests** |
+| Suite del paquete móvil | ✅ **112 tests en verde**, todos de dominio |
 | Cliente HTTP (`api/client.ts`) | ❌ **Sin pruebas automáticas** |
-| Suite del monorepo | ✅ **405 tests** (309 backend + 96 móvil, al 09/11/2026) |
+| Suite del monorepo | ✅ **435 tests** (323 backend + 112 móvil, al 09/11/2026), más 23 reglas de motor sobre PostgreSQL |
+| Pantallas por rol en la web, contra el servidor de QA | ✅ Admin, padre, docente y estudiante recorridos el 09/11/2026 |
+| Pantallas nuevas de la app en el teléfono | ❌ **No verificado** |
 | Bundle de Android armado por Metro | ✅ sin errores, con `expo-print` (09/11/2026) |
 | Comprobante con transferencias acreditadas | ✅ Probado en la web contra el servidor de QA local: la cuota de agosto del seed lista sus dos transferencias |
 | "Ver comprobante" en el teléfono | ❌ **No verificado** |
@@ -356,7 +379,6 @@ emulador.
 | Probar en emulador Android y en un dispositivo real | Lo primero al retomar |
 | Verificar el `multipart` de RN contra multer | Es donde suelen aparecer sorpresas |
 | Rastreo del transporte (RF-08) | El backend está listo (`GET /api/transporte/seguimiento/:alumnoId`); falta la pantalla y un simulador de posiciones |
-| Materias y profesores del hijo (RF-03) | `GET /api/padres/mis-hijos/:id` ya los devuelve; falta mostrarlos |
 | Notificaciones push | La consigna las pide para el QR; en Android requieren un build de desarrollo, no Expo Go |
 | Íconos e imagen de splash | `app.json` tiene los colores; faltan los assets |
 | Pantalla de calificaciones | El endpoint existe y está tipado; falta la pantalla |

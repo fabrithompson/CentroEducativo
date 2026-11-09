@@ -601,13 +601,13 @@ reutilización de un código QR.
 |---|---|
 | [`plan_de_trabajo.md`](docs/plan_de_trabajo.md) | Objetivo, alcance, RF y RNF, cronograma, riesgos, entregables |
 | [`patrones_de_diseno.md`](docs/patrones_de_diseno.md) | Los patrones de diseño del sistema —MVC, Strategy, Singleton, Observer, Repository y otros—, con archivo y línea |
-| [`plan_de_trabajo_mobile.md`](docs/plan_de_trabajo_mobile.md) | Plan de la app móvil de tutores: alcance, cronograma por sprint, pruebas, riesgos y estado de avance |
+| [`plan_de_trabajo_mobile.md`](docs/plan_de_trabajo_mobile.md) | Plan de la app móvil (padres, estudiantes, docentes y administración): alcance, cronograma por sprint, pruebas, riesgos y estado de avance |
 | [`informe_final_ia.md`](docs/informe_final_ia.md) | Informe académico sobre el uso de IA — los 5 puntos de la consigna |
 | [`bitacora_ia.md`](docs/bitacora_ia.md) | Registro de cada intervención asistida por IA |
 | [`modelo_de_datos.md`](docs/modelo_de_datos.md) | Decisiones del esquema y validación contra PostgreSQL |
 | [`api_rest.md`](docs/api_rest.md) | Rutas, roles y autorización de los módulos de dominio |
 | [`frontend.md`](docs/frontend.md) | Portal, backoffice y accesibilidad |
-| [`aplicacion_movil.md`](docs/aplicacion_movil.md) | Arquitectura de la app de tutores |
+| [`aplicacion_movil.md`](docs/aplicacion_movil.md) | Arquitectura de la app móvil y módulos por rol |
 | [`facturacion_y_schedulers.md`](docs/facturacion_y_schedulers.md) | Circuito de cobranza y tareas programadas |
 | [`carnet_digital_qr.md`](docs/carnet_digital_qr.md) | Desafío de valor agregado: justificación y diseño |
 | [`informe_auditoria.md`](docs/informe_auditoria.md) | Auditoría inicial del repositorio |

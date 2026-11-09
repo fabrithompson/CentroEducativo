@@ -17,17 +17,30 @@ técnico de lo ya construido está en `docs/aplicacion_movil.md`.
 
 ### 1.1 Objetivo
 
-Entregar el **17/11/2026** una aplicación móvil para **tutores** (madres, padres
-o responsables) que les permita seguir a sus hijos desde el teléfono: la ficha,
-las materias con sus profesores, las cuotas y la deuda, el pago por
-transferencia, el carnet digital y el **rastreo del transporte escolar en tiempo
-real** (RF-08), sin reimplementar ninguna regla de negocio del backend.
+Entregar el **17/11/2026** una aplicación móvil para **los cuatro roles del
+sistema** —padres, estudiantes, docentes y administración—, cada uno con los
+módulos de la Parte 3 que le corresponden: las familias siguen a sus hijos (la
+ficha, las materias con sus profesores y horarios, las inscripciones, las cuotas
+y la deuda, el pago por transferencia y el carnet digital), el docente controla
+el acceso con el carnet y ve sus cursos, y la administración fija los aranceles
+y valida los comprobantes. Todo sin reimplementar ninguna regla de negocio del
+backend.
+
+> **Corrección del 09/11/2026.** La primera versión de este plan decía "ingreso
+> sólo para tutores". La consigna no lo dice: pide que el usuario acceda
+> "únicamente a las funcionalidades correspondientes a su rol", lo que supone
+> varios roles dentro de la app, y el proyecto la definía como de padres y
+> estudiantes. Se corrigió en las intervenciones 48 a 51 de la bitácora.
 
 ### 1.2 Alcance
 
 | Incluido | Motivo |
 |---|---|
-| Ingreso sólo para tutores, con recuperación de contraseña | La app es de las familias; un docente o un alumno se deriva al campus web |
+| Ingreso para los cuatro roles, con recuperación y cambio de contraseña | Consigna, Parte 3, Módulo 1: cada usuario accede a las funcionalidades de su rol |
+| Estudiante: lo suyo en lectura y su carnet | La consigna no lo excluye y el carnet lo usa el alumno; pagar es de los padres |
+| Padre: inscripción a deportes, transporte y comedor, e inscripción al cursado | Parte 2 y Parte 3: cada alumno se inscribe a 2 deportes, transporte por recorrido y comedor |
+| Docente: escanear el carnet y ver sus cursos con horarios | Control de acceso (valor agregado) y reporte por docente (Parte 2) |
+| Administración: aranceles y validación de comprobantes | Parte 3: los administradores especifican el valor de la cuota, deportes, transporte y comedor |
 | Ficha del hijo, deportes, servicios y asistencia | Es lo que una familia consulta a diario |
 | Materias y profesores del hijo | RF-03: los padres consultan los profesores por materia |
 | Calificaciones | Completa la ficha académica; el endpoint ya existe |
