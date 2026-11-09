@@ -238,8 +238,12 @@ export const api = {
     servicios: (alumnoId: number, anio?: number, mes?: number) =>
       http.get<RespuestaServicios>(`/padres/mis-hijos/${alumnoId}/servicios`, { anio, mes }),
 
-    facturas: (alumnoId: number) =>
-      http.get<RespuestaFacturas>(`/padres/mis-hijos/${alumnoId}/facturas`),
+    /**
+     * Sin `rango`, todas las facturas del alumno. Con `rango` (AAAA-MM-DD), sólo
+     * las emitidas en ese período; el backend toma `hasta` inclusive.
+     */
+    facturas: (alumnoId: number, rango?: { desde: string; hasta: string }) =>
+      http.get<RespuestaFacturas>(`/padres/mis-hijos/${alumnoId}/facturas`, rango),
 
     deuda: (alumnoId: number) => http.get<RespuestaDeuda>(`/padres/mis-hijos/${alumnoId}/deuda`),
 
@@ -274,6 +278,15 @@ export const api = {
   },
 
   facturacion: {
+    /**
+     * HTML del comprobante de la cuota: conceptos, total, pagado, saldo y las
+     * transferencias ya acreditadas. Es el mismo documento que abre la web y
+     * que viaja adjunto en el mail mensual. El backend verifica el vínculo con
+     * el alumno antes de devolverlo.
+     */
+    comprobanteHtml: (facturaId: number) =>
+      http.get<string>(`/facturacion/facturas/${facturaId}/comprobante`),
+
     /**
      * Sube el comprobante de transferencia.
      *

@@ -2,7 +2,7 @@
 
 **Proyecto:** Centro Educativo "EDUCAR PARA TRANSFORMAR"
 **Paquete:** `mobile/` (workspace pnpm)
-**Fecha:** 16/09/2026 · actualizado el 29/09/2026
+**Fecha:** 16/09/2026 · actualizado el 09/11/2026
 **Plan de lo que falta:** `docs/plan_de_trabajo_mobile.md`
 
 ---
@@ -15,6 +15,7 @@
 | Lenguaje | TypeScript estricto, con `noUncheckedIndexedAccess` |
 | Almacenamiento de sesión | `expo-secure-store` |
 | Cámara y archivos | `expo-image-picker`, `expo-document-picker` |
+| Comprobante en PDF | `expo-print` (vista previa de impresión del sistema) |
 | Navegación | **Estado propio, sin React Navigation** |
 
 Expo era la recomendación de la auditoría (decisión #1): comparte TypeScript con
@@ -43,6 +44,7 @@ mobile/
     dominio/
       pagos.ts                  Selección de ítems y clasificación   ← testeado
       formato.ts                Importes, fechas, horarios           ← testeado
+      rango.ts                  Período del filtro de cuotas         ← testeado
       totp.ts                   Código del carnet (HMAC-SHA256)      ← testeado
     pantallas/
       Ingreso.tsx
@@ -136,6 +138,39 @@ y texto de vencimiento en lenguaje natural ("Vence en 5 días", "Venció hace 6
 días"). El detalle desplegable trae los conceptos y las transferencias cargadas
 con su estado. **Si un comprobante fue rechazado, se muestra el motivo**.
 
+### Filtro por período
+
+La consigna pide, por alumno, el "listado de factura y comprobantes asociados en
+un período de fechas". Arriba de las solapas hay una tarjeta **Período**: por
+defecto muestra todas las cuotas, y con **Filtrar** aparecen dos selectores,
+*Desde* y *Hasta*, que se corren de a un mes con flechas. Abre con los últimos
+tres meses, contando el actual.
+
+El filtro lo resuelve el backend: la app manda `desde` y `hasta` (AAAA-MM-DD) a
+`GET /api/padres/mis-hijos/:id/facturas`, que ya los aceptaba y filtra por
+`fechaEmision`. La app no filtra nada por su cuenta.
+
+**Se elige por mes, no por día.** La factura de un mes se emite el último día
+hábil de ese mes (`fechaEmision` en `facturacion/periodos.ts`), así que "de
+marzo a mayo" viaja como `2027-03-01` a `2027-05-31` y trae exactamente esas
+tres cuotas. Con un selector de días, "del 5 al 20 de abril" devolvería una
+lista vacía sin que la familia pudiera saber por qué. La traducción de meses a
+fechas está en `dominio/rango.ts`, con 20 tests: fin de año, febrero bisiesto y
+meses de 30 y 31 días.
+
+Dos decisiones más:
+
+- **El filtro achica el listado, no el resumen.** La deuda total y la deuda por
+  concepto siguen sumando todas las cuotas. Si no, una familia que mira "marzo a
+  mayo" leería "Al día" aunque deba junio.
+- **Con filtro, los mensajes de lista vacía hablan del período** ("No hay cuotas
+  vencidas en marzo a mayo 2027"). El "No tenés cuotas vencidas" de siempre
+  sería falso si la vencida quedó fuera del rango.
+
+Cada toque en una flecha pide la lista de nuevo. Si las respuestas llegan
+desordenadas, solo cuenta la del último pedido. Así, tocar rápido no deja en
+pantalla la lista de un rango que ya no es el elegido.
+
 ### Historial de deuda por ítem
 
 Sale tal cual de `GET /api/padres/mis-hijos/:id/deuda`, con los cinco conceptos
@@ -155,6 +190,33 @@ Tres bloques:
    cuánto va a quedar pendiente.
 3. **Carga del comprobante**: cámara, galería o PDF. Con validación previa de
    formato antes de gastar una subida.
+
+### Comprobante de pago
+
+La consigna pide que el sistema "emita un comprobante de pago". Cada cuota tiene
+un botón **Ver comprobante**. Abre el documento que emite el backend
+(`GET /api/facturacion/facturas/:id/comprobante`): el mismo que abre la web y
+que va adjunto en el mail mensual. La app no arma su propia versión.
+
+El documento trae los conceptos, el total, lo pagado, el saldo, el estado y una
+sección **Transferencias acreditadas** con la fecha, el banco, el número de
+operación y el importe de cada transferencia aprobada. Una cuota saldada en dos
+transferencias muestra las dos. Las pendientes o rechazadas no figuran, porque
+todavía no son plata acreditada. Por eso, recién después de que Administración
+valida el pago, el comprobante funciona como constancia.
+
+Se abre con `expo-print`, en la vista previa de impresión del teléfono. Desde
+ahí se guarda como PDF, se comparte o se imprime, sin que la app tenga que
+escribir archivos. En iOS, cerrar esa hoja sin imprimir rechaza la promesa con
+"Printing did not complete". `dominio/errores.ts` lo reconoce
+(`esImpresionCancelada`, con pruebas) para no mostrarlo como un error.
+
+En la web, el botón **Ver** de "Estado de cuenta" tampoco funcionaba. Era un
+enlace común a la ruta, y la ruta exige el token en el header `Authorization`,
+que un enlace no manda: la pestaña mostraba `{"message":"Falta el token de
+acceso."}`. Ahora el HTML se pide con el cliente de la API y se escribe en la
+pestaña nueva. Si el navegador bloquea esa pestaña, el comprobante se descarga
+como archivo.
 
 ---
 
@@ -240,12 +302,17 @@ pnpm --filter mobile typecheck
 | Typecheck contra los tipos reales de React Native y Expo | ✅ `tsc --noEmit` sin errores |
 | Cálculo de monto y selección de ítems | ✅ **27 tests** |
 | Formato de importes, fechas y vencimientos | ✅ **19 tests** |
+| Rango de meses del filtro por período | ✅ **20 tests** |
+| Mensajes de error del cliente y cancelación de la impresión | ✅ **6 tests** |
 | Código TOTP del carnet contra `node:crypto` | ✅ **24 tests** |
 | Validación del comprobante | ✅ incluida arriba |
 | Clasificación en solapas | ✅ incluida arriba |
-| Suite del paquete móvil | ✅ **70 tests en verde**, todos de dominio |
+| Suite del paquete móvil | ✅ **96 tests en verde**, todos de dominio |
 | Cliente HTTP (`api/client.ts`) | ❌ **Sin pruebas automáticas** |
-| Suite del monorepo | ✅ **365 tests** (295 backend + 70 móvil) |
+| Suite del monorepo | ✅ **405 tests** (309 backend + 96 móvil, al 09/11/2026) |
+| Bundle de Android armado por Metro | ✅ sin errores, con `expo-print` (09/11/2026) |
+| Comprobante con transferencias acreditadas | ✅ Probado en la web contra el servidor de QA local: la cuota de agosto del seed lista sus dos transferencias |
+| "Ver comprobante" en el teléfono | ❌ **No verificado** |
 | Render en emulador o dispositivo | ❌ **No verificado** |
 | Llamadas contra el backend en ejecución | ❌ **No verificado** |
 | Subida real de un comprobante | ❌ **No verificado** |

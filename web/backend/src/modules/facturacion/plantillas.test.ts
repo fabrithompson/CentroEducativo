@@ -96,6 +96,43 @@ test('la factura muestra el saldo sólo cuando hay un pago parcial', () => {
   assert.match(facturaHtml(parcial), /Saldo pendiente/);
 });
 
+test('la factura sin pagos no muestra la sección de transferencias', () => {
+  assert.doesNotMatch(facturaHtml(FACTURA), /Transferencias acreditadas/);
+  assert.doesNotMatch(facturaHtml({ ...FACTURA, pagos: [] }), /Transferencias acreditadas/);
+});
+
+test('la factura saldada en dos transferencias lista las dos', () => {
+  // Es lo que la vuelve comprobante de pago: una factura puede tener más de
+  // un comprobante asociado, y cada uno tiene que poder identificarse.
+  const html = facturaHtml({
+    ...FACTURA,
+    montoPagado: 240000,
+    estado: 'PAGADA',
+    pagos: [
+      { fechaTransferencia: d('2026-10-02'), bancoOrigen: 'Banco Nación', numeroOperacion: 'OP-111', monto: 140000 },
+      { fechaTransferencia: d('2026-10-09'), bancoOrigen: 'Nuevo Banco del Chaco', numeroOperacion: 'OP-222', monto: 100000 },
+    ],
+  });
+
+  assert.match(html, /Transferencias acreditadas/);
+  assert.match(html, /02\/10\/2026/);
+  assert.match(html, /OP-111/);
+  assert.match(html, /Nuevo Banco del Chaco/);
+  assert.match(html, /OP-222/);
+  assert.match(html, /100\.000,00/);
+});
+
+test('la factura escapa el banco y la operación de cada transferencia', () => {
+  const html = facturaHtml({
+    ...FACTURA,
+    pagos: [{ fechaTransferencia: d('2026-10-02'), bancoOrigen: '<b>Banco</b>', numeroOperacion: 'A&B', monto: 1 }],
+  });
+
+  assert.doesNotMatch(html, /<b>Banco<\/b>/);
+  assert.match(html, /&lt;b&gt;Banco/);
+  assert.match(html, /A&amp;B/);
+});
+
 test('la factura escapa el HTML de los nombres', () => {
   // Un apellido con comillas o & no puede romper el documento.
   const conHtml = { ...FACTURA, alumno: 'O\'Brien & <script>alert(1)</script>' };

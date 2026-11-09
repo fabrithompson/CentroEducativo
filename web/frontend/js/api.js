@@ -250,7 +250,11 @@ export const api = {
   facturacion: {
     listar: (filtros) => get('/facturacion/facturas', filtros),
     obtener: (id) => get(`/facturacion/facturas/${id}`),
-    urlComprobante: (id) => `${BASE}/facturacion/facturas/${id}/comprobante`,
+    /**
+     * HTML del comprobante de la cuota. Se pide con el cliente —y no con un
+     * enlace— porque la ruta exige el token en el header `Authorization`.
+     */
+    comprobanteHtml: (id) => get(`/facturacion/facturas/${id}/comprobante`),
     anular: (id, motivo) => post(`/facturacion/facturas/${id}/anular`, { motivo }),
     previsualizar: (periodo) => get('/facturacion/previsualizar', periodo),
     generar: (periodo) => post('/facturacion/generar', periodo),
