@@ -10,7 +10,8 @@
  *     transporte, comedor y al cursado.
  *   - estudiante: lo suyo, en lectura (pagar es de los padres), y su carnet.
  *   - docente: controla el acceso con el carnet y ve sus cursos y horarios.
- *   - admin: fija los aranceles, valida los comprobantes y controla el acceso.
+ *   - admin: gestiona los alumnos (deuda, inscripciones y baja), fija los
+ *     aranceles, valida los comprobantes y controla el acceso.
  *
  * Esto es sólo lo que se muestra: el backend vuelve a verificar cada permiso.
  */
@@ -24,6 +25,7 @@ export type Vista =
   | 'finanzas'
   | 'escanear'
   | 'cursos'
+  | 'alumnos'
   | 'aranceles'
   | 'comprobantes'
   | 'cuenta';
@@ -69,6 +71,7 @@ const PESTANIAS: Record<Rol, Pestania[]> = {
     { clave: 'cuenta', titulo: 'Cuenta' },
   ],
   admin: [
+    { clave: 'alumnos', titulo: 'Alumnos' },
     { clave: 'aranceles', titulo: 'Aranceles' },
     { clave: 'comprobantes', titulo: 'Pagos' },
     { clave: 'escanear', titulo: 'Escanear' },
@@ -112,6 +115,7 @@ const TITULOS: Record<Vista, string> = {
   finanzas: 'Cuotas y pagos',
   escanear: 'Control de acceso',
   cursos: 'Mis cursos',
+  alumnos: 'Alumnos',
   aranceles: 'Aranceles',
   comprobantes: 'Comprobantes de pago',
   cuenta: 'Mi cuenta',

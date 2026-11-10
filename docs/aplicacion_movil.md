@@ -19,7 +19,7 @@ dice y se corrigió (ver `plan_de_trabajo_mobile.md` §1.1).
 | Padre | Inicio (ficha, materias con profesor y horarios, deportes, servicios, asistencia) · Inscribir (deportes, transporte por mes, comedor, cursado) · Carnet · Finanzas (cuotas, filtro por período, deuda por ítem, pago, comprobante) · Cuenta |
 | Estudiante | Inicio · Carnet · Cuotas (lectura: pagar es de los padres) · Cuenta |
 | Docente | Escanear carnet (cámara o carga manual) · Mis cursos (por nivel, con horarios) · Cuenta |
-| Administración | Aranceles (cuota por nivel, deportes, recorridos, comedor) · Pagos (aprobar o rechazar comprobantes) · Escanear · Cuenta |
+| Administración | Alumnos (deuda de cada uno, cuotas, inscribir, dar de baja y rehabilitar; solicitudes de inscripción de las familias, para aceptar o rechazar) · Aranceles (cuota por nivel, deportes, recorridos, comedor) · Pagos (aprobar o rechazar comprobantes) · Escanear · Cuenta |
 
 "Cuenta" es común a todos: cambiar la contraseña y cerrar sesión. El backend
 vuelve a verificar cada permiso: la app sólo decide qué se muestra.
@@ -63,6 +63,7 @@ mobile/
       SesionContext.tsx         Estado de sesión
     dominio/
       roles.ts                  Pestañas de cada rol                 ← testeado
+      alumnos.ts                Deuda de cada alumno (lista admin)   ← testeado
       pagos.ts                  Selección de ítems y clasificación   ← testeado
       formato.ts                Importes, fechas, horarios           ← testeado
       rango.ts                  Período del filtro de cuotas         ← testeado
@@ -79,6 +80,7 @@ mobile/
       PagoTransferencia.tsx     Padre: transferencia y comprobante
       MisCursos.tsx             Docente: cursos por nivel y horarios
       Escaner.tsx               Docente y admin: control de acceso con el carnet
+      Alumnos.tsx               Admin: deuda, cuotas, alta, baja; solicitudes
       Aranceles.tsx             Admin: cuota, deportes, recorridos, comedor
       Comprobantes.tsx          Admin: aprobar o rechazar transferencias
     ui/
@@ -262,6 +264,9 @@ Este era un requisito explícito. Cómo se cumple:
 | Deuda por ítem | Backend (prorrateo). La app la muestra y cita la nota |
 | Acreditación del pago | Backend. La app manda el comprobante y espera |
 | Comprobante duplicado, factura saldada, importe inválido | Backend. La app muestra **su** mensaje |
+| Deuda de cada alumno (lista de Administración) | Backend (`/reportes/morosidad`). La app la cruza por `alumnoId` y arma el texto (`dominio/alumnos.ts`) |
+| Baja de un alumno y de sus inscripciones | Backend (`DELETE /alumnos/:id`, en una transacción). La app elige el motivo y confirma |
+| Alta de un alumno: legajo, DNI repetido, lugar en el curso | Backend (`POST /alumnos`). La app valida sólo el formato (`dominio/formularios.ts`) |
 
 **Lo único que calcula la app** es la suma de los ítems marcados, y está en
 `dominio/pagos.ts` con 27 tests.
@@ -305,6 +310,27 @@ En un teléfono, TalkBack y VoiceOver son el modo normal de uso para mucha gente
 ---
 
 ## 8. Configuración
+
+### Instalar la app en un celular
+
+**Android — APK descargable.** `mobile/eas.json` define el perfil `preview`,
+que arma un APK de distribución interna con EAS Build (el servicio de Expo, con
+cuenta gratuita). Desde `mobile/`:
+
+```bash
+pnpm dlx eas-cli@latest login          # una vez, con la cuenta de Expo del equipo
+pnpm dlx eas-cli@latest init           # una vez: vincula el proyecto y agrega extra.eas.projectId a app.json
+pnpm build:apk                         # arma el APK en los servidores de Expo
+```
+
+Al terminar, EAS muestra un enlace y un QR para **descargar el APK** e
+instalarlo en el teléfono (Android pide permitir "instalar apps de orígenes
+desconocidos"). La app instalada apunta al backend de producción, igual que en
+Expo Go.
+
+**iPhone — Expo Go.** Un instalable para iOS fuera de la App Store exige la
+cuenta paga de Apple Developer. En iPhone se descarga **Expo Go** de la App Store
+y se escanea el QR que muestra `pnpm --filter mobile start`.
 
 La URL de la API sale de `app.json` → `extra.apiUrl`, que apunta al backend de
 producción (`https://transformar-para-educar.up.railway.app`): la app abierta con
@@ -354,6 +380,19 @@ claves que el SDK 58 ya no acepta:
 
 Con los dos cambios, `expo-doctor` pasa los 20 controles.
 
+**El SDK 58 cambia el `fetch` global.** `expo/src/winter/runtime.native.ts`
+reemplaza el `fetch` de React Native por `expo/fetch` (salvo que se defina
+`EXPO_PUBLIC_USE_RN_FETCH`). `expo/fetch` no acepta el archivo en el formato
+propio de React Native, `{ uri, name, type }`: su `convertFormData.ts` lo dice
+textualmente y tira una excepción antes de mandar el pedido. El cliente HTTP la
+mostraba como "No pudimos conectarnos con el colegio", así que el comprobante no
+se podía enviar aunque la red anduviera. Ni expo-doctor, ni el typecheck, ni el
+bundle lo detectan: apareció al probar en el teléfono. Ahora el archivo viaja
+como un `File` de `expo-file-system`, que implementa `Blob`, y en desarrollo el
+cliente muestra en la consola el error real de cualquier `fetch` que falle.
+Las cookies no cambian: en Android `expo/fetch` usa el mismo almacén que React
+Native.
+
 ---
 
 ## 9. Estado de verificación
@@ -368,11 +407,12 @@ Con los dos cambios, `expo-doctor` pasa los 20 controles.
 | Código TOTP del carnet contra `node:crypto` | ✅ **24 tests** |
 | Validación del comprobante | ✅ incluida arriba |
 | Clasificación en solapas | ✅ incluida arriba |
-| Roles y pestañas por rol | ✅ **9 tests** |
-| Formularios (contraseña, importes, solicitud de cursado) | ✅ **7 tests** |
-| Suite del paquete móvil | ✅ **112 tests en verde**, todos de dominio |
+| Roles y pestañas por rol | ✅ **11 tests** |
+| Deuda de cada alumno en la lista de Administración | ✅ **7 tests** |
+| Formularios (contraseña, importes, solicitud de cursado, alta de alumno) | ✅ **12 tests** |
+| Suite del paquete móvil | ✅ **126 tests en verde**, todos de dominio |
 | Cliente HTTP (`api/client.ts`) | ❌ **Sin pruebas automáticas** |
-| Suite del monorepo | ✅ **435 tests** (323 backend + 112 móvil, al 09/11/2026), más 23 reglas de motor sobre PostgreSQL |
+| Suite del monorepo | ✅ **449 tests** (323 backend + 126 móvil, al 09/11/2026), más 23 reglas de motor sobre PostgreSQL |
 | Pantallas por rol en la web, contra el servidor de QA | ✅ Admin, padre, docente y estudiante recorridos el 09/11/2026 |
 | Pantallas nuevas de la app en el teléfono | ❌ **No verificado** |
 | Bundle de Android armado por Metro | ✅ sin errores, con `expo-print` (09/11/2026) |

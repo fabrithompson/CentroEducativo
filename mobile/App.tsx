@@ -42,6 +42,7 @@ import { PantallaInscripciones } from './src/pantallas/Inscripciones';
 import { PantallaCuenta } from './src/pantallas/Cuenta';
 import { PantallaEscaner } from './src/pantallas/Escaner';
 import { PantallaMisCursos } from './src/pantallas/MisCursos';
+import { PantallaAlumnos } from './src/pantallas/Alumnos';
 import { PantallaAranceles } from './src/pantallas/Aranceles';
 import { PantallaComprobantes } from './src/pantallas/Comprobantes';
 import { Boton, Cargando, ErrorPantalla, Vacio } from './src/ui/componentes';
@@ -230,7 +231,9 @@ function AppPersonal({ rol }: { rol: Rol }) {
       />
 
       <View style={{ flex: 1 }}>
-        {vista === 'escanear' ? (
+        {vista === 'alumnos' ? (
+          <PantallaAlumnos />
+        ) : vista === 'escanear' ? (
           <PantallaEscaner />
         ) : vista === 'cursos' ? (
           <PantallaMisCursos />

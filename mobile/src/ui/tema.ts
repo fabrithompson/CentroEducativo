@@ -77,6 +77,10 @@ const TONO_POR_ESTADO: Record<string, Tono> = {
   VENCIDA: 'alerta',
   RECHAZADO: 'alerta',
   ANULADA: 'neutro',
+  // Estados del alumno
+  SUSPENDIDO: 'alerta',
+  INACTIVO: 'neutro',
+  EGRESADO: 'neutro',
 };
 
 const ETIQUETA_POR_ESTADO: Record<string, string> = {
@@ -88,6 +92,10 @@ const ETIQUETA_POR_ESTADO: Record<string, string> = {
   ANULADA: 'Anulada',
   APROBADO: 'Aprobado',
   RECHAZADO: 'Rechazado',
+  ACTIVO: 'Activo',
+  INACTIVO: 'Inactivo',
+  EGRESADO: 'Egresado',
+  SUSPENDIDO: 'Suspendido',
 };
 
 export function tonoDeEstado(estado: string): Tono {

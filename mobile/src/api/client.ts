@@ -206,6 +206,10 @@ async function pedir<T>(
     });
   } catch (err) {
     clearTimeout(reloj);
+    // Todo lo que tira `fetch` se le muestra a la persona como un problema de
+    // conexión, pero no siempre lo es: con el SDK 58, un archivo mal armado en
+    // el multipart también caía acá. En desarrollo se deja ver la causa real.
+    if (__DEV__) console.warn(`[api] ${metodo} ${ruta} falló antes de recibir respuesta:`, err);
     const abortada = err instanceof Error && err.name === 'AbortError';
     throw new ApiError(
       0,
@@ -250,6 +254,6 @@ export const http = {
   post: <T>(ruta: string, body?: unknown) => pedir<T>('POST', ruta, { body }),
   postSinAuth: <T>(ruta: string, body?: unknown) => pedir<T>('POST', ruta, { body, sinAuth: true }),
   patch: <T>(ruta: string, body?: unknown) => pedir<T>('PATCH', ruta, { body }),
-  del: <T>(ruta: string) => pedir<T>('DELETE', ruta),
+  del: <T>(ruta: string, body?: unknown) => pedir<T>('DELETE', ruta, { body }),
   subir: <T>(ruta: string, formData: FormData) => pedir<T>('POST', ruta, { formData }),
 };
