@@ -315,13 +315,18 @@ En un teléfono, TalkBack y VoiceOver son el modo normal de uso para mucha gente
 
 **Android — APK descargable.** `mobile/eas.json` define el perfil `preview`,
 que arma un APK de distribución interna con EAS Build (el servicio de Expo, con
-cuenta gratuita). Desde `mobile/`:
+cuenta gratuita). Desde la raíz del repositorio:
 
 ```bash
-pnpm dlx eas-cli@latest login          # una vez, con la cuenta de Expo del equipo
-pnpm dlx eas-cli@latest init           # una vez: vincula el proyecto y agrega extra.eas.projectId a app.json
-pnpm build:apk                         # arma el APK en los servidores de Expo
+pnpm apk:login     # una vez, con la cuenta de Expo del equipo
+pnpm apk:init      # una vez: crea el proyecto en Expo y agrega extra.eas.projectId a app.json
+pnpm apk           # arma el APK en los servidores de Expo
 ```
+
+En PowerShell, `pnpm` falla con "la ejecución de scripts está deshabilitada en
+este sistema": hay que escribir `pnpm.cmd` (`pnpm.cmd apk:init`, etc.). La
+primera vez, `apk:init` pregunta si crear el proyecto y `apk` si generar una
+clave de firma de Android (*keystore*): a las dos se responde que sí.
 
 Al terminar, EAS muestra un enlace y un QR para **descargar el APK** e
 instalarlo en el teléfono (Android pide permitir "instalar apps de orígenes
