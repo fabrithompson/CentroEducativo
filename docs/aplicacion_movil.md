@@ -331,6 +331,17 @@ lockfile. Es un *peer* opcional de `expo`, que acepta cualquier versión, pero
 versión del SDK. Después de actualizar conviene arrancar Metro con
 `--clear`.
 
+`expo install --check` no revisa `app.json`; `npx expo-doctor` sí, y marcó dos
+claves que el SDK 58 ya no acepta:
+
+- `newArchEnabled`: la nueva arquitectura es la única desde el SDK 58, así que
+  la clave se borró.
+- `splash` en la raíz: la pantalla de inicio nativa ahora la configura el plugin
+  `expo-splash-screen` (instalado con `expo install`), con el mismo color de
+  fondo. En la raíz sólo queda `web.splash`, que es para la versión PWA.
+
+Con los dos cambios, `expo-doctor` pasa los 20 controles.
+
 ---
 
 ## 9. Estado de verificación
@@ -353,6 +364,7 @@ versión del SDK. Después de actualizar conviene arrancar Metro con
 | Pantallas por rol en la web, contra el servidor de QA | ✅ Admin, padre, docente y estudiante recorridos el 09/11/2026 |
 | Pantallas nuevas de la app en el teléfono | ❌ **No verificado** |
 | Bundle de Android armado por Metro | ✅ sin errores, con `expo-print` (09/11/2026) |
+| `expo-doctor` | ✅ 20/20 controles (09/11/2026) |
 | Comprobante con transferencias acreditadas | ✅ Probado en la web contra el servidor de QA local: la cuota de agosto del seed lista sus dos transferencias |
 | "Ver comprobante" en el teléfono | ❌ **No verificado** |
 | Render en emulador o dispositivo | ❌ **No verificado** |
@@ -380,7 +392,7 @@ emulador.
 | Verificar el `multipart` de RN contra multer | Es donde suelen aparecer sorpresas |
 | Rastreo del transporte (RF-08) | El backend está listo (`GET /api/transporte/seguimiento/:alumnoId`); falta la pantalla y un simulador de posiciones |
 | Notificaciones push | La consigna las pide para el QR; en Android requieren un build de desarrollo, no Expo Go |
-| Íconos e imagen de splash | `app.json` tiene los colores; faltan los assets |
+| Íconos e imagen de splash | `app.json` tiene los colores (el de la splash, en el plugin `expo-splash-screen`); faltan los assets |
 | Pantalla de calificaciones | El endpoint existe y está tipado; falta la pantalla |
 | Pruebas del cliente HTTP | Refresco único, oyentes de sesión caída y errores, con un `fetch` simulado |
 | Modo oscuro | El tema está en tokens; falta la variante |
