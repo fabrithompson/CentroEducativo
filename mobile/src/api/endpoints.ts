@@ -9,6 +9,8 @@
  * `Decimal` de Prisma antes de serializar.
  */
 
+import { File } from 'expo-file-system';
+
 import { http } from './client';
 import type { EstadoFactura, ItemFactura, TipoItem } from '../dominio/pagos';
 
@@ -508,9 +510,12 @@ export const api = {
     /**
      * Sube el comprobante de transferencia.
      *
-     * El archivo va como `multipart/form-data` con el shape que espera React
-     * Native: `{ uri, name, type }`. No se usa `Blob`, que en RN no lee del
-     * sistema de archivos.
+     * El archivo va como `multipart/form-data`, como un `File` de
+     * `expo-file-system`. Desde el SDK 58 el `fetch` global es `expo/fetch`,
+     * que no acepta el `{ uri, name, type }` propio de React Native: tiraba una
+     * excepción antes de mandar nada y la app mostraba "no pudimos
+     * conectarnos". `File` implementa `Blob` y `expo/fetch` lee sus bytes; el
+     * nombre y el tipo MIME salen del archivo.
      */
     subirComprobante: (datos: {
       facturaId: number;
@@ -526,11 +531,7 @@ export const api = {
       fd.append('fechaTransferencia', datos.fechaTransferencia);
       fd.append('bancoOrigen', datos.bancoOrigen);
       fd.append('numeroOperacion', datos.numeroOperacion);
-      fd.append('comprobante', {
-        uri: datos.archivo.uri,
-        name: datos.archivo.nombre,
-        type: datos.archivo.tipo,
-      } as unknown as Blob);
+      fd.append('comprobante', new File(datos.archivo.uri), datos.archivo.nombre);
 
       return http.subir<RespuestaSubida>('/facturacion/comprobantes', fd);
     },

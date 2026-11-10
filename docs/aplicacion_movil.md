@@ -354,6 +354,19 @@ claves que el SDK 58 ya no acepta:
 
 Con los dos cambios, `expo-doctor` pasa los 20 controles.
 
+**El SDK 58 cambia el `fetch` global.** `expo/src/winter/runtime.native.ts`
+reemplaza el `fetch` de React Native por `expo/fetch` (salvo que se defina
+`EXPO_PUBLIC_USE_RN_FETCH`). `expo/fetch` no acepta el archivo en el formato
+propio de React Native, `{ uri, name, type }`: su `convertFormData.ts` lo dice
+textualmente y tira una excepción antes de mandar el pedido. El cliente HTTP la
+mostraba como "No pudimos conectarnos con el colegio", así que el comprobante no
+se podía enviar aunque la red anduviera. Ni expo-doctor, ni el typecheck, ni el
+bundle lo detectan: apareció al probar en el teléfono. Ahora el archivo viaja
+como un `File` de `expo-file-system`, que implementa `Blob`, y en desarrollo el
+cliente muestra en la consola el error real de cualquier `fetch` que falle.
+Las cookies no cambian: en Android `expo/fetch` usa el mismo almacén que React
+Native.
+
 ---
 
 ## 9. Estado de verificación
