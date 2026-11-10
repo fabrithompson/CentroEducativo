@@ -311,6 +311,27 @@ En un teléfono, TalkBack y VoiceOver son el modo normal de uso para mucha gente
 
 ## 8. Configuración
 
+### Instalar la app en un celular
+
+**Android — APK descargable.** `mobile/eas.json` define el perfil `preview`,
+que arma un APK de distribución interna con EAS Build (el servicio de Expo, con
+cuenta gratuita). Desde `mobile/`:
+
+```bash
+pnpm dlx eas-cli@latest login          # una vez, con la cuenta de Expo del equipo
+pnpm dlx eas-cli@latest init           # una vez: vincula el proyecto y agrega extra.eas.projectId a app.json
+pnpm build:apk                         # arma el APK en los servidores de Expo
+```
+
+Al terminar, EAS muestra un enlace y un QR para **descargar el APK** e
+instalarlo en el teléfono (Android pide permitir "instalar apps de orígenes
+desconocidos"). La app instalada apunta al backend de producción, igual que en
+Expo Go.
+
+**iPhone — Expo Go.** Un instalable para iOS fuera de la App Store exige la
+cuenta paga de Apple Developer. En iPhone se descarga **Expo Go** de la App Store
+y se escanea el QR que muestra `pnpm --filter mobile start`.
+
 La URL de la API sale de `app.json` → `extra.apiUrl`, que apunta al backend de
 producción (`https://transformar-para-educar.up.railway.app`): la app abierta con
 Expo Go en un teléfono funciona sin levantar nada en la computadora. Hasta el
