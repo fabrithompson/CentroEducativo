@@ -19,7 +19,7 @@ dice y se corrigió (ver `plan_de_trabajo_mobile.md` §1.1).
 | Padre | Inicio (ficha, materias con profesor y horarios, deportes, servicios, asistencia) · Inscribir (deportes, transporte por mes, comedor, cursado) · Carnet · Finanzas (cuotas, filtro por período, deuda por ítem, pago, comprobante) · Cuenta |
 | Estudiante | Inicio · Carnet · Cuotas (lectura: pagar es de los padres) · Cuenta |
 | Docente | Escanear carnet (cámara o carga manual) · Mis cursos (por nivel, con horarios) · Cuenta |
-| Administración | Alumnos (deuda de cada uno, cuotas, inscripciones, baja y reactivación) · Aranceles (cuota por nivel, deportes, recorridos, comedor) · Pagos (aprobar o rechazar comprobantes) · Escanear · Cuenta |
+| Administración | Alumnos (deuda de cada uno, cuotas, inscribir, dar de baja y rehabilitar; solicitudes de inscripción de las familias, para aceptar o rechazar) · Aranceles (cuota por nivel, deportes, recorridos, comedor) · Pagos (aprobar o rechazar comprobantes) · Escanear · Cuenta |
 
 "Cuenta" es común a todos: cambiar la contraseña y cerrar sesión. El backend
 vuelve a verificar cada permiso: la app sólo decide qué se muestra.
@@ -74,13 +74,13 @@ mobile/
       Ingreso.tsx               Todos los roles
       Cuenta.tsx                Todos: cambiar contraseña, salir
       Dashboard.tsx             Padre y estudiante: ficha, materias, servicios
-      Inscripciones.tsx         Padre y admin: deportes, transporte, comedor (+ cursado, padre)
+      Inscripciones.tsx         Padre: deportes, transporte, comedor, cursado
       Carnet.tsx                Padre y estudiante: QR rotativo y accesos
       Finanzas.tsx              Padre (y estudiante, en lectura): cuotas y deuda
       PagoTransferencia.tsx     Padre: transferencia y comprobante
       MisCursos.tsx             Docente: cursos por nivel y horarios
       Escaner.tsx               Docente y admin: control de acceso con el carnet
-      Alumnos.tsx               Admin: lista con deuda, ficha, cuotas, baja
+      Alumnos.tsx               Admin: deuda, cuotas, alta, baja; solicitudes
       Aranceles.tsx             Admin: cuota, deportes, recorridos, comedor
       Comprobantes.tsx          Admin: aprobar o rechazar transferencias
     ui/
@@ -266,6 +266,7 @@ Este era un requisito explícito. Cómo se cumple:
 | Comprobante duplicado, factura saldada, importe inválido | Backend. La app muestra **su** mensaje |
 | Deuda de cada alumno (lista de Administración) | Backend (`/reportes/morosidad`). La app la cruza por `alumnoId` y arma el texto (`dominio/alumnos.ts`) |
 | Baja de un alumno y de sus inscripciones | Backend (`DELETE /alumnos/:id`, en una transacción). La app elige el motivo y confirma |
+| Alta de un alumno: legajo, DNI repetido, lugar en el curso | Backend (`POST /alumnos`). La app valida sólo el formato (`dominio/formularios.ts`) |
 
 **Lo único que calcula la app** es la suma de los ítems marcados, y está en
 `dominio/pagos.ts` con 27 tests.
@@ -387,10 +388,10 @@ Native.
 | Clasificación en solapas | ✅ incluida arriba |
 | Roles y pestañas por rol | ✅ **11 tests** |
 | Deuda de cada alumno en la lista de Administración | ✅ **7 tests** |
-| Formularios (contraseña, importes, solicitud de cursado) | ✅ **7 tests** |
-| Suite del paquete móvil | ✅ **121 tests en verde**, todos de dominio |
+| Formularios (contraseña, importes, solicitud de cursado, alta de alumno) | ✅ **12 tests** |
+| Suite del paquete móvil | ✅ **126 tests en verde**, todos de dominio |
 | Cliente HTTP (`api/client.ts`) | ❌ **Sin pruebas automáticas** |
-| Suite del monorepo | ✅ **444 tests** (323 backend + 121 móvil, al 09/11/2026), más 23 reglas de motor sobre PostgreSQL |
+| Suite del monorepo | ✅ **449 tests** (323 backend + 126 móvil, al 09/11/2026), más 23 reglas de motor sobre PostgreSQL |
 | Pantallas por rol en la web, contra el servidor de QA | ✅ Admin, padre, docente y estudiante recorridos el 09/11/2026 |
 | Pantallas nuevas de la app en el teléfono | ❌ **No verificado** |
 | Bundle de Android armado por Metro | ✅ sin errores, con `expo-print` (09/11/2026) |
