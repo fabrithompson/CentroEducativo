@@ -33,17 +33,18 @@ vuelve a verificar cada permiso: la app sólo decide qué se muestra.
 | Framework | **Expo SDK 58** (`~58.0.23`) + React Native 0.88.1 · React 19.3.0 |
 | Lenguaje | TypeScript estricto, con `noUncheckedIndexedAccess` |
 | Almacenamiento de sesión | `expo-secure-store` |
-| Cámara y archivos | `expo-image-picker`, `expo-document-picker` |
+| Cámara y archivos | `expo-camera` (escáner del carnet), `expo-image-picker`, `expo-document-picker` |
 | Comprobante en PDF | `expo-print` (vista previa de impresión del sistema) |
 | Navegación | **Estado propio, sin React Navigation** |
 
 Expo era la recomendación de la auditoría (decisión #1): comparte TypeScript con
 el resto del monorepo y produce un build instalable para la defensa.
 
-**Sobre la navegación:** son cinco pantallas con una barra inferior. React Navigation
-arrastra `react-native-gesture-handler`, `reanimated` y `screens`, todas con
-código nativo. Para este alcance no se justifica. Si el flujo crece, migrar es
-un cambio acotado a `App.tsx`.
+**Sobre la navegación:** es una barra inferior con entre tres y cinco pestañas
+según el rol (`dominio/roles.ts`), más la pantalla de pago, que se abre sola.
+React Navigation arrastra `react-native-gesture-handler`, `reanimated` y
+`screens`, todas con código nativo. Para este alcance no se justifica. Si el
+flujo crece, migrar es un cambio acotado a `App.tsx`.
 
 ---
 
@@ -51,9 +52,9 @@ un cambio acotado a `App.tsx`.
 
 ```
 mobile/
-  App.tsx                       Raíz: sesión, selector de hijo, barra inferior
+  App.tsx                       Raíz: sesión, selector de hijo, pestañas por rol
   index.ts                      Punto de entrada de Expo
-  app.json                      Configuración y permisos
+  app.json                      Configuración, permisos y plugins
   src/
     api/
       client.ts                 HTTP, sesión segura, refresh token
@@ -61,16 +62,25 @@ mobile/
     auth/
       SesionContext.tsx         Estado de sesión
     dominio/
+      roles.ts                  Pestañas de cada rol                 ← testeado
       pagos.ts                  Selección de ítems y clasificación   ← testeado
       formato.ts                Importes, fechas, horarios           ← testeado
       rango.ts                  Período del filtro de cuotas         ← testeado
+      formularios.ts            Formato de contraseña, importes…     ← testeado
+      errores.ts                Mensaje de error de la API           ← testeado
       totp.ts                   Código del carnet (HMAC-SHA256)      ← testeado
     pantallas/
-      Ingreso.tsx
-      Dashboard.tsx
-      Finanzas.tsx
-      PagoTransferencia.tsx
-      Carnet.tsx                QR rotativo y últimos accesos
+      Ingreso.tsx               Todos los roles
+      Cuenta.tsx                Todos: cambiar contraseña, salir
+      Dashboard.tsx             Padre y estudiante: ficha, materias, servicios
+      Inscripciones.tsx         Padre: deportes, transporte, comedor, cursado
+      Carnet.tsx                Padre y estudiante: QR rotativo y accesos
+      Finanzas.tsx              Padre (y estudiante, en lectura): cuotas y deuda
+      PagoTransferencia.tsx     Padre: transferencia y comprobante
+      MisCursos.tsx             Docente: cursos por nivel y horarios
+      Escaner.tsx               Docente y admin: control de acceso con el carnet
+      Aranceles.tsx             Admin: cuota, deportes, recorridos, comedor
+      Comprobantes.tsx          Admin: aprobar o rechazar transferencias
     ui/
       tema.ts                   Tokens visuales
       componentes.tsx           Tarjeta, Estado, Botón, Progreso…
@@ -154,8 +164,10 @@ Las facturas `ANULADA` no aparecen en ninguna solapa: no son deuda ni son un pag
 
 Cada cuota muestra total, pagado, saldo, barra de progreso si hubo pago parcial,
 y texto de vencimiento en lenguaje natural ("Vence en 5 días", "Venció hace 6
-días"). El detalle desplegable trae los conceptos y las transferencias cargadas
-con su estado. **Si un comprobante fue rechazado, se muestra el motivo**.
+días"). El detalle desplegable trae los conceptos y las transferencias cargadas,
+cada una con su fecha, banco, número de operación, importe y estado: es el
+historial de pagos de esa cuota. **Si un comprobante fue rechazado, se muestra
+el motivo**.
 
 ### Filtro por período
 
