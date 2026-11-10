@@ -402,6 +402,61 @@ export interface FacturaAdmin {
   estado: EstadoFactura;
 }
 
+export type EstadoSolicitud = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
+
+/** Solicitud de inscripción al cursado que manda una familia (app o web). */
+export interface SolicitudInscripcion {
+  id: number;
+  nombreTutor: string;
+  emailTutor: string;
+  telefonoTutor: string;
+  nombreEstudiante: string;
+  nivel: string;
+  curso: string;
+  mensaje: string | null;
+  status: EstadoSolicitud;
+  notaAdmin: string | null;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
+export interface CursoConCupo {
+  id: number;
+  nombre: string;
+  division: string;
+  turno: string;
+  anioLectivo: number;
+  cupoMaximo: number;
+  activo: boolean;
+  nivel: { id: number; nombre: string; orden: number };
+  /** `alumnos` cuenta sólo los activos: son los que ocupan cupo. */
+  _count: { alumnos: number; materias: number };
+}
+
+/** Lo que pide `POST /api/alumnos`. El legajo lo asigna el backend. */
+export interface AltaAlumno {
+  dni: string;
+  apellido: string;
+  nombres: string;
+  /** AAAA-MM-DD */
+  fechaNacimiento: string;
+  domicilio: string;
+  telefono: string | null;
+  email: string | null;
+  cursoId: number;
+  observaciones: string | null;
+}
+
+export interface UsuarioListado {
+  id: number;
+  usuario: string;
+  email: string;
+  dni: string;
+  nombre: string;
+  role: string;
+  isActive: boolean;
+}
+
 export type PuntoControl = 'TRANSPORTE' | 'COMEDOR';
 
 export interface ResultadoEscaneo {
@@ -441,29 +496,6 @@ export const api = {
    * 2 deportes, los choques de horario y que el alumno sea hijo del tutor.
    */
   inscripciones: {
-    /**
-     * Deportes que cursa el alumno, para quien no es su tutor (Administración).
-     * `/deportes/alumno/:id` devuelve `inscripciones[]` con el `id` de cada una;
-     * se lo lleva a la forma de `/padres/mis-hijos/:id/deportes` para que la
-     * pantalla de inscripciones sea la misma para los dos roles.
-     */
-    deportesDeAlumno: async (alumnoId: number): Promise<RespuestaDeportes> => {
-      const r = await http.get<{
-        exito: boolean;
-        cupo: RespuestaDeportes['cupo'];
-        inscripciones: (Omit<DeporteInscripto, 'inscripcionId'> & { id: number })[];
-      }>(`/deportes/alumno/${alumnoId}`);
-      return {
-        exito: r.exito,
-        cupo: r.cupo,
-        deportes: r.inscripciones.map(({ id, slot, fechaAlta, deporte }) => ({ inscripcionId: id, slot, fechaAlta, deporte })),
-      };
-    },
-
-    /** Transporte y comedor del mes, para Administración. Misma forma que la del portal de tutores. */
-    serviciosDeAlumno: (alumnoId: number, anio?: number, mes?: number) =>
-      http.get<RespuestaServicios>(`/servicios/alumno/${alumnoId}`, { anio, mes }),
-
     deportesDisponibles: (alumnoId: number) =>
       http.get<{ exito: boolean; deportes: DeporteDisponible[] }>(`/deportes/alumno/${alumnoId}/disponibles`),
 
@@ -521,6 +553,34 @@ export const api = {
     /** Vuelve a activo. Las inscripciones no vuelven solas. */
     reactivar: (alumnoId: number) =>
       http.patch<{ exito: boolean; mensaje: string }>(`/alumnos/${alumnoId}`, { estado: 'ACTIVO' }),
+
+    /**
+     * Alta del alumno en el colegio. El backend asigna el legajo y rechaza un
+     * DNI repetido o un curso sin lugar, con su mensaje.
+     */
+    inscribirAlumno: (datos: AltaAlumno) =>
+      http.post<{ exito: boolean; mensaje: string; alumno: AlumnoListado }>('/alumnos', datos),
+
+    cursos: () => http.get<{ exito: boolean; cursos: CursoConCupo[] }>('/academico/cursos', { activo: 'true' }),
+
+    /** Solicitudes de inscripción de las familias. Sin estado, todas. */
+    solicitudes: (status?: EstadoSolicitud) =>
+      http.get<{ exito: boolean; inscripciones: SolicitudInscripcion[] }>('/admin/inscriptions', { status }),
+    aceptarSolicitud: (id: number, notaAdmin?: string) =>
+      http.post<{ exito: boolean; inscripcion: SolicitudInscripcion }>(`/admin/inscriptions/${id}/approve`, { notaAdmin }),
+    rechazarSolicitud: (id: number, notaAdmin?: string) =>
+      http.post<{ exito: boolean; inscripcion: SolicitudInscripcion }>(`/admin/inscriptions/${id}/reject`, { notaAdmin }),
+
+    /** Cuentas de padre que coinciden con un texto (nombre, usuario, DNI o correo). */
+    buscarPadres: (q: string) =>
+      http.get<{ exito: boolean; usuarios: UsuarioListado[] }>('/admin/users', { role: 'PADRE', q }),
+
+    /** Vincula la cuenta del tutor con el alumno: así lo ve en su app. */
+    vincularTutor: (alumnoId: number, tutorId: number) =>
+      http.post<{ exito: boolean; mensaje: string }>(`/alumnos/${alumnoId}/tutores`, {
+        tutorId,
+        esResponsableFacturacion: true,
+      }),
 
     niveles: () => http.get<{ exito: boolean; niveles: NivelConCuota[] }>('/academico/niveles'),
     cuotaNivel: (id: number, cuotaMensual: number) =>

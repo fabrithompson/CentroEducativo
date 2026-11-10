@@ -10,11 +10,6 @@
  * marcada como `inscribible` con el `motivo` si no lo es, y cualquier rechazo
  * se muestra con el mensaje del servidor. La solicitud de cursado la aprueba
  * Administración, como la del formulario de la página pública.
- *
- * La misma pantalla la usa Administración desde la ficha de un alumno
- * (`deAdmin`): lee de los endpoints generales en vez del portal de tutores, que
- * exige el vínculo con el hijo, y no muestra la solicitud de cursado, que es
- * de las familias.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -22,6 +17,7 @@ import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react
 
 import api, {
   type DeporteDisponible,
+  type Hijo,
   type PlanComedor,
   type Recorrido,
   type RespuestaDeportes,
@@ -49,15 +45,8 @@ const TURNOS: { valor: TurnoTransporte; titulo: string }[] = [
   { valor: 'VUELTA', titulo: 'Sólo vuelta' },
 ];
 
-interface Props {
-  alumnoId: number;
-  /** Cómo se lo nombra en los textos ("Inscribir a Mateo"). */
-  nombre: string;
-  /** Administración: endpoints generales y sin solicitud de cursado. */
-  deAdmin?: boolean;
-}
-
-export function PantallaInscripciones({ alumnoId, nombre, deAdmin = false }: Props) {
+export function PantallaInscripciones({ hijo }: { hijo: Hijo }) {
+  const alumnoId = hijo.alumno.id;
   const hoy = mesDe();
   const [mes, setMes] = useState<Mes>(hoy);
   const [datos, setDatos] = useState<Datos | null>(null);
@@ -70,11 +59,9 @@ export function PantallaInscripciones({ alumnoId, nombre, deAdmin = false }: Pro
     setError(null);
     try {
       const [inscriptos, disponibles, servicios, recorridos, planes] = await Promise.all([
-        deAdmin ? api.inscripciones.deportesDeAlumno(alumnoId) : api.padres.deportes(alumnoId),
+        api.padres.deportes(alumnoId),
         api.inscripciones.deportesDisponibles(alumnoId),
-        deAdmin
-          ? api.inscripciones.serviciosDeAlumno(alumnoId, mes.anio, mes.mes)
-          : api.padres.servicios(alumnoId, mes.anio, mes.mes),
+        api.padres.servicios(alumnoId, mes.anio, mes.mes),
         api.inscripciones.recorridos(mes.anio, mes.mes),
         api.inscripciones.planesComedor(mes.anio, mes.mes),
       ]);
@@ -88,7 +75,7 @@ export function PantallaInscripciones({ alumnoId, nombre, deAdmin = false }: Pro
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No pudimos cargar las inscripciones.');
     }
-  }, [alumnoId, mes, deAdmin]);
+  }, [alumnoId, mes]);
 
   useEffect(() => {
     setDatos(null);
@@ -125,6 +112,7 @@ export function PantallaInscripciones({ alumnoId, nombre, deAdmin = false }: Pro
   if (error) return <ErrorPantalla mensaje={error} onReintentar={() => void cargar()} />;
   if (!datos) return <Cargando mensaje="Cargando inscripciones…" />;
 
+  const nombre = hijo.alumno.nombres;
   const inscriptosIds = new Set(datos.inscriptos.deportes.map((d) => d.deporte.id));
   const transporte = datos.servicios.transporte?.estado === 'ACTIVA' ? datos.servicios.transporte : null;
   const comedor = datos.servicios.comedor?.estado === 'ACTIVA' ? datos.servicios.comedor : null;
@@ -287,13 +275,9 @@ export function PantallaInscripciones({ alumnoId, nombre, deAdmin = false }: Pro
         )}
       </Tarjeta>
 
-      {/* ---------- Cursado (sólo familias) ---------- */}
-      {deAdmin ? null : (
-        <>
-          <Seccion titulo="Inscripción al cursado" />
-          <SolicitudCursado />
-        </>
-      )}
+      {/* ---------- Cursado ---------- */}
+      <Seccion titulo="Inscripción al cursado" />
+      <SolicitudCursado />
 
       <View style={{ height: espaciado.xxl }} />
     </ScrollView>

@@ -4,7 +4,8 @@
  * Sólo formato, para no gastar un pedido en algo que va a fallar: las reglas
  * de negocio (contraseña actual correcta, tope de deportes, permisos) las
  * resuelve el backend y la app muestra su mensaje. Los límites copian los del
- * backend (`auth/politicaPassword.ts`, `moderacion.routes.ts`).
+ * backend (`auth/politicaPassword.ts`, `moderacion.routes.ts`,
+ * `alumnos.routes.ts`).
  */
 
 const LARGO_MINIMO_CLAVE = 8;
@@ -65,4 +66,57 @@ export function validarSolicitudCursado(d: DatosSolicitudCursado): string | null
   if (!d.nivel) return 'Elegí el nivel.';
   if (!d.curso.trim()) return 'Indicá el curso, grado o sala.';
   return null;
+}
+
+// ------------------------------------------------------------------
+// Alta de un alumno (Administración)
+// ------------------------------------------------------------------
+
+export interface DatosAltaAlumno {
+  dni: string;
+  apellido: string;
+  nombres: string;
+  /** AAAA-MM-DD */
+  fechaNacimiento: string;
+  domicilio: string;
+  /** Opcional: vacío se manda como `null`. */
+  email: string;
+  cursoId: number | null;
+}
+
+/** "40.123.456" o "40 123 456" → "40123456". El backend busca duplicados por el texto exacto. */
+export function soloDigitos(texto: string): string {
+  return texto.replace(/\D/g, '');
+}
+
+/** AAAA-MM-DD que existe en el calendario: rechaza "2015-02-30". */
+function esFechaReal(texto: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(texto)) return false;
+  const d = new Date(`${texto}T00:00:00.000Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === texto;
+}
+
+export function validarAltaAlumno(d: DatosAltaAlumno, hoy: Date = new Date()): string | null {
+  const dni = soloDigitos(d.dni);
+  if (dni.length < 6 || dni.length > 15) return 'Revisá el DNI: tiene que tener entre 6 y 15 números.';
+  if (d.apellido.trim().length < 2) return 'Completá el apellido.';
+  if (d.nombres.trim().length < 2) return 'Completá el nombre.';
+  if (!esFechaReal(d.fechaNacimiento)) return 'Escribí la fecha de nacimiento como AAAA-MM-DD, por ejemplo 2015-03-21.';
+  if (d.fechaNacimiento > hoy.toISOString().slice(0, 10)) return 'La fecha de nacimiento no puede ser futura.';
+  if (d.domicilio.trim().length < 4) return 'Completá el domicilio.';
+  if (d.email.trim() && !pareceCorreo(d.email)) return 'Revisá el correo del alumno: no parece válido.';
+  if (!d.cursoId) return 'Elegí el curso.';
+  return null;
+}
+
+/**
+ * Punto de partida para el alta desde una solicitud, que trae el nombre
+ * completo en un solo campo: la última palabra como apellido. Es una
+ * suposición —"Juan Pérez Gómez" queda mal— y por eso el formulario la deja
+ * editable.
+ */
+export function separarNombreCompleto(texto: string): { nombres: string; apellido: string } {
+  const palabras = texto.trim().split(/\s+/).filter(Boolean);
+  if (palabras.length < 2) return { nombres: palabras[0] ?? '', apellido: '' };
+  return { nombres: palabras.slice(0, -1).join(' '), apellido: palabras[palabras.length - 1]! };
 }

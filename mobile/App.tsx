@@ -199,7 +199,7 @@ function AppFamilia({ rol }: { rol: Rol }) {
         {vista === 'inicio' ? (
           <PantallaDashboard hijo={hijo} rol={rol} onIrAFinanzas={() => setVista('finanzas')} />
         ) : vista === 'inscripciones' ? (
-          <PantallaInscripciones alumnoId={hijo.alumno.id} nombre={hijo.alumno.nombres} />
+          <PantallaInscripciones hijo={hijo} />
         ) : vista === 'carnet' ? (
           <PantallaCarnet hijo={hijo} />
         ) : vista === 'finanzas' ? (
