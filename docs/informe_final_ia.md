@@ -17,7 +17,7 @@ desarrollo del Trabajo Práctico Integrador, sobre un sistema compuesto por tres
 aplicaciones —portal web institucional, sistema de gestión y aplicación móvil—
 que comparten un backend y una base de datos únicos.
 
-El trabajo se organizó en **51 intervenciones asistidas por IA**, todas
+El trabajo se organizó en **52 intervenciones asistidas por IA**, todas
 registradas en `docs/bitacora_ia.md`. El producto resultante comprende 40
 modelos de datos, 160 endpoints REST, 13 migraciones y 397 pruebas automatizadas
 más 3 de extremo a extremo con Selenium, **validadas contra una instancia real de
@@ -404,12 +404,12 @@ sistema le rechazaría después.
 *(Recontada el 28/10/2026 sobre el repositorio —`main` después del PR #53—, no
 sobre la memoria del equipo. Las cifras del sistema son a esa fecha; las intervenciones, al
 09/11/2026: las 43 registradas hasta el 27/10/2026, la 44, que hizo este
-recuento, y de la 45 a la 51. Cómo
+recuento, y de la 45 a la 52. Cómo
 se contó cada una, debajo de la tabla.)*
 
 | Métrica | Valor |
 |---|---|
-| Intervenciones registradas | 51 |
+| Intervenciones registradas | 52 |
 | Modelos de datos | 40 |
 | Enumeraciones | 25 |
 | Endpoints REST | 160 |
@@ -969,7 +969,7 @@ alguien que las revisó una por una.
 La bitácora, con sus columnas «¿Funcionó?» y «Modificaciones realizadas», es en
 parte un mecanismo de control sobre eso: obliga a declarar qué se revisó
 efectivamente y qué hubo que corregir. Reconocemos que completarla con honestidad
-—admitiendo treinta «Parcialmente» y dos «No» sobre cincuenta y una
+—admitiendo treinta y uno «Parcialmente» y dos «No» sobre cincuenta y dos
 intervenciones— fue incómodo, y que la tentación de uniformar todo en «Sí»
 existió.
 
@@ -1073,7 +1073,7 @@ restantes conservan algún valor.
 ## Conclusión general
 
 El uso de inteligencia artificial en este Trabajo Práctico Integrador nos
-permitió construir, en cincuenta y una intervenciones, un sistema de tres
+permitió construir, en cincuenta y dos intervenciones, un sistema de tres
 aplicaciones con 40 modelos de datos, 160 endpoints, 13 migraciones y 397
 pruebas automatizadas.
 Ese volumen no habría sido alcanzable con desarrollo tradicional en el tiempo
@@ -1161,7 +1161,7 @@ está justamente en la precisión con que se enuncian sus límites.
 
 | Anexo | Documento | Contenido |
 |---|---|---|
-| A | `docs/bitacora_ia.md` | Bitácora completa: 51 intervenciones con prompts y comandos |
+| A | `docs/bitacora_ia.md` | Bitácora completa: 52 intervenciones con prompts y comandos |
 | B | `docs/plan_de_trabajo.md` | Cronograma, hitos y matriz de riesgos |
 | B.1 | `docs/plan_de_trabajo_mobile.md` | Plan de trabajo de la aplicación móvil |
 | B.2 | `docs/patrones_de_diseno.md` | Patrones de diseño, con archivo y línea |

@@ -305,6 +305,36 @@ al ciclo real alcanza con cambiar esa constante.
 
 ---
 
+## 7.1 Grilla horaria de las materias (migración del 09/11/2026)
+
+La consigna pide el reporte por docente con los "horarios de cada curso" y que
+el administrador gestione los horarios. Hasta el 09/11/2026 el curso tenía sólo
+un turno y la materia, una carga horaria sin días ni horas. La migración
+`20261109130000_grilla_horaria_materias` agrega:
+
+| Elemento | Detalle |
+|---|---|
+| Modelo `HorarioMateria` | `materiaId` (FK con borrado en cascada), `diaSemana` (el enum `DiaSemana` de los deportes), `horaInicio` y `horaFin` en minutos desde medianoche, `aula` opcional |
+| Índice único | `(materiaId, diaSemana, horaInicio)`: la misma materia no arranca dos veces a la misma hora el mismo día |
+| `CHECK chk_horario_materia_rango` | Igual que `chk_horario_deporte_rango`: `0 ≤ inicio < 1440`, `0 < fin ≤ 1440`, `fin > inicio` |
+| Datos | La grilla de las 27 materias del seed, con los mismos bloques que arma `armarGrilla()` (bloques de 80 minutos de 07:30 a 13:20) |
+
+**Lo que valida el servicio y no la base.** Que una materia no se superponga
+con otra **del mismo curso** ni con otra **del mismo docente** depende de filas
+de otras materias, así que lo resuelve `administrador/grilla.ts` (puro, con
+pruebas) dentro de una transacción serializable en `grilla.service.ts`. Usa la
+misma comparación de franjas que los deportes (`haySolapamiento`, extremos
+semiabiertos: una clase que termina 09:20 y otra que empieza 09:20 no chocan).
+También se valida al cambiar el docente de una materia, y una materia con
+horarios no se puede pasar a otro curso sin quitarlos antes.
+
+**Prueba manual.** En "Estructura académica" → Materias → Horarios de
+*Literatura (1er Año)*, agregar lunes de 07:30 a 08:50:
+
+**Esperado:** `Literatura el lunes de 07:30 a 08:50 se superpone con Álgebra y Geometría (07:30 a 08:50), del mismo curso.`
+
+---
+
 ## 8. Lo que falta
 
 Esta migración cubre el **modelo**. Falta la capa que lo expone:
