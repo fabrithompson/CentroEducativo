@@ -339,6 +339,69 @@ export interface ComprobantePendiente {
   coincideConSaldo: boolean;
 }
 
+export type EstadoAlumno = 'ACTIVO' | 'INACTIVO' | 'EGRESADO' | 'SUSPENDIDO';
+
+/** Una página del listado paginado del backend (`armarPagina`). */
+export interface Pagina<T> {
+  exito: boolean;
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface AlumnoListado {
+  id: number;
+  legajo: string;
+  dni: string;
+  apellido: string;
+  nombres: string;
+  fechaNacimiento: string;
+  domicilio: string;
+  telefono: string | null;
+  email: string | null;
+  estado: EstadoAlumno;
+  fechaIngreso: string;
+  curso: {
+    id: number;
+    nombre: string;
+    division: string;
+    turno: string;
+    nivel: { id: number; nombre: string };
+  } | null;
+}
+
+export interface FilaMorosidad {
+  alumnoId: number;
+  legajo: string;
+  apellido: string;
+  nombres: string;
+  curso: string;
+  nivel: string;
+  facturasImpagas: number;
+  mesesAdeudados: string[];
+  deuda: number;
+}
+
+export interface RespuestaMorosidad {
+  exito: boolean;
+  totales: { alumnosConDeuda: number; deudaTotal: number; facturasImpagas: number };
+  filas: FilaMorosidad[];
+}
+
+export interface FacturaAdmin {
+  id: number;
+  numero: string;
+  anio: number;
+  mes: number;
+  fechaVencimiento: string;
+  total: number;
+  montoPagado: number;
+  saldo: number;
+  estado: EstadoFactura;
+}
+
 export type PuntoControl = 'TRANSPORTE' | 'COMEDOR';
 
 export interface ResultadoEscaneo {
@@ -378,6 +441,29 @@ export const api = {
    * 2 deportes, los choques de horario y que el alumno sea hijo del tutor.
    */
   inscripciones: {
+    /**
+     * Deportes que cursa el alumno, para quien no es su tutor (Administración).
+     * `/deportes/alumno/:id` devuelve `inscripciones[]` con el `id` de cada una;
+     * se lo lleva a la forma de `/padres/mis-hijos/:id/deportes` para que la
+     * pantalla de inscripciones sea la misma para los dos roles.
+     */
+    deportesDeAlumno: async (alumnoId: number): Promise<RespuestaDeportes> => {
+      const r = await http.get<{
+        exito: boolean;
+        cupo: RespuestaDeportes['cupo'];
+        inscripciones: (Omit<DeporteInscripto, 'inscripcionId'> & { id: number })[];
+      }>(`/deportes/alumno/${alumnoId}`);
+      return {
+        exito: r.exito,
+        cupo: r.cupo,
+        deportes: r.inscripciones.map(({ id, slot, fechaAlta, deporte }) => ({ inscripcionId: id, slot, fechaAlta, deporte })),
+      };
+    },
+
+    /** Transporte y comedor del mes, para Administración. Misma forma que la del portal de tutores. */
+    serviciosDeAlumno: (alumnoId: number, anio?: number, mes?: number) =>
+      http.get<RespuestaServicios>(`/servicios/alumno/${alumnoId}`, { anio, mes }),
+
     deportesDisponibles: (alumnoId: number) =>
       http.get<{ exito: boolean; deportes: DeporteDisponible[] }>(`/deportes/alumno/${alumnoId}/disponibles`),
 
@@ -415,6 +501,27 @@ export const api = {
   },
 
   admin: {
+    /** Listado de alumnos. El backend pagina de a 100 como máximo. */
+    alumnos: (filtros: { busqueda?: string; estado?: EstadoAlumno; page?: number; pageSize?: number }) =>
+      http.get<Pagina<AlumnoListado>>('/alumnos', filtros),
+
+    /** Deuda por alumno: saldo, cuotas impagas y meses. La calcula el backend. */
+    morosidad: () => http.get<RespuestaMorosidad>('/reportes/morosidad'),
+
+    facturasDe: (alumnoId: number) =>
+      http.get<Pagina<FacturaAdmin>>('/facturacion/facturas', { alumnoId, pageSize: 100 }),
+
+    /**
+     * Baja lógica: el alumno cambia de estado y el backend da de baja sus
+     * deportes, transporte y comedor. Notas, asistencias y facturas quedan.
+     */
+    darDeBaja: (alumnoId: number, estado: Exclude<EstadoAlumno, 'ACTIVO'>) =>
+      http.del<{ exito: boolean; mensaje: string }>(`/alumnos/${alumnoId}`, { estado }),
+
+    /** Vuelve a activo. Las inscripciones no vuelven solas. */
+    reactivar: (alumnoId: number) =>
+      http.patch<{ exito: boolean; mensaje: string }>(`/alumnos/${alumnoId}`, { estado: 'ACTIVO' }),
+
     niveles: () => http.get<{ exito: boolean; niveles: NivelConCuota[] }>('/academico/niveles'),
     cuotaNivel: (id: number, cuotaMensual: number) =>
       http.patch<{ exito: boolean; mensaje: string }>(`/academico/niveles/${id}`, { cuotaMensual }),

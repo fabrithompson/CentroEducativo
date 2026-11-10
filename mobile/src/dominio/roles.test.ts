@@ -58,6 +58,15 @@ test('sólo el administrador fija aranceles y valida comprobantes', () => {
   }
 });
 
+test('sólo el administrador gestiona alumnos, y es su primera pestaña', () => {
+  for (const rol of ROLES) assert.equal(claves(rol).includes('alumnos'), rol === 'admin', rol);
+  assert.equal(vistaInicial('admin'), 'alumnos');
+});
+
+test('ningún rol pasa de cinco pestañas: más no entran en la barra de un teléfono', () => {
+  for (const rol of ROLES) assert.ok(claves(rol).length <= 5, `${rol}: ${claves(rol).length}`);
+});
+
 test('las familias tienen selector de alumno; el personal no', () => {
   assert.equal(esFamilia('padre'), true);
   assert.equal(esFamilia('estudiante'), true);
