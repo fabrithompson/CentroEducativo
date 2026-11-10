@@ -32,7 +32,7 @@ import {
   type FacturaResumen,
   type Solapa,
 } from '../dominio/pagos';
-import { moneda, periodo, textoVencimiento, tipoItem } from '../dominio/formato';
+import { fecha, moneda, periodo, textoVencimiento, tipoItem } from '../dominio/formato';
 import {
   consultaDeRango,
   mover,
@@ -493,7 +493,9 @@ function TarjetaCuota({ factura, onPagar }: { factura: FacturaDetallada; onPagar
                 <View key={c.id} style={estilos.filaItem}>
                   <View style={estilos.itemTexto}>
                     <Text style={estilos.itemNombre}>{c.bancoOrigen}</Text>
-                    <Text style={estilos.itemFacturado}>Operación {c.numeroOperacion}</Text>
+                    <Text style={estilos.itemFacturado}>
+                      {fecha(c.fechaTransferencia)} · Operación {c.numeroOperacion}
+                    </Text>
                   </View>
                   <View style={{ alignItems: 'flex-end', gap: espaciado.xs }}>
                     <Text style={estilos.itemAdeudado}>{moneda(c.monto)}</Text>
