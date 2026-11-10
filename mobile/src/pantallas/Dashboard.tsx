@@ -15,29 +15,34 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native
 import api, {
   type DeporteInscripto,
   type Hijo,
+  type MateriaDelCurso,
   type RespuestaAsistencia,
   type RespuestaDeportes,
   type RespuestaFacturas,
   type RespuestaServicios,
 } from '../api/endpoints';
 import { deudaTotal } from '../dominio/pagos';
+import { puedePagar, type Rol } from '../dominio/roles';
 import { dia, hora, moneda, periodo } from '../dominio/formato';
 import { Aviso, Boton, Cargando, Dato, ErrorPantalla, Estado, Tarjeta, Vacio } from '../ui/componentes';
 import { colores, espaciado, tipografia } from '../ui/tema';
 
 interface Props {
   hijo: Hijo;
+  rol: Rol;
   onIrAFinanzas: () => void;
 }
 
 interface Datos {
+  materias: MateriaDelCurso[] | null;
   deportes: RespuestaDeportes | null;
   servicios: RespuestaServicios | null;
   facturas: RespuestaFacturas | null;
   asistencia: RespuestaAsistencia | null;
 }
 
-export function PantallaDashboard({ hijo, onIrAFinanzas }: Props) {
+export function PantallaDashboard({ hijo, rol, onIrAFinanzas }: Props) {
+  const esPadre = puedePagar(rol);
   const [datos, setDatos] = useState<Datos | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refrescando, setRefrescando] = useState(false);
@@ -47,7 +52,8 @@ export function PantallaDashboard({ hijo, onIrAFinanzas }: Props) {
   const cargar = useCallback(async () => {
     setError(null);
 
-    const [deportes, servicios, facturas, asistencia] = await Promise.allSettled([
+    const [ficha, deportes, servicios, facturas, asistencia] = await Promise.allSettled([
+      api.padres.ficha(alumnoId),
       api.padres.deportes(alumnoId),
       api.padres.servicios(alumnoId),
       api.padres.facturas(alumnoId),
@@ -55,7 +61,7 @@ export function PantallaDashboard({ hijo, onIrAFinanzas }: Props) {
     ]);
 
     // Si TODO falló, es un problema de conexión y hay que decirlo.
-    if ([deportes, servicios, facturas, asistencia].every((r) => r.status === 'rejected')) {
+    if ([ficha, deportes, servicios, facturas, asistencia].every((r) => r.status === 'rejected')) {
       const primero = deportes.status === 'rejected' ? deportes.reason : null;
       setError(primero instanceof Error ? primero.message : 'No pudimos cargar la información.');
       setDatos(null);
@@ -63,6 +69,7 @@ export function PantallaDashboard({ hijo, onIrAFinanzas }: Props) {
     }
 
     setDatos({
+      materias: ficha.status === 'fulfilled' ? (ficha.value.alumno.curso?.materias ?? []) : null,
       deportes: deportes.status === 'fulfilled' ? deportes.value : null,
       servicios: servicios.status === 'fulfilled' ? servicios.value : null,
       facturas: facturas.status === 'fulfilled' ? facturas.value : null,
@@ -126,7 +133,11 @@ export function PantallaDashboard({ hijo, onIrAFinanzas }: Props) {
           {datos.facturas.resumen.vencidas > 0 ? (
             <Aviso
               tono="alerta"
-              texto={`Tenés ${datos.facturas.resumen.vencidas} cuota(s) vencida(s). Tocá "Finanzas" para regularizar.`}
+              texto={
+                esPadre
+                  ? `Tenés ${datos.facturas.resumen.vencidas} cuota(s) vencida(s). Tocá "Finanzas" para regularizar.`
+                  : `Hay ${datos.facturas.resumen.vencidas} cuota(s) vencida(s). Los pagos los hace tu familia.`
+              }
             />
           ) : null}
 
@@ -139,9 +150,9 @@ export function PantallaDashboard({ hijo, onIrAFinanzas }: Props) {
 
           {deuda > 0 ? (
             <Boton
-              titulo="Ver y pagar cuotas"
+              titulo={esPadre ? 'Ver y pagar cuotas' : 'Ver mis cuotas'}
               onPress={onIrAFinanzas}
-              accesibilidad={`Ir a finanzas para pagar una deuda de ${moneda(deuda)}`}
+              accesibilidad={esPadre ? `Ir a finanzas para pagar una deuda de ${moneda(deuda)}` : 'Ver el detalle de las cuotas'}
               style={{ marginTop: espaciado.sm }}
             />
           ) : null}
@@ -151,6 +162,26 @@ export function PantallaDashboard({ hijo, onIrAFinanzas }: Props) {
           <Vacio mensaje="No pudimos cargar el estado de cuenta. Deslizá hacia abajo para reintentar." />
         </Tarjeta>
       )}
+
+      {/* ---------- Materias ---------- */}
+      {datos.materias && datos.materias.length > 0 ? (
+        <>
+          <Text style={estilos.seccion}>Materias y profesores</Text>
+          <Tarjeta>
+            {datos.materias.map((m, i) => (
+              <View key={m.id} style={i > 0 ? estilos.materiaSeparada : undefined}>
+                <Text style={estilos.tituloTarjeta}>{m.nombre}</Text>
+                <Text style={estilos.detalleSuave}>
+                  {m.profesor ? `Prof. ${m.profesor.apellido}, ${m.profesor.nombres}` : 'Profesor a designar'}
+                </Text>
+                {m.horarios.map((h) => (
+                  <Dato key={h.id} etiqueta={dia(h.diaSemana)} valor={`${hora(h.horaInicio)} – ${hora(h.horaFin)}`} />
+                ))}
+              </View>
+            ))}
+          </Tarjeta>
+        </>
+      ) : null}
 
       {/* ---------- Servicios del mes ---------- */}
       <Text style={estilos.seccion}>
@@ -216,8 +247,9 @@ export function PantallaDashboard({ hijo, onIrAFinanzas }: Props) {
         datos.deportes.deportes.length === 0 ? (
           <Tarjeta>
             <Text style={estilos.detalleSuave}>
-              No está inscripto en ninguna actividad deportiva. Para anotarlo, acercate a
-              Administración.
+              {esPadre
+                ? 'No está inscripto en ninguna actividad deportiva. Podés anotarlo desde "Inscribir".'
+                : 'No estás inscripto en ninguna actividad deportiva. Tu familia puede anotarte desde la app.'}
             </Text>
           </Tarjeta>
         ) : (
@@ -312,4 +344,5 @@ const estilos = StyleSheet.create({
   detalleSuave: { ...tipografia.cuerpo, color: colores.textoSuave, marginBottom: espaciado.sm },
   nota: { fontSize: 12, color: colores.textoSuave, marginTop: espaciado.xs, fontStyle: 'italic' },
   separador: { height: 1, backgroundColor: colores.borde, marginVertical: espaciado.sm },
+  materiaSeparada: { borderTopWidth: 1, borderTopColor: colores.borde, paddingTop: espaciado.sm, marginTop: espaciado.sm },
 });

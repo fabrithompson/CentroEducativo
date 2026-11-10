@@ -6,18 +6,15 @@
     "orientation": "portrait",
     "scheme": "educar",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "splash": {
-      "resizeMode": "contain",
-      "backgroundColor": "#1f4e79"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ar.edu.educarparatransformar.tutores"
     },
     "android": {
       "package": "ar.edu.educarparatransformar.tutores",
-      "adaptiveIcon": { "backgroundColor": "#1f4e79" }
+      "adaptiveIcon": {
+        "backgroundColor": "#1f4e79"
+      }
     },
     "plugins": [
       [
@@ -27,7 +24,21 @@
           "cameraPermission": "La app usa la cámara para que puedas fotografiar el comprobante de transferencia."
         }
       ],
-      "expo-secure-store"
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "La app usa la cámara para leer el QR del carnet en el micro y en el comedor, y para fotografiar comprobantes de transferencia."
+        }
+      ],
+      "expo-secure-store",
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#1f4e79",
+          "resizeMode": "contain"
+        }
+      ]
     ],
     "extra": {
       "apiUrl": "https://transformar-para-educar.up.railway.app"

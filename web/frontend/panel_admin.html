@@ -94,6 +94,7 @@
                 <li><a class="nav-link" onclick="switchView('m-alumnos', this); window.abrirAdminAlumnos();"><i class="fas fa-user-graduate" aria-hidden="true"></i> Alumnos</a></li>
                 <li><a class="nav-link" onclick="switchView('m-profesores', this); window.abrirAdminProfesores();"><i class="fas fa-chalkboard-user" aria-hidden="true"></i> Profesores</a></li>
                 <li><a class="nav-link" onclick="switchView('m-academico', this); window.abrirAdminAcademico();"><i class="fas fa-graduation-cap" aria-hidden="true"></i> Niveles, cursos y materias</a></li>
+                <li><a class="nav-link" onclick="switchView('m-servicios', this); window.abrirAdminServicios();"><i class="fas fa-futbol" aria-hidden="true"></i> Deportes, servicios y aranceles</a></li>
                 <li><a class="nav-link" onclick="switchView('escaner', this); window.abrirEscaner();"><i class="fas fa-qrcode" aria-hidden="true"></i> Escanear carnet</a></li>
                 <li><a class="nav-link" onclick="switchView('reportes', this); window.abrirReportes();"><i class="fas fa-chart-column" aria-hidden="true"></i> Reportes</a></li>
                 <li><a class="nav-link" onclick="switchView('usuarios', this); cargarUsuarios();"><i class="fas fa-users" aria-hidden="true"></i> Usuarios</a></li>
@@ -130,6 +131,11 @@
             <section id="m-academico" class="view-section" aria-labelledby="t-m-academico">
                 <h2 class="section-title" id="t-m-academico">Estructura académica</h2>
                 <div id="vista-admin-academico"></div>
+            </section>
+
+            <section id="m-servicios" class="view-section" aria-labelledby="t-m-servicios">
+                <h2 class="section-title" id="t-m-servicios">Deportes, servicios y aranceles</h2>
+                <div id="vista-admin-servicios"></div>
             </section>
 
             <section id="comprobantes" class="view-section" aria-labelledby="t-comprobantes">
@@ -1374,10 +1380,12 @@
   import { iniciarAdminAlumnos } from './js/vistas/admin-alumnos.js';
   import { iniciarAdminProfesores } from './js/vistas/admin-profesores.js';
   import { iniciarAdminAcademico } from './js/vistas/admin-academico.js';
+  import { iniciarAdminServicios } from './js/vistas/admin-servicios.js';
 
   window.abrirAdminAlumnos = () => iniciarAdminAlumnos('vista-admin-alumnos');
   window.abrirAdminProfesores = () => iniciarAdminProfesores('vista-admin-profesores');
   window.abrirAdminAcademico = () => iniciarAdminAcademico('vista-admin-academico');
+  window.abrirAdminServicios = () => iniciarAdminServicios('vista-admin-servicios');
 </script>
 
 <script type="module">

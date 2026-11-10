@@ -389,9 +389,31 @@ model Materia {
   createdAt    DateTime @default(now())
 
   avisos       AvisoMasivo[]
+  horarios     HorarioMateria[]
 
   @@unique([cursoId, nombre])
   @@index([profesorId])
+}
+
+/// Grilla horaria semanal de una materia: cuándo se dicta en su curso.
+///
+/// Mismas convenciones que `HorarioDeporte`: minutos desde medianoche y
+/// extremos semiabiertos (una clase que termina 09:20 y otra que empieza 09:20
+/// no se superponen). El rango lo asegura un CHECK en la base; que no choquen
+/// dos materias del mismo curso ni dos del mismo docente lo valida el servicio
+/// (`administrador/grilla.ts`), porque depende de filas de otras materias.
+model HorarioMateria {
+  id         Int       @id @default(autoincrement())
+  materiaId  Int
+  materia    Materia   @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  diaSemana  DiaSemana
+  horaInicio Int
+  horaFin    Int
+  aula       String?
+  createdAt  DateTime  @default(now())
+
+  @@unique([materiaId, diaSemana, horaInicio])
+  @@index([diaSemana])
 }
 
 // ============================================================

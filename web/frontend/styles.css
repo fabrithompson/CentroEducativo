@@ -523,6 +523,53 @@ ul {
     color: var(--primary);
 }
 
+/* Idiomas: bloque debajo de las tres tarjetas de niveles */
+.idiomas {
+    margin-top: 40px;
+    background: var(--white);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.idiomas h3 {
+    margin-bottom: 10px;
+    color: var(--primary);
+}
+
+.idiomas h3 i {
+    color: var(--secondary);
+    margin-right: 6px;
+}
+
+.idiomas__lista {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.idiomas__lista li {
+    padding: 15px;
+    border-radius: 8px;
+    background: var(--light);
+}
+
+.idiomas__lista strong {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--primary);
+}
+
+@media (max-width: 768px) {
+    .idiomas__lista {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Wellbeing Section */
 .wellbeing-content {
     display: grid;
@@ -840,19 +887,52 @@ ul {
 }
 
 /* Contact Section */
+/*
+ * Cinco tarjetas sobre seis columnas: dirección, teléfono y email ocupan dos
+ * columnas cada una en la primera fila, y WhatsApp y redes sociales tres cada
+ * una en la segunda, una junto a la otra. Con cuatro columnas iguales la quinta
+ * tarjeta quedaba sola en su fila.
+ */
 .contact-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 30px;
     margin-bottom: 50px;
 }
 
 .contact-info-card {
+    grid-column: span 2;
     background: var(--white);
     padding: 30px;
     border-radius: 10px;
     text-align: center;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.contact-info-card--ancha {
+    grid-column: span 3;
+}
+
+.redes-botones {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Mismo azul que los botones primarios, ya verificado en AA con texto blanco. */
+.btn-red-social {
+    display: inline-block;
+    background: var(--secondary);
+    color: var(--white);
+    padding: 8px 20px;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.btn-red-social:hover {
+    background: var(--primary);
 }
 
 .contact-info-card i {
@@ -1118,6 +1198,16 @@ footer {
 
     .contact-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* En dos columnas, la quinta tarjeta (redes) toma la fila entera. */
+    .contact-info-card,
+    .contact-info-card--ancha {
+        grid-column: auto;
+    }
+
+    .contact-info-card:last-child {
+        grid-column: 1 / -1;
     }
 }
 
@@ -1546,7 +1636,10 @@ html[data-theme="dark"] .level-card h3,
 html[data-theme="dark"] .news-card h3,
 html[data-theme="dark"] .wellbeing-item h3,
 html[data-theme="dark"] .contact-info-card h3 { color: #f1f5f9; }
+html[data-theme="dark"] .idiomas__lista li { background: #0f172a; color: #cbd5e1; }
+html[data-theme="dark"] .idiomas__lista strong { color: #f1f5f9; }
 html[data-theme="dark"] .level-card,
+html[data-theme="dark"] .idiomas,
 html[data-theme="dark"] .wellbeing-item,
 html[data-theme="dark"] .news-card,
 html[data-theme="dark"] .mv-card,

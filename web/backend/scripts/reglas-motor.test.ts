@@ -44,14 +44,14 @@ after(async () => {
 // ==================================================================
 
 // 40 desde la migración de ConsultaContacto (formulario de contacto del portal).
-test('las migraciones crearon las 40 tablas del modelo', async () => {
+test('las migraciones crearon las 41 tablas del modelo', async () => {
   const filas = await prisma.$queryRaw<{ n: bigint }[]>`
     SELECT COUNT(*)::bigint AS n
     FROM information_schema.tables
     WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
       AND table_name <> '_prisma_migrations'`;
 
-  assert.equal(Number(filas[0]!.n), 40);
+  assert.equal(Number(filas[0]!.n), 41);
 });
 
 test('las tablas de RF-07 y RF-08 existen', async () => {
@@ -196,7 +196,7 @@ test('al dar de baja un deporte se libera el cupo', async () => {
 // ==================================================================
 
 test('REGLA: el motor rechaza un deporte que se superpone', async () => {
-  // A-0005 (Secundario) cursa Hockey: miércoles y viernes 17:00-18:30.
+  // A-0005 (Secundario) cursa Danza: miércoles y viernes 17:00-18:30.
   // Vóley de Secundario va lunes y miércoles 17:00-18:30 → choca el miércoles.
   const voley = await prisma.deporte.findUnique({ where: { nombre: 'Vóley' } });
   assert.ok(voley);
@@ -402,4 +402,153 @@ test('REGLA: un código QR no puede usarse dos veces en el mismo punto', async (
   );
 
   await prisma.credencialDigital.delete({ where: { id: credencial.id } });
+});
+
+// ------------------------------------------------------------------
+// Deportes del PDF y grilla horaria de materias (migraciones del 09/11)
+// ------------------------------------------------------------------
+
+test('los deportes son los 8 de la consigna', async () => {
+  const nombres = (await prisma.deporte.findMany({ select: { nombre: true } })).map((d) => d.nombre).sort();
+  assert.deepEqual(
+    nombres,
+    ['Ajedrez', 'Artes Marciales', 'Atletismo', 'Básquet', 'Danza', 'Fútbol', 'Natación', 'Vóley'].sort(),
+  );
+});
+
+test('la migración de deportes renombra en el lugar y no pisa un nombre ocupado', async () => {
+  const { readFileSync } = await import('node:fs');
+  const sql = readFileSync(new URL('../prisma/migrations/20261109120000_deportes_del_pdf/migration.sql', import.meta.url), 'utf8')
+    .split(';')
+    .map((s) => s.replace(/--.*$/gm, '').trim())
+    .filter(Boolean);
+
+  const danza = await prisma.deporte.findUniqueOrThrow({ where: { nombre: 'Danza' }, include: { horarios: true } });
+  const ROLLBACK = new Error('rollback');
+
+  await assert.rejects(
+    prisma.$transaction(async (tx) => {
+      // Se vuelve atrás el nombre y la sede, como estaban en producción…
+      await tx.deporte.update({ where: { id: danza.id }, data: { nombre: 'Hockey sobre césped' } });
+      await tx.horarioDeporte.updateMany({ where: { deporteId: danza.id }, data: { lugar: 'Polideportivo del colegio' } });
+      // …y otro deporte ocupa el nombre de destino del primer UPDATE.
+      const handball = await tx.deporte.create({
+        data: {
+          nombre: 'Handball',
+          profesorResponsableId: danza.profesorResponsableId,
+          arancelMensual: 1,
+        },
+      });
+
+      for (const sentencia of sql) await tx.$executeRawUnsafe(sentencia);
+
+      const renombrado = await tx.deporte.findUniqueOrThrow({ where: { id: danza.id }, include: { horarios: true } });
+      assert.equal(renombrado.nombre, 'Danza', 'el ex Hockey vuelve a llamarse Danza');
+      assert.ok(renombrado.horarios.every((h) => h.lugar.startsWith('SUM')), 'la danza pasa al SUM');
+
+      const intacto = await tx.deporte.findUniqueOrThrow({ where: { id: handball.id } });
+      assert.equal(intacto.nombre, 'Handball', 'Artes Marciales ya existe: no se renombra ni falla');
+      throw ROLLBACK;
+    }),
+    (err) => err === ROLLBACK,
+  );
+});
+
+test('REGLA: el motor rechaza un horario de materia imposible', async () => {
+  const materia = await prisma.materia.findFirstOrThrow({ where: { activo: true } });
+  await assert.rejects(
+    () =>
+      prisma.horarioMateria.create({
+        data: { materiaId: materia.id, diaSemana: 'SABADO', horaInicio: 600, horaFin: 540 },
+      }),
+    (err: Error) => {
+      assert.match(err.message, /chk_horario_materia_rango|check constraint/i);
+      return true;
+    },
+  );
+});
+
+test('la grilla del seed quedó cargada y sin choques de curso ni de docente', async () => {
+  const horarios = await prisma.horarioMateria.findMany({
+    include: { materia: { select: { cursoId: true, profesorId: true } } },
+  });
+  assert.ok(horarios.length >= 60, `se esperaban los bloques del seed y hay ${horarios.length}`);
+
+  const vistos = new Set<string>();
+  for (const h of horarios) {
+    for (const clave of [
+      `curso|${h.materia.cursoId}|${h.diaSemana}|${h.horaInicio}`,
+      ...(h.materia.profesorId ? [`docente|${h.materia.profesorId}|${h.diaSemana}|${h.horaInicio}`] : []),
+    ]) {
+      assert.ok(!vistos.has(clave), `choque: ${clave}`);
+      vistos.add(clave);
+    }
+  }
+});
+
+test('el servicio de la grilla rechaza un choque de curso y uno de docente', async () => {
+  const { agregarHorarioMateria } = await import('../src/modules/administrador/grilla.service.ts');
+
+  const ocupado = await prisma.horarioMateria.findFirstOrThrow({
+    include: { materia: { select: { id: true, cursoId: true, profesorId: true } } },
+    where: { materia: { profesorId: { not: null } } },
+  });
+
+  // Otra materia del mismo curso, en el mismo bloque.
+  const delCurso = await prisma.materia.findFirstOrThrow({
+    where: { cursoId: ocupado.materia.cursoId, id: { not: ocupado.materia.id }, activo: true },
+  });
+  await assert.rejects(
+    () =>
+      agregarHorarioMateria(prisma, delCurso.id, {
+        diaSemana: ocupado.diaSemana,
+        horaInicio: ocupado.horaInicio,
+        horaFin: ocupado.horaFin,
+      }),
+    /del mismo curso/,
+  );
+
+  // Una materia del mismo docente en otro curso, en el mismo bloque.
+  const delDocente = await prisma.materia.findFirst({
+    where: { profesorId: ocupado.materia.profesorId, cursoId: { not: ocupado.materia.cursoId }, activo: true },
+  });
+  if (delDocente) {
+    await assert.rejects(
+      () =>
+        agregarHorarioMateria(prisma, delDocente.id, {
+          diaSemana: ocupado.diaSemana,
+          horaInicio: ocupado.horaInicio + 10,
+          horaFin: ocupado.horaFin + 10,
+        }),
+      /mismo docente/,
+    );
+  }
+});
+
+test('los reportes de gestión responden con los datos del seed', async () => {
+  const { reportePorAlumno, reportePorDocente, docentesPorNivel, pagosPorDeporte, pagosPorRecorrido } = await import(
+    '../src/modules/reportes/gestion.service.ts'
+  );
+  const ahora = new Date();
+  const periodo = { anio: ahora.getFullYear(), mes: ahora.getMonth() + 1 };
+
+  const porAlumno = await reportePorAlumno(prisma, alumnoSecundario, periodo);
+  assert.ok(porAlumno.materias.length > 0, 'A-0001 cursa materias');
+  assert.ok(porAlumno.materias.some((m) => m.horarios.length > 0), 'con horarios');
+  assert.ok(porAlumno.materias.every((m) => m.profesor !== undefined));
+
+  const profesor = await prisma.profesor.findFirstOrThrow({ where: { legajo: 'P-0001' } });
+  const porDocente = await reportePorDocente(prisma, profesor.id);
+  assert.ok(porDocente.niveles.length >= 2, 'P-0001 da clases en primario y secundario');
+  assert.ok(porDocente.niveles.every((n) => n.cursos.length > 0));
+
+  const docentes = await docentesPorNivel(prisma);
+  assert.ok(docentes.filas.some((f) => f.profesor.id === profesor.id && f.materias.length > 0));
+
+  const deportes = await pagosPorDeporte(prisma, { ...periodo });
+  assert.equal(deportes.totales.filas, deportes.filas.length);
+  assert.ok(deportes.filas.every((f) => ['SIN_FACTURA', 'PENDIENTE', 'EN_REVISION', 'PARCIAL', 'PAGADA', 'VENCIDA'].includes(f.pago.estadoPago)));
+
+  const recorridos = await pagosPorRecorrido(prisma, { ...periodo });
+  assert.equal(recorridos.totales.filas, recorridos.filas.length);
 });

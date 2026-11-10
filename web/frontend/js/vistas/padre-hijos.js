@@ -6,11 +6,19 @@
  * devolver nada. Esta vista nunca pide un `alumnoId` que no haya salido de
  * `/mis-hijos`.
  *
- * Cuatro pestañas por hijo: ficha y materias, deportes, servicios, y estado de
- * cuenta con carga de comprobantes.
+ * Pestañas por hijo: ficha y materias (con el docente y el horario de cada
+ * una), deportes, servicios, estado de cuenta con carga de comprobantes, e
+ * inscripción al cursado.
+ *
+ * Desde deportes y servicios el tutor inscribe y da de baja: la consigna dice
+ * que cada alumno puede inscribirse a dos deportes, al transporte por
+ * recorrido (opcional, mes a mes) y al comedor. Ninguna regla se decide acá:
+ * el tope de 2 deportes, los choques de horario y el vínculo con el hijo los
+ * valida el backend, y su mensaje es el que se muestra.
  */
 
 import api from '../api.js';
+import { verComprobante } from '../comprobante.js';
 import {
   badge,
   esc,
@@ -21,6 +29,7 @@ import {
   dia,
   moneda,
   periodoActual,
+  MESES,
   pieDialogo,
   plantillaDialogo,
   render,
@@ -51,6 +60,13 @@ async function seccionFicha(alumnoId) {
         m.profesor
           ? `${esc(m.profesor.apellido)}, ${esc(m.profesor.nombres)}<br><small>${esc(m.profesor.especialidad)}</small>`
           : '<em>Sin docente asignado</em>',
+    },
+    {
+      clave: 'horarios', titulo: 'Horarios',
+      render: (m) =>
+        m.horarios?.length
+          ? m.horarios.map((h) => `${esc(dia(h.diaSemana))} ${esc(hora(h.horaInicio))}–${esc(hora(h.horaFin))}`).join('<br>')
+          : '—',
     },
     { clave: 'contacto', titulo: 'Contacto', render: (m) => (m.profesor?.email ? esc(m.profesor.email) : '—') },
     { clave: 'cargaHoraria', titulo: 'Horas', alinear: 'derecha', render: (m) => `${esc(m.cargaHoraria)} h` },
@@ -94,15 +110,27 @@ async function seccionFicha(alumnoId) {
 // Deportes
 // ==================================================================
 
-async function seccionDeportes(alumnoId) {
-  const data = await api.padres.deportes(alumnoId);
-  const { cupo, deportes } = data;
+function listaHorarios(horarios) {
+  return `
+    <ul class="lista-horarios">
+      ${horarios
+        .map(
+          (h) => `<li>
+            <span>${esc(dia(h.diaSemana))}</span>
+            <span>${esc(h.horaInicioTexto ?? hora(h.horaInicio))}–${esc(h.horaFinTexto ?? hora(h.horaFin))}</span>
+          </li>`,
+        )
+        .join('')}
+    </ul>`;
+}
 
-  if (deportes.length === 0) {
-    return `
-      ${cupoDeportes(cupo)}
-      ${estadoVacio('Todavía no está inscripto en ninguna actividad deportiva. Consultá en Administración para anotarlo.', 'fa-futbol')}`;
-  }
+async function seccionDeportes(alumnoId) {
+  const [data, disponibles] = await Promise.all([
+    api.padres.deportes(alumnoId),
+    api.deportes.disponiblesPara(alumnoId),
+  ]);
+  const { cupo, deportes } = data;
+  const inscriptos = new Set(deportes.map((d) => d.deporte.id));
 
   const tarjetas = deportes
     .map(
@@ -116,24 +144,46 @@ async function seccionDeportes(alumnoId) {
           <strong>${moneda(d.deporte.arancelMensual)}</strong> por mes
         </p>
         <h4 class="sr-only">Horarios de ${esc(d.deporte.nombre)}</h4>
-        <ul class="lista-horarios">
-          ${d.deporte.horarios
-            .map(
-              (h) => `<li>
-                <span>${esc(dia(h.diaSemana))}</span>
-                <span>${esc(h.horaInicioTexto ?? hora(h.horaInicio))}–${esc(h.horaFinTexto ?? hora(h.horaFin))}</span>
-              </li>`,
-            )
-            .join('')}
-        </ul>
+        ${listaHorarios(d.deporte.horarios)}
         ${d.deporte.horarios[0]?.lugar ? `<p class="tarjeta__sub" style="margin-top:8px"><i class="fas fa-location-dot" aria-hidden="true"></i> ${esc(d.deporte.horarios[0].lugar)}</p>` : ''}
+        <button type="button" class="btn btn--suave btn--chico" style="margin-top:12px"
+                data-baja-deporte="${d.inscripcionId}" data-nombre="${esc(d.deporte.nombre)}">
+          <i class="fas fa-user-minus" aria-hidden="true"></i> Dar de baja
+        </button>
+      </div>`,
+    )
+    .join('');
+
+  const otros = disponibles.deportes
+    .filter((d) => !inscriptos.has(d.id))
+    .map(
+      (d) => `
+      <div class="tarjeta">
+        <p class="tarjeta__titulo">${esc(d.nombre)}</p>
+        <p class="tarjeta__sub">
+          Profesor: ${esc(d.profesorResponsable.apellido)}, ${esc(d.profesorResponsable.nombres)}
+        </p>
+        <p class="tarjeta__sub"><strong>${moneda(d.arancelMensual)}</strong> por mes</p>
+        ${listaHorarios(d.horarios)}
+        ${d.inscribible
+          ? `<button type="button" class="btn btn--primario btn--chico" style="margin-top:12px"
+                     data-inscribir-deporte="${d.id}" data-nombre="${esc(d.nombre)}">
+               <i class="fas fa-user-plus" aria-hidden="true"></i> Inscribir
+             </button>`
+          : `<p class="tarjeta__sub" style="margin-top:12px"><i class="fas fa-circle-info" aria-hidden="true"></i> ${esc(d.motivo)}</p>`}
       </div>`,
     )
     .join('');
 
   return `
     ${cupoDeportes(cupo)}
-    <div class="grilla-tarjetas">${tarjetas}</div>`;
+    ${deportes.length > 0
+      ? `<div class="grilla-tarjetas">${tarjetas}</div>`
+      : estadoVacio('Todavía no está inscripto en ninguna actividad deportiva.', 'fa-futbol')}
+    <h3 class="ficha__titulo" style="margin-top:24px">
+      <i class="fas fa-plus" aria-hidden="true"></i> Deportes disponibles para su nivel
+    </h3>
+    ${otros ? `<div class="grilla-tarjetas">${otros}</div>` : estadoVacio('No hay otros deportes disponibles para su nivel.', 'fa-futbol')}`;
 }
 
 function cupoDeportes(cupo) {
@@ -154,11 +204,40 @@ function cupoDeportes(cupo) {
 // Servicios
 // ==================================================================
 
+const TURNOS_TRANSPORTE = [
+  ['IDA_Y_VUELTA', 'Ida y vuelta'],
+  ['IDA', 'Sólo ida'],
+  ['VUELTA', 'Sólo vuelta'],
+];
+
+/** El mes actual y el siguiente: el transporte y el comedor se contratan mes a mes. */
+function periodosContratables() {
+  const p = periodoActual();
+  const siguiente = p.mes === 12 ? { anio: p.anio + 1, mes: 1 } : { anio: p.anio, mes: p.mes + 1 };
+  return [p, siguiente];
+}
+
+function selectorPeriodo(id) {
+  return `
+    <div class="form-group">
+      <label for="${id}">Mes</label>
+      <select id="${id}" name="periodo" class="form-select">
+        ${periodosContratables()
+          .map((p) => `<option value="${p.anio}-${p.mes}">${esc(MESES[p.mes - 1])} ${p.anio}</option>`)
+          .join('')}
+      </select>
+    </div>`;
+}
+
 async function seccionServicios(alumnoId) {
   const p = periodoActual();
-  const data = await api.padres.servicios(alumnoId, p);
+  const [data, recorridos, planes] = await Promise.all([
+    api.padres.servicios(alumnoId, p),
+    api.servicios.recorridos(p),
+    api.servicios.planesComedor(p),
+  ]);
 
-  const transporte = data.transporte
+  const transporte = data.transporte && data.transporte.estado === 'ACTIVA'
     ? `
       <div class="tarjeta">
         <p class="tarjeta__titulo"><i class="fas fa-bus" aria-hidden="true"></i> Transporte escolar</p>
@@ -170,10 +249,35 @@ async function seccionServicios(alumnoId) {
           <div><dt>Regreso</dt><dd>${esc(hora(data.transporte.recorrido.horaRegreso))}</dd></div>
           <div><dt>Arancel</dt><dd>${moneda(data.transporte.recorrido.arancelMensual)}</dd></div>
         </dl>
+        <button type="button" class="btn btn--suave btn--chico" data-baja-transporte="${data.transporte.id}">
+          <i class="fas fa-ban" aria-hidden="true"></i> Dar de baja este mes
+        </button>
       </div>`
-    : '';
+    : `
+      <form class="tarjeta" id="form-transporte" novalidate>
+        <p class="tarjeta__titulo"><i class="fas fa-bus" aria-hidden="true"></i> Contratar transporte</p>
+        <p class="tarjeta__sub">Es opcional y se contrata mes a mes. Hay 4 recorridos, cada uno con su arancel.</p>
+        <div class="form-group">
+          <label for="tr-recorrido">Recorrido</label>
+          <select id="tr-recorrido" name="recorridoId" class="form-select" required>
+            ${recorridos.recorridos
+              .map((r) => `<option value="${r.id}">${esc(r.codigo)} · ${esc(r.nombre)} — ${moneda(r.arancelMensual)} (${esc(r.horaSalidaTexto)} / ${esc(r.horaRegresoTexto)})</option>`)
+              .join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="tr-turno">Turno</label>
+          <select id="tr-turno" name="turno" class="form-select">
+            ${TURNOS_TRANSPORTE.map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join('')}
+          </select>
+        </div>
+        ${selectorPeriodo('tr-periodo')}
+        <button type="submit" class="btn btn--primario btn--chico">
+          <i class="fas fa-check" aria-hidden="true"></i> Contratar
+        </button>
+      </form>`;
 
-  const comedor = data.comedor
+  const comedor = data.comedor && data.comedor.estado === 'ACTIVA'
     ? `
       <div class="tarjeta">
         <p class="tarjeta__titulo"><i class="fas fa-utensils" aria-hidden="true"></i> Comedor</p>
@@ -183,12 +287,26 @@ async function seccionServicios(alumnoId) {
           <div><dt>Horario</dt><dd>${esc(hora(data.comedor.comedor.horaServicio))}</dd></div>
           <div><dt>Arancel</dt><dd>${moneda(data.comedor.comedor.arancelMensual)}</dd></div>
         </dl>
+        <button type="button" class="btn btn--suave btn--chico" data-baja-comedor="${data.comedor.id}">
+          <i class="fas fa-ban" aria-hidden="true"></i> Dar de baja este mes
+        </button>
       </div>`
-    : '';
-
-  if (!transporte && !comedor && data.deportes.length === 0) {
-    return estadoVacio('No tiene servicios opcionales contratados este mes.', 'fa-box-open');
-  }
+    : `
+      <form class="tarjeta" id="form-comedor" novalidate>
+        <p class="tarjeta__titulo"><i class="fas fa-utensils" aria-hidden="true"></i> Contratar comedor</p>
+        <div class="form-group">
+          <label for="co-plan">Plan</label>
+          <select id="co-plan" name="comedorId" class="form-select" required>
+            ${planes.planes
+              .map((pl) => `<option value="${pl.id}">${esc(pl.nombre)} — ${moneda(pl.arancelMensual)}</option>`)
+              .join('')}
+          </select>
+        </div>
+        ${selectorPeriodo('co-periodo')}
+        <button type="submit" class="btn btn--primario btn--chico">
+          <i class="fas fa-check" aria-hidden="true"></i> Contratar
+        </button>
+      </form>`;
 
   const c = data.costoMensualEstimado;
 
@@ -200,6 +318,58 @@ async function seccionServicios(alumnoId) {
       { titulo: 'Total de servicios', valor: moneda(c.total), tono: 'espera', detalle: 'Sin la cuota base', icono: 'fa-calculator' },
     ])}
     <div class="grilla-tarjetas">${transporte}${comedor}</div>`;
+}
+
+// ==================================================================
+// Inscripción al cursado
+// ==================================================================
+
+/**
+ * "Inscribir a su hijo al cursado" (consigna, Parte 2). Es la misma solicitud
+ * que la del formulario de la página pública, con los datos del tutor ya
+ * cargados; la aprueba Administración en "Solicitudes de inscripción".
+ */
+async function seccionCursado() {
+  const yo = typeof window.usuarioSesion === 'function' ? window.usuarioSesion() : null;
+  return `
+    <form class="ficha" id="form-cursado" novalidate>
+      <h3 class="ficha__titulo"><i class="fas fa-user-graduate" aria-hidden="true"></i> Solicitar inscripción</h3>
+      <p>Para anotar a un hijo en un nivel o curso. Administración revisa la solicitud y se comunica con vos.</p>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="cu-tutor">Tu nombre</label>
+          <input id="cu-tutor" name="nombreTutor" class="form-input" required minlength="2" maxlength="120" value="${esc(yo?.nombre ?? '')}">
+        </div>
+        <div class="form-group">
+          <label for="cu-email">Tu correo</label>
+          <input id="cu-email" name="emailTutor" type="email" class="form-input" required value="${esc(yo?.email ?? '')}">
+        </div>
+        <div class="form-group">
+          <label for="cu-tel">Tu teléfono</label>
+          <input id="cu-tel" name="telefonoTutor" type="tel" class="form-input" required minlength="6" maxlength="30">
+        </div>
+        <div class="form-group">
+          <label for="cu-alumno">Nombre y apellido del estudiante</label>
+          <input id="cu-alumno" name="nombreEstudiante" class="form-input" required minlength="2" maxlength="120">
+        </div>
+        <div class="form-group">
+          <label for="cu-nivel">Nivel</label>
+          <select id="cu-nivel" name="nivel" class="form-select" required>
+            <option value="">Elegí…</option>
+            <option>Inicial</option><option>Primario</option><option>Secundario</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="cu-curso">Curso, grado o sala</label>
+          <input id="cu-curso" name="curso" class="form-input" required maxlength="60" placeholder="Ej.: 1er Grado">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="cu-msj">Comentario (opcional)</label>
+        <textarea id="cu-msj" name="mensaje" class="form-input" rows="3" maxlength="2000"></textarea>
+      </div>
+      <button type="submit" class="btn btn--primario"><i class="fas fa-paper-plane" aria-hidden="true"></i> Enviar solicitud</button>
+    </form>`;
 }
 
 // ==================================================================
@@ -432,6 +602,7 @@ const SECCIONES = {
   deportes: { titulo: 'Deportes', icono: 'fa-futbol', fn: seccionDeportes },
   servicios: { titulo: 'Servicios', icono: 'fa-bus', fn: seccionServicios },
   cuenta: { titulo: 'Estado de cuenta', icono: 'fa-file-invoice-dollar', fn: seccionCuenta },
+  cursado: { titulo: 'Inscripción al cursado', icono: 'fa-user-graduate', fn: seccionCursado },
 };
 
 function selectorHijos() {
@@ -480,60 +651,112 @@ async function dibujarSeccion() {
     );
   });
 
+  cablearInscripciones(panel);
+
   panel.querySelectorAll('[data-ver-comprobante]').forEach((btn) => {
     btn.addEventListener('click', () => void verComprobante(btn.dataset.verComprobante, btn.dataset.numero));
   });
 }
 
-/**
- * Abre el comprobante de la cuota en una pestaña nueva.
- *
- * Antes era un enlace común (`<a href target="_blank">`), pero la ruta exige el
- * token en el header `Authorization` y un enlace no lo manda: la pestaña
- * mostraba `{"message":"Falta el token de acceso."}`. Ahora el HTML se pide con
- * el cliente de la API —que agrega el token y lo renueva si venció— y se
- * escribe en la pestaña nueva, que se abrió en blanco.
- *
- * La pestaña se abre antes del pedido, dentro del clic: abierta después del
- * `await`, el navegador la tomaría por una ventana emergente y la bloquearía.
- * Si igual la bloquea (un bloqueador estricto, o un navegador embebido), el
- * comprobante se descarga como archivo: la familia no se queda sin él.
- */
-async function verComprobante(facturaId, numero) {
-  const ventana = window.open('', '_blank');
-  if (ventana) {
-    ventana.opener = null;
-    ventana.document.title = 'Comprobante';
-    ventana.document.body.textContent = 'Cargando el comprobante…';
-  }
+// ==================================================================
+// Acciones de inscripción
+// ==================================================================
 
+async function confirmar(mensaje, titulo) {
+  if (typeof window.uxConfirm === 'function') return window.uxConfirm(mensaje, { title: titulo });
+  return window.confirm(mensaje);
+}
+
+/** Corre la acción, avisa con el mensaje del backend y vuelve a dibujar la pestaña. */
+async function ejecutar(boton, accion) {
+  if (boton) boton.disabled = true;
   try {
-    const html = await api.facturacion.comprobanteHtml(facturaId);
-
-    if (ventana) {
-      // Se escribe el documento en la pestaña en blanco en vez de navegarla a
-      // un `blob:`: funciona igual en todos los navegadores y no depende de
-      // que dejen abrir esas URL en primer plano.
-      ventana.document.open();
-      ventana.document.write(html);
-      ventana.document.close();
-      return;
-    }
-
-    const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
-    const enlace = document.createElement('a');
-    enlace.href = url;
-    enlace.download = `comprobante-${numero}.html`;
-    document.body.append(enlace);
-    enlace.click();
-    enlace.remove();
-    // La descarga ya arrancó: el Blob se puede soltar.
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    avisar('El navegador no dejó abrir una pestaña nueva, así que descargamos el comprobante. Abrilo para verlo o imprimirlo.');
+    const r = await accion();
+    avisar(r?.mensaje ?? 'Listo.', 'ok');
+    await dibujarSeccion();
   } catch (err) {
-    ventana?.close();
-    avisar(err?.message ?? 'No se pudo abrir el comprobante.', 'error');
+    avisar(err?.message ?? 'No se pudo completar la operación.', 'error');
+    if (boton) boton.disabled = false;
   }
+}
+
+function leerPeriodo(form, nombre) {
+  const [anio, mes] = String(new FormData(form).get(nombre) ?? '').split('-').map(Number);
+  return { anio, mes };
+}
+
+function cablearInscripciones(panel) {
+  panel.querySelectorAll('[data-inscribir-deporte]').forEach((btn) => {
+    btn.addEventListener('click', () =>
+      ejecutar(btn, () => api.deportes.inscribir(hijoActivo, Number(btn.dataset.inscribirDeporte))),
+    );
+  });
+
+  panel.querySelectorAll('[data-baja-deporte]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!(await confirmar(`Se da de baja de ${btn.dataset.nombre} y se libera el cupo.`, 'Dar de baja'))) return;
+      void ejecutar(btn, () => api.deportes.darDeBaja(Number(btn.dataset.bajaDeporte)));
+    });
+  });
+
+  panel.querySelectorAll('[data-baja-transporte]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!(await confirmar('Deja de usar el transporte este mes.', 'Dar de baja'))) return;
+      void ejecutar(btn, () => api.servicios.bajaTransporte(Number(btn.dataset.bajaTransporte)));
+    });
+  });
+
+  panel.querySelectorAll('[data-baja-comedor]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!(await confirmar('Deja el comedor este mes.', 'Dar de baja'))) return;
+      void ejecutar(btn, () => api.servicios.bajaComedor(Number(btn.dataset.bajaComedor)));
+    });
+  });
+
+  const formTransporte = panel.querySelector('#form-transporte');
+  formTransporte?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const datos = new FormData(formTransporte);
+    void ejecutar(formTransporte.querySelector('button[type=submit]'), () =>
+      api.servicios.contratarTransporte({
+        alumnoId: hijoActivo,
+        recorridoId: Number(datos.get('recorridoId')),
+        turno: datos.get('turno'),
+        ...leerPeriodo(formTransporte, 'periodo'),
+      }),
+    );
+  });
+
+  const formComedor = panel.querySelector('#form-comedor');
+  formComedor?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const datos = new FormData(formComedor);
+    void ejecutar(formComedor.querySelector('button[type=submit]'), () =>
+      api.servicios.contratarComedor({
+        alumnoId: hijoActivo,
+        comedorId: Number(datos.get('comedorId')),
+        ...leerPeriodo(formComedor, 'periodo'),
+      }),
+    );
+  });
+
+  const formCursado = panel.querySelector('#form-cursado');
+  formCursado?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!formCursado.reportValidity()) return;
+    const datos = Object.fromEntries(new FormData(formCursado));
+    const boton = formCursado.querySelector('button[type=submit]');
+    boton.disabled = true;
+    try {
+      const r = await api.publico.solicitarInscripcion({ ...datos, mensaje: datos.mensaje || null });
+      avisar(r.mensaje, 'ok');
+      formCursado.reset();
+    } catch (err) {
+      avisar(err?.message ?? 'No se pudo enviar la solicitud.', 'error');
+    } finally {
+      boton.disabled = false;
+    }
+  });
 }
 
 /** Punto de entrada. Lo llama el panel del tutor al abrir la vista. */

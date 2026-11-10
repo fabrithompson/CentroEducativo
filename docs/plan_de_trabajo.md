@@ -110,7 +110,7 @@ camino alternativo; una restricción del motor no.
 | Acceso a datos | Prisma 6 (ORM) |
 | Base de datos | PostgreSQL 18 en producción y en el CI · 15 embebido en desarrollo |
 | Frontend web | HTML5 · CSS3 · JavaScript con módulos ES |
-| Aplicación móvil | Expo SDK 57 · React Native 0.86.3 · React 19.2.3 |
+| Aplicación móvil | Expo SDK 58 · React Native 0.88.1 · React 19.3.0 |
 | Pruebas | Ejecutor nativo de Node (`node --test`) contra PostgreSQL real mediante `embedded-postgres` |
 | Repositorio | Monorepo pnpm · Git · GitHub |
 | Gestión | GitHub Issues + tablero Kanban en GitHub Projects (desde el 26/10/2026; el plan original decía Jira, que nunca se llegó a usar) |

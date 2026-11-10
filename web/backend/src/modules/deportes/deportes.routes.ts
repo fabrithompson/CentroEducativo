@@ -210,6 +210,71 @@ router.post('/:id/horarios', requireAuth, requireRole(Role.ADMIN), async (req, r
 });
 
 // ------------------------------------------------------------------
+// Edición del deporte y baja de un grupo
+// ------------------------------------------------------------------
+
+/**
+ * La consigna deja en manos del administrador "especificar el valor" de cada
+ * deporte. Cambiar el arancel no toca las facturas ya emitidas: cada ítem
+ * guarda su `precioUnitario`, así que rige desde la próxima facturación.
+ */
+const editarDeporteSchema = z
+  .object({
+    descripcion: z.string().trim().max(500).nullable().optional(),
+    profesorResponsableId: z.coerce.number().int().positive().optional(),
+    arancelMensual: z.coerce.number().positive('El arancel tiene que ser mayor que cero.').max(10_000_000).optional(),
+    cupoMaximo: z.coerce.number().int().positive().max(200).optional(),
+    activo: z.boolean().optional(),
+  })
+  .refine((v) => Object.values(v).some((x) => x !== undefined), { message: 'No hay cambios para guardar.' });
+
+router.patch('/:id', requireAuth, requireRole(Role.ADMIN), async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    const body = editarDeporteSchema.parse(req.body);
+
+    const deporte = await prisma.deporte.findUnique({ where: { id } });
+    if (!deporte) throw HttpError.notFound('El deporte no existe.');
+
+    if (body.profesorResponsableId !== undefined) {
+      const profesor = await prisma.profesor.findUnique({ where: { id: body.profesorResponsableId } });
+      if (!profesor) throw HttpError.notFound('El profesor responsable no existe.');
+      if (profesor.estado !== 'ACTIVO') throw HttpError.conflict('El profesor responsable no está activo.');
+    }
+
+    const actualizado = await prisma.deporte.update({ where: { id }, data: body });
+
+    res.json({
+      exito: true,
+      mensaje: `${actualizado.nombre} actualizado.`,
+      deporte: { ...actualizado, arancelMensual: aNumero(actualizado.arancelMensual) },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+const horarioDeporteParams = z.object({
+  id: z.coerce.number().int().positive(),
+  horarioId: z.coerce.number().int().positive(),
+});
+
+router.delete('/:id/horarios/:horarioId', requireAuth, requireRole(Role.ADMIN), async (req, res, next) => {
+  try {
+    const { id, horarioId } = horarioDeporteParams.parse(req.params);
+
+    const horario = await prisma.horarioDeporte.findFirst({ where: { id: horarioId, deporteId: id } });
+    if (!horario) throw HttpError.notFound('Ese grupo no pertenece al deporte.');
+
+    await prisma.horarioDeporte.delete({ where: { id: horarioId } });
+
+    res.json({ exito: true, mensaje: 'Grupo quitado de la grilla.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ------------------------------------------------------------------
 // Consulta por alumno
 // ------------------------------------------------------------------
 

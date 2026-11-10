@@ -12,7 +12,7 @@
  */
 
 import api from '../api.js';
-import { badge, esc, estadoVacio, fecha, grillaIndicadores, render, tabla } from '../ui.js';
+import { badge, dia, esc, estadoVacio, fecha, grillaIndicadores, render, tabla } from '../ui.js';
 
 let perfil = null;
 let materiaActiva = null;
@@ -98,6 +98,45 @@ async function listadoAlumnos(materia) {
     </div>`;
 }
 
+const ORDEN_DIAS = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+
+/**
+ * Mi horario semanal: el reporte por docente de la consigna ("cursos a cargo
+ * por nivel" y "horarios de cada curso"), desde `/api/profesores/yo/cursos`.
+ * Si la grilla todavía no está cargada, no se muestra nada.
+ */
+async function miHorario() {
+  let reporte;
+  try {
+    reporte = await api.profesores.misCursos();
+  } catch {
+    return '';
+  }
+  const clases = reporte.niveles.flatMap((n) =>
+    n.cursos.flatMap((c) =>
+      c.materias.flatMap((m) => m.horarios.map((h) => ({ ...h, materia: m.nombre, curso: c.curso, nivel: n.nivel }))),
+    ),
+  );
+  if (clases.length === 0) return '';
+  clases.sort(
+    (a, b) => ORDEN_DIAS.indexOf(a.diaSemana) - ORDEN_DIAS.indexOf(b.diaSemana) || a.desde.localeCompare(b.desde),
+  );
+
+  return `
+    <h3 class="subtitulo" style="margin-top:22px">Mi horario semanal</h3>
+    ${tabla({
+      caption: 'Clases de la semana, por día y hora',
+      columnas: [
+        { clave: 'dia', titulo: 'Día', render: (c) => esc(dia(c.diaSemana)) },
+        { clave: 'hora', titulo: 'Horario', render: (c) => `${esc(c.desde)}–${esc(c.hasta)}` },
+        { clave: 'materia', titulo: 'Materia', render: (c) => `<strong>${esc(c.materia)}</strong>` },
+        { clave: 'curso', titulo: 'Curso', render: (c) => `${esc(c.nivel)} · ${esc(c.curso)}` },
+        { clave: 'aula', titulo: 'Aula', render: (c) => esc(c.aula ?? '—') },
+      ],
+      filas: clases,
+    })}`;
+}
+
 async function contenido() {
   const p = await resolverPerfil();
   if (!p) return sinFicha();
@@ -124,6 +163,8 @@ async function contenido() {
     <div class="grilla-tarjetas" role="group" aria-labelledby="titulo-materias">
       ${materias.map(tarjetaMateria).join('')}
     </div>
+
+    ${await miHorario()}
 
     <div id="alumnos-materia" style="margin-top:22px">
       ${await listadoAlumnos(materia)}

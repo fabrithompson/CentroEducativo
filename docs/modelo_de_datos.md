@@ -220,7 +220,7 @@ VALUES (
 
 ### 6.2 Solapamiento de horarios — debe fallar
 
-`A-0005` (Sofía Rodríguez, Secundario) cursa Hockey, que va miércoles y viernes 17:00-18:30.
+`A-0005` (Sofía Rodríguez, Secundario) cursa Danza, que va miércoles y viernes 17:00-18:30.
 Vóley también va miércoles 17:00-18:30.
 
 ```sql
@@ -232,7 +232,7 @@ VALUES (
 );
 ```
 
-**Esperado:** `Conflicto de horarios: Vóley (MIERCOLES de 17:00 a 18:30) se superpone con Hockey sobre césped...`
+**Esperado:** `Conflicto de horarios: Vóley (MIERCOLES de 17:00 a 18:30) se superpone con Danza...`
 
 ### 6.3 Caso límite que SÍ debe permitirse
 
@@ -293,7 +293,7 @@ Ambientados en Resistencia y el Gran Resistencia: calles, barrios y localidades 
 - **27 materias** con profesor asignado
 - **7 profesores** — 4 vinculados a usuarios existentes + 3 del departamento de Educación Física
 - **12 alumnos** — 8 con cuenta de campus, 4 sin credenciales (Inicial y 4to grado)
-- **8 deportes oficiales** — Fútbol, Vóley, Básquet, Handball, Natación, Atletismo, Hockey sobre césped, Ajedrez — con **26 horarios** distribuidos por nivel
+- **8 deportes oficiales** — Fútbol, Vóley, Básquet, Artes Marciales, Natación, Atletismo, Danza, Ajedrez (los 8 del PDF; Artes Marciales y Danza reemplazaron a Handball y Hockey sobre césped con la migración `20261109120000_deportes_del_pdf`) — con **26 horarios** distribuidos por nivel
 - **4 recorridos** — Centro/Macrocentro, Zona Norte, Fontana/Oeste, Barranqueras/Puerto Vilelas, con aranceles diferenciados por distancia ($46.000 a $62.000)
 - **3 planes de comedor** — 5, 3 y 2 días
 - **6 facturas** con items desglosados y **6 comprobantes** en los cuatro estados posibles

@@ -77,6 +77,8 @@
                 <li><a class="nav-link" onclick="switchView('mensajes', this); cargarContactos();"><i class="fas fa-comments" aria-hidden="true"></i> Mensajes</a></li>
                 <li><a class="nav-link" onclick="switchView('foros', this); cargarForos();"><i class="fas fa-people-group" aria-hidden="true"></i> Foros</a></li>
                 <li><a class="nav-link" onclick="switchView('cursado', this); cargarCursado();"><i class="fas fa-calendar-alt" aria-hidden="true"></i> Mi cursado</a></li>
+                <li><a class="nav-link" onclick="switchView('mis-servicios', this); window.abrirMisServicios();"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i> Mis servicios y cuotas</a></li>
+                <li><a class="nav-link" onclick="switchView('carnet', this); window.abrirCarnet();"><i class="fas fa-qrcode" aria-hidden="true"></i> Carnet digital</a></li>
             </ul>
         </aside>
 
@@ -162,6 +164,18 @@
                 <h2 class="section-title">Mi cursado</h2>
                 <div id="vistaCursado"><p class="texto-vacio">Cargando…</p></div>
             </section>
+
+            <!-- Lo mismo que el estudiante ve en la app: servicios del mes, cuotas
+                 y deuda por concepto, en lectura. Pagar es de los padres. -->
+            <section id="mis-servicios" class="view-section">
+                <h2 class="section-title">Mis servicios y cuotas</h2>
+                <div id="vista-mis-servicios"></div>
+            </section>
+
+            <section id="carnet" class="view-section">
+                <h2 class="section-title">Carnet digital</h2>
+                <div id="vista-carnet"></div>
+            </section>
         </main>
     </div>
 
@@ -169,6 +183,12 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/sesion.js"></script>
     <script src="campus.js"></script>
+    <script type="module">
+      import { iniciarServiciosEstudiante } from './js/vistas/estudiante-servicios.js';
+      window.abrirMisServicios = () => iniciarServiciosEstudiante('vista-mis-servicios');
+      import { iniciarCarnetEstudiante } from './js/vistas/estudiante-carnet.js';
+      window.abrirCarnet = () => iniciarCarnetEstudiante('vista-carnet');
+    </script>
     <script>
         // La cuenta de esta pestaña (ver js/sesion.js). Se confirma al cargar.
         let ME = window.usuarioSesion();

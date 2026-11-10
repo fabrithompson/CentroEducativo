@@ -169,6 +169,21 @@ const RUTAS_PROTEGIDAS: [string, string][] = [
   ['POST', '/api/transporte/posicion'],
   ['GET', '/api/transporte/1/posicion'],
   ['GET', '/api/transporte/seguimiento/1'],
+  // Aranceles y grilla horaria: las cambia sólo el administrador.
+  ['PATCH', '/api/deportes/1'],
+  ['DELETE', '/api/deportes/1/horarios/1'],
+  ['PATCH', '/api/servicios/transporte/recorridos/1'],
+  ['PATCH', '/api/servicios/comedor/planes/1'],
+  ['GET', '/api/academico/materias/1/horarios'],
+  ['POST', '/api/academico/materias/1/horarios'],
+  ['DELETE', '/api/academico/materias/1/horarios/1'],
+  // Reportes de la consigna que faltaban.
+  ['GET', '/api/reportes/alumno/1'],
+  ['GET', '/api/reportes/docente/1'],
+  ['GET', '/api/reportes/docentes-por-nivel'],
+  ['GET', '/api/reportes/pagos-por-deporte'],
+  ['GET', '/api/reportes/pagos-por-recorrido'],
+  ['GET', '/api/profesores/yo/cursos'],
 ];
 
 test('ninguna ruta del sistema de gestión responde sin autenticación', async () => {
@@ -227,6 +242,68 @@ test('change-password exige sesión iniciada', async () => {
     body: { actual: 'x', nueva: 'Passw0rd1' },
   });
   assert.equal(res.status, 401);
+});
+
+// ------------------------------------------------------------------
+// Permisos por rol
+// ------------------------------------------------------------------
+//
+// `requireRole` corta antes de tocar la base, así que un token firmado con el
+// secreto de prueba alcanza para comprobar quién entra y quién no.
+
+async function tokenDe(role: 'ADMIN' | 'DOCENTE' | 'PADRE' | 'ESTUDIANTE'): Promise<string> {
+  const { signAccessToken } = await import('./middleware/auth.ts');
+  return `Bearer ${signAccessToken({ id: 999_999, usuario: `prueba-${role.toLowerCase()}`, role } as never)}`;
+}
+
+const SOLO_ADMIN: [string, string][] = [
+  ['PATCH', '/api/deportes/1'],
+  ['DELETE', '/api/deportes/1/horarios/1'],
+  ['PATCH', '/api/servicios/transporte/recorridos/1'],
+  ['PATCH', '/api/servicios/comedor/planes/1'],
+  ['POST', '/api/academico/materias/1/horarios'],
+  ['DELETE', '/api/academico/materias/1/horarios/1'],
+];
+
+test('los aranceles y la grilla sólo los cambia el administrador', async () => {
+  const pasaron: string[] = [];
+  for (const role of ['DOCENTE', 'PADRE', 'ESTUDIANTE'] as const) {
+    const auth = await tokenDe(role);
+    for (const [metodo, ruta] of SOLO_ADMIN) {
+      const res = await pedir(metodo, ruta, { auth, body: { arancelMensual: 1 } });
+      if (res.status !== 403) pasaron.push(`${role} ${metodo} ${ruta} -> ${res.status}`);
+    }
+  }
+  assert.deepEqual(pasaron, []);
+});
+
+test('los reportes de gestión son del administrador; el docente sólo ve el suyo', async () => {
+  for (const role of ['DOCENTE', 'PADRE', 'ESTUDIANTE'] as const) {
+    const res = await pedir('GET', '/api/reportes/pagos-por-deporte', { auth: await tokenDe(role) });
+    assert.equal(res.status, 403, role);
+  }
+  for (const role of ['ADMIN', 'PADRE', 'ESTUDIANTE'] as const) {
+    const res = await pedir('GET', '/api/profesores/yo/cursos', { auth: await tokenDe(role) });
+    assert.equal(res.status, 403, role);
+  }
+});
+
+test('un docente no entra al portal de familias', async () => {
+  const res = await pedir('GET', '/api/padres/mis-hijos', { auth: await tokenDe('DOCENTE') });
+  assert.equal(res.status, 403);
+});
+
+test('un estudiante ve lo suyo pero no paga ni inscribe', async () => {
+  const auth = await tokenDe('ESTUDIANTE');
+  for (const [metodo, ruta] of [
+    ['POST', '/api/facturacion/comprobantes'],
+    ['POST', '/api/deportes/inscripciones'],
+    ['POST', '/api/servicios/transporte'],
+    ['POST', '/api/servicios/comedor'],
+  ] as const) {
+    const res = await pedir(metodo, ruta, { auth, body: {} });
+    assert.equal(res.status, 403, `${metodo} ${ruta}`);
+  }
 });
 
 // ------------------------------------------------------------------

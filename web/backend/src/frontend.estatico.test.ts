@@ -45,6 +45,10 @@ const ARCHIVOS = [
   { ruta: '/js/vistas/docente-cursos.js', tipo: 'javascript' },
   { ruta: '/js/vistas/padre-hijos.js', tipo: 'javascript' },
   { ruta: '/js/vistas/escaner.js', tipo: 'javascript' },
+  { ruta: '/js/vistas/admin-servicios.js', tipo: 'javascript' },
+  { ruta: '/js/vistas/estudiante-servicios.js', tipo: 'javascript' },
+  { ruta: '/js/comprobante.js', tipo: 'javascript' },
+  { ruta: '/js/vistas/estudiante-carnet.js', tipo: 'javascript' },
 ];
 
 test('el servidor entrega todos los archivos del frontend', async () => {

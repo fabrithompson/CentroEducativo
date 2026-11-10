@@ -14,6 +14,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
   type StyleProp,
   type ViewStyle,
@@ -196,6 +197,102 @@ export function Aviso({ texto, tono = 'neutro' }: { texto: string; tono?: 'neutr
 }
 
 // ==================================================================
+// Título de sección
+// ==================================================================
+
+export function Seccion({ titulo }: { titulo: string }) {
+  return (
+    <Text style={estilos.seccion} accessibilityRole="header">
+      {titulo}
+    </Text>
+  );
+}
+
+// ==================================================================
+// Campo de texto
+// ==================================================================
+
+export function CampoTexto({
+  etiqueta,
+  valor,
+  onChange,
+  secreto = false,
+  placeholder,
+  tipoTeclado = 'default',
+  multilinea = false,
+  ayuda,
+}: {
+  etiqueta: string;
+  valor: string;
+  onChange: (v: string) => void;
+  secreto?: boolean;
+  placeholder?: string;
+  tipoTeclado?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
+  multilinea?: boolean;
+  ayuda?: string;
+}) {
+  return (
+    <View style={estilos.campo}>
+      <Text style={estilos.campoEtiqueta}>{etiqueta}</Text>
+      <TextInput
+        style={[estilos.input, multilinea && estilos.inputMultilinea]}
+        value={valor}
+        onChangeText={onChange}
+        secureTextEntry={secreto}
+        placeholder={placeholder}
+        placeholderTextColor={colores.textoSuave}
+        keyboardType={tipoTeclado}
+        autoCapitalize={tipoTeclado === 'default' && !secreto ? 'sentences' : 'none'}
+        autoCorrect={false}
+        multiline={multilinea}
+        accessibilityLabel={etiqueta}
+        accessibilityHint={ayuda}
+      />
+      {ayuda ? <Text style={estilos.campoAyuda}>{ayuda}</Text> : null}
+    </View>
+  );
+}
+
+// ==================================================================
+// Selector de opciones (una sola)
+// ==================================================================
+
+export function Opciones<T extends string | number>({
+  etiqueta,
+  opciones,
+  valor,
+  onChange,
+}: {
+  etiqueta: string;
+  opciones: { valor: T; titulo: string }[];
+  valor: T | null;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <View style={estilos.campo} accessibilityRole="radiogroup" accessibilityLabel={etiqueta}>
+      <Text style={estilos.campoEtiqueta}>{etiqueta}</Text>
+      <View style={estilos.opciones}>
+        {opciones.map((o) => {
+          const activa = o.valor === valor;
+          return (
+            <Pressable
+              key={String(o.valor)}
+              onPress={() => onChange(o.valor)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: activa }}
+              accessibilityLabel={o.titulo}
+              style={[estilos.opcion, activa && estilos.opcionActiva]}
+            >
+              <Text style={[estilos.opcionTexto, activa && estilos.opcionTextoActiva]}>{o.titulo}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// ==================================================================
 // Estilos
 // ==================================================================
 
@@ -301,4 +398,37 @@ const estilos = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  seccion: {
+    ...tipografia.subtitulo,
+    color: colores.texto,
+    marginTop: espaciado.lg,
+    marginBottom: espaciado.md,
+  },
+  campo: { gap: espaciado.xs, marginBottom: espaciado.md },
+  campoEtiqueta: { ...tipografia.etiqueta, color: colores.textoSuave },
+  campoAyuda: { fontSize: 12, color: colores.textoSuave },
+  input: {
+    minHeight: ALTO_TOCABLE,
+    borderWidth: 1,
+    borderColor: colores.borde,
+    borderRadius: radio.sm,
+    paddingHorizontal: espaciado.md,
+    fontSize: 16,
+    color: colores.texto,
+    backgroundColor: colores.superficie,
+  },
+  inputMultilinea: { minHeight: 96, paddingTop: espaciado.sm, textAlignVertical: 'top' },
+  opciones: { flexDirection: 'row', flexWrap: 'wrap', gap: espaciado.sm },
+  opcion: {
+    minHeight: ALTO_TOCABLE,
+    paddingHorizontal: espaciado.lg,
+    justifyContent: 'center',
+    borderRadius: radio.pill,
+    borderWidth: 1,
+    borderColor: colores.borde,
+    backgroundColor: colores.superficie,
+  },
+  opcionActiva: { backgroundColor: colores.primario, borderColor: colores.primario },
+  opcionTexto: { color: colores.texto, fontWeight: '600' },
+  opcionTextoActiva: { color: colores.textoInverso },
 });

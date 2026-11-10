@@ -619,6 +619,276 @@ function ejecutarExportacion() {
 // Orquestación
 // ==================================================================
 
+// ==================================================================
+// Reportes de gestión que pide la consigna (Parte 2 y Parte 3)
+// ==================================================================
+
+const horariosTexto = (horarios) =>
+  horarios?.length ? horarios.map((h) => `${esc(dia(h.diaSemana))} ${esc(h.desde)}–${esc(h.hasta)}`).join('<br>') : '—';
+
+const periodoDe = (valores) => {
+  const hoy = periodoActual();
+  return { anio: Number(valores.anio ?? hoy.anio), mes: Number(valores.mes ?? hoy.mes) };
+};
+
+const camposPeriodo = (valores) => {
+  const p = periodoDe(valores);
+  return [
+    { nombre: 'anio', etiqueta: 'Año', tipo: 'select', valor: String(p.anio), opciones: opcionesAnio() },
+    { nombre: 'mes', etiqueta: 'Mes', tipo: 'select', valor: String(p.mes), opciones: MESES.map((m, i) => opcion(String(i + 1), m)) },
+  ];
+};
+
+const ESTADO_PAGO = { SIN_FACTURA: 'Sin factura', PAGADA: 'Pagado' };
+const estadoPago = (pago) => (pago.estadoPago === 'SIN_FACTURA' ? '<span class="badge">Sin factura</span>' : badge(pago.estadoPago));
+
+/** Parte 2 — Por alumno: curso, materias y profesores, deportes y horarios, uso de transporte y comedor. */
+async function reportePorAlumno(_contenedor, valores = {}) {
+  const barra = filtros({
+    id: 'f-alumno',
+    textoBoton: 'Ver reporte',
+    campos: [
+      { nombre: 'legajo', etiqueta: 'Legajo, DNI o apellido', tipo: 'text', valor: valores.legajo, placeholder: 'A-0001' },
+      ...camposPeriodo(valores),
+    ],
+  });
+
+  if (!valores.legajo) return `${barra}<p>Buscá un alumno para ver su reporte.</p>`;
+
+  const { items } = await api.alumnos.listar({ busqueda: valores.legajo, pageSize: 5 });
+  const alumno = items.find((a) => a.legajo.toLowerCase() === String(valores.legajo).toLowerCase()) ?? items[0];
+  if (!alumno) return `${barra}<p>No se encontró ningún alumno con "${esc(valores.legajo)}".</p>`;
+
+  const r = await api.reportes.porAlumno(alumno.id, periodoDe(valores));
+
+  return `
+    ${barra}
+    <div class="ficha">
+      <h3 class="ficha__titulo"><i class="fas fa-id-card" aria-hidden="true"></i>
+        ${esc(r.alumno.apellido)}, ${esc(r.alumno.nombres)} · Legajo ${esc(r.alumno.legajo)}
+      </h3>
+      <dl class="ficha__datos">
+        <div><dt>Nivel</dt><dd>${esc(r.curso.nivel)}</dd></div>
+        <div><dt>Curso</dt><dd>${esc(r.curso.nombre)}</dd></div>
+        <div><dt>Estado</dt><dd>${badge(r.alumno.estado)}</dd></div>
+      </dl>
+    </div>
+    ${grillaIndicadores([
+      { titulo: 'Transporte', valor: r.transporte.inscripto ? esc(r.transporte.recorrido) : 'No usa', icono: 'fa-bus', detalle: `${r.transporte.viajesRegistrados} viaje(s) registrados en el mes` },
+      { titulo: 'Comedor', valor: r.comedor.inscripto ? esc(r.comedor.plan) : 'No usa', icono: 'fa-utensils', detalle: `${r.comedor.almuerzosRegistrados} almuerzo(s) registrados en el mes` },
+    ])}
+    ${tabla({
+      caption: 'Materias que cursa y profesor de cada una',
+      columnas: [
+        { clave: 'nombre', titulo: 'Materia', render: (m) => `<strong>${esc(m.nombre)}</strong>` },
+        { clave: 'profesor', titulo: 'Profesor', render: (m) => esc(m.profesor ?? 'Sin asignar') },
+        { clave: 'horarios', titulo: 'Horarios', render: (m) => horariosTexto(m.horarios) },
+      ],
+      filas: r.materias,
+      vacio: 'El curso no tiene materias cargadas.',
+    })}
+    ${tabla({
+      caption: 'Deportes en los que participa y sus horarios',
+      columnas: [
+        { clave: 'nombre', titulo: 'Deporte', render: (d) => `<strong>${esc(d.nombre)}</strong>` },
+        { clave: 'profesor', titulo: 'Profesor', render: (d) => esc(d.profesor) },
+        { clave: 'horarios', titulo: 'Horarios', render: (d) => horariosTexto(d.horarios) },
+      ],
+      filas: r.deportes,
+      vacio: 'No participa en deportes.',
+    })}`;
+}
+
+/** Parte 2 — Por docente: cursos a cargo por nivel y los horarios de cada curso. */
+async function reportePorDocente(_contenedor, valores = {}) {
+  const cat = await cargarCatalogos();
+  const barra = filtros({
+    id: 'f-docente',
+    textoBoton: 'Ver reporte',
+    campos: [
+      {
+        nombre: 'profesorId', etiqueta: 'Docente', tipo: 'select', valor: valores.profesorId,
+        opciones: [opcion('', 'Elegí un docente'), ...cat.profesores.map((p) => opcion(String(p.id), `${p.apellido}, ${p.nombres}`))],
+      },
+    ],
+  });
+
+  if (!valores.profesorId) return `${barra}<p>Elegí un docente para ver sus cursos y horarios.</p>`;
+
+  const r = await api.reportes.porDocente(valores.profesorId);
+  const niveles = r.niveles
+    .map(
+      (n) => `
+      <h3 class="ficha__titulo" style="margin-top:20px">${esc(n.nivel)}</h3>
+      ${tabla({
+        caption: `Cursos a cargo en ${n.nivel}`,
+        columnas: [
+          { clave: 'curso', titulo: 'Curso', render: (c) => `<strong>${esc(c.curso)}</strong><br><small>Turno ${esc(c.turno)}</small>` },
+          { clave: 'materias', titulo: 'Materias y horarios', render: (c) => c.materias.map((m) => `<strong>${esc(m.nombre)}</strong> (${esc(m.cargaHoraria)} h)<br>${horariosTexto(m.horarios)}`).join('<hr>') },
+        ],
+        filas: n.cursos,
+      })}`,
+    )
+    .join('');
+
+  return `
+    ${barra}
+    ${grillaIndicadores([
+      { titulo: 'Niveles', valor: r.totales.niveles, icono: 'fa-layer-group' },
+      { titulo: 'Cursos', valor: r.totales.cursos, icono: 'fa-door-open' },
+      { titulo: 'Materias', valor: r.totales.materias, icono: 'fa-book' },
+      { titulo: 'Horas semanales', valor: r.totales.horasSemanales, icono: 'fa-clock' },
+    ])}
+    ${niveles || '<p>No tiene materias asignadas.</p>'}
+    ${r.deportes.length ? tabla({
+      caption: 'Deportes a cargo',
+      columnas: [
+        { clave: 'nombre', titulo: 'Deporte' },
+        { clave: 'horarios', titulo: 'Grupos', render: (d) => d.horarios.map((h) => `${esc(h.nivel)}: ${esc(dia(h.diaSemana))} ${esc(h.desde)}–${esc(h.hasta)}`).join('<br>') },
+      ],
+      filas: r.deportes,
+    }) : ''}`;
+}
+
+/** Parte 2 — Listado de docentes por nivel educativo. */
+async function reporteDocentesPorNivel(_contenedor, valores = {}) {
+  await cargarCatalogos();
+  const barra = filtros({
+    id: 'f-docentes-nivel',
+    campos: [{ nombre: 'nivelId', etiqueta: 'Nivel', tipo: 'select', valor: valores.nivelId, opciones: opcionesNivel() }],
+  });
+  const data = await api.reportes.docentesPorNivel(valores);
+
+  const columnas = [
+    { clave: 'nivel', titulo: 'Nivel educativo' },
+    { clave: 'profesor', titulo: 'Profesor', render: (f) => `${esc(f.profesor.apellido)}, ${esc(f.profesor.nombres)}` },
+    { clave: 'materias', titulo: 'Materias a cargo', render: (f) => f.materias.map(esc).join('<br>') },
+    { clave: 'cursos', titulo: 'Cursos', render: (f) => f.cursos.map(esc).join('<br>') },
+  ];
+
+  guardarExportacion('docentes-por-nivel', columnas, data.filas, (f) => ({
+    Nivel: f.nivel,
+    Profesor: `${f.profesor.apellido}, ${f.profesor.nombres}`,
+    Materias: f.materias.join(' / '),
+    Cursos: f.cursos.join(' / '),
+  }));
+
+  return `
+    ${barra}
+    ${grillaIndicadores([{ titulo: 'Docentes', valor: data.totales.docentesDistintos, icono: 'fa-chalkboard-user' }])}
+    ${botonExportar()}
+    ${tabla({ caption: 'Docentes por nivel educativo', columnas, filas: data.filas, vacio: 'No hay docentes con materias en ese nivel.' })}`;
+}
+
+function indicadoresDePago(t) {
+  return grillaIndicadores([
+    { titulo: 'Alumnos', valor: t.filas, icono: 'fa-users' },
+    { titulo: 'Pagaron', valor: t.pagados, tono: 'ok', icono: 'fa-circle-check' },
+    { titulo: 'Con deuda', valor: t.conDeuda, tono: 'alerta', icono: 'fa-circle-exclamation' },
+    { titulo: 'Sin factura', valor: t.sinFactura, icono: 'fa-file-circle-question' },
+    { titulo: 'Cobrado', valor: moneda(t.cobrado), tono: 'ok', icono: 'fa-coins' },
+    { titulo: 'Adeudado', valor: moneda(t.adeudado), tono: 'alerta', icono: 'fa-hand-holding-dollar' },
+  ]);
+}
+
+/** Parte 3 — Pagos de alumnos por deporte, nivel, horario y profesor a cargo. */
+async function reportePagosDeporte(_contenedor, valores = {}) {
+  const cat = await cargarCatalogos();
+  const barra = filtros({
+    id: 'f-pagos-deporte',
+    campos: [
+      { nombre: 'deporteId', etiqueta: 'Deporte', tipo: 'select', valor: valores.deporteId, opciones: [opcion('', 'Todos'), ...cat.deportes.map((d) => opcion(String(d.id), d.nombre))] },
+      { nombre: 'nivelId', etiqueta: 'Nivel', tipo: 'select', valor: valores.nivelId, opciones: opcionesNivel() },
+      { nombre: 'diaSemana', etiqueta: 'Día', tipo: 'select', valor: valores.diaSemana, opciones: [opcion('', 'Todos los días'), ...['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'].map((d) => opcion(d, dia(d)))] },
+      { nombre: 'profesorId', etiqueta: 'Profesor a cargo', tipo: 'select', valor: valores.profesorId, opciones: [opcion('', 'Todos'), ...cat.profesores.map((p) => opcion(String(p.id), `${p.apellido}, ${p.nombres}`))] },
+      ...camposPeriodo(valores),
+    ],
+  });
+
+  const data = await api.reportes.pagosPorDeporte({ ...valores, ...periodoDe(valores) });
+
+  const columnas = [
+    { clave: 'deporte', titulo: 'Deporte', render: (f) => `<strong>${esc(f.deporte.nombre)}</strong>` },
+    { clave: 'profesor', titulo: 'Profesor', render: (f) => esc(`${f.deporte.profesorResponsable.apellido}, ${f.deporte.profesorResponsable.nombres}`) },
+    { clave: 'alumno', titulo: 'Alumno', render: (f) => `${esc(f.alumno.apellido)}, ${esc(f.alumno.nombres)}<br><small>${esc(f.alumno.legajo)}</small>` },
+    { clave: 'curso', titulo: 'Nivel y curso', render: (f) => `${esc(f.alumno.nivel)}<br><small>${esc(f.alumno.curso)}</small>` },
+    { clave: 'horarios', titulo: 'Horario', render: (f) => horariosTexto(f.horarios) },
+    { clave: 'estado', titulo: 'Pago', render: (f) => estadoPago(f.pago) },
+    { clave: 'facturado', titulo: 'Facturado', alinear: 'derecha', render: (f) => `<span class="numero">${moneda(f.pago.facturado)}</span>` },
+    { clave: 'adeudado', titulo: 'Adeudado', alinear: 'derecha', render: (f) => `<span class="numero">${moneda(f.pago.adeudado)}</span>` },
+  ];
+
+  guardarExportacion('pagos-por-deporte', columnas, data.filas, (f) => ({
+    Deporte: f.deporte.nombre,
+    Profesor: `${f.deporte.profesorResponsable.apellido}, ${f.deporte.profesorResponsable.nombres}`,
+    Legajo: f.alumno.legajo,
+    Alumno: `${f.alumno.apellido}, ${f.alumno.nombres}`,
+    Nivel: f.alumno.nivel,
+    Curso: f.alumno.curso,
+    Horario: f.horarios.map((h) => `${h.diaSemana} ${h.desde}-${h.hasta}`).join(' / '),
+    Pago: ESTADO_PAGO[f.pago.estadoPago] ?? f.pago.estadoPago,
+    Facturado: f.pago.facturado,
+    Adeudado: f.pago.adeudado,
+  }));
+
+  return `
+    ${barra}
+    ${indicadoresDePago(data.totales)}
+    ${botonExportar()}
+    ${tabla({ caption: 'Pagos de alumnos por deporte', columnas, filas: data.filas, vacio: 'No hay inscripciones con esos filtros.' })}`;
+}
+
+/** Parte 3 — Pagos de alumnos por recorrido del servicio de transporte. */
+async function reportePagosRecorrido(_contenedor, valores = {}) {
+  const cat = await cargarCatalogos();
+  const barra = filtros({
+    id: 'f-pagos-recorrido',
+    campos: [
+      { nombre: 'codigo', etiqueta: 'Recorrido', tipo: 'select', valor: valores.codigo, opciones: [opcion('', 'Los 4 recorridos'), ...cat.recorridos.map((r) => opcion(r.codigo, `${r.codigo} — ${r.nombre}`))] },
+      ...camposPeriodo(valores),
+    ],
+  });
+
+  const data = await api.reportes.pagosPorRecorrido({ ...valores, ...periodoDe(valores) });
+
+  const columnas = [
+    { clave: 'recorrido', titulo: 'Recorrido', render: (f) => `<strong>${esc(f.recorrido.codigo)}</strong> · ${esc(f.recorrido.nombre)}` },
+    { clave: 'alumno', titulo: 'Alumno', render: (f) => `${esc(f.alumno.apellido)}, ${esc(f.alumno.nombres)}<br><small>${esc(f.alumno.legajo)}</small>` },
+    { clave: 'curso', titulo: 'Curso', render: (f) => esc(f.alumno.curso) },
+    { clave: 'turno', titulo: 'Turno', render: (f) => badge(f.turno) },
+    { clave: 'estado', titulo: 'Pago', render: (f) => estadoPago(f.pago) },
+    { clave: 'facturado', titulo: 'Facturado', alinear: 'derecha', render: (f) => `<span class="numero">${moneda(f.pago.facturado)}</span>` },
+    { clave: 'adeudado', titulo: 'Adeudado', alinear: 'derecha', render: (f) => `<span class="numero">${moneda(f.pago.adeudado)}</span>` },
+  ];
+
+  guardarExportacion('pagos-por-recorrido', columnas, data.filas, (f) => ({
+    Recorrido: f.recorrido.codigo,
+    Legajo: f.alumno.legajo,
+    Alumno: `${f.alumno.apellido}, ${f.alumno.nombres}`,
+    Curso: f.alumno.curso,
+    Turno: f.turno,
+    Pago: ESTADO_PAGO[f.pago.estadoPago] ?? f.pago.estadoPago,
+    Facturado: f.pago.facturado,
+    Adeudado: f.pago.adeudado,
+  }));
+
+  return `
+    ${barra}
+    ${indicadoresDePago(data.totales)}
+    <div class="ficha">${tabla({
+      caption: 'Resumen por recorrido',
+      columnas: [
+        { clave: 'recorrido', titulo: 'Recorrido' },
+        { clave: 'alumnos', titulo: 'Alumnos', alinear: 'derecha' },
+        { clave: 'pagados', titulo: 'Pagaron', alinear: 'derecha' },
+        { clave: 'adeudado', titulo: 'Adeudado', alinear: 'derecha', render: (r) => `<span class="numero">${moneda(r.adeudado)}</span>` },
+      ],
+      filas: data.resumenPorRecorrido,
+    })}</div>
+    ${botonExportar()}
+    ${tabla({ caption: 'Pagos de alumnos por recorrido', columnas, filas: data.filas, vacio: 'No hay alumnos con transporte en ese período.' })}`;
+}
+
 const REPORTES = {
   deportes: { titulo: 'Alumnos por deporte', icono: 'fa-futbol', fn: reporteDeportes },
   materias: { titulo: 'Alumnos por materia', icono: 'fa-book', fn: reporteMaterias },
@@ -626,6 +896,11 @@ const REPORTES = {
   pagos: { titulo: 'Pagos completos e incompletos', icono: 'fa-file-invoice-dollar', fn: reportePagos },
   ingresos: { titulo: 'Ingresos por período', icono: 'fa-chart-line', fn: reporteIngresos },
   morosidad: { titulo: 'Morosidad', icono: 'fa-user-clock', fn: reporteMorosidad },
+  porAlumno: { titulo: 'Por alumno', icono: 'fa-id-card', fn: reportePorAlumno },
+  porDocente: { titulo: 'Por docente', icono: 'fa-chalkboard-user', fn: reportePorDocente },
+  docentesNivel: { titulo: 'Docentes por nivel', icono: 'fa-layer-group', fn: reporteDocentesPorNivel },
+  pagosDeporte: { titulo: 'Pagos por deporte', icono: 'fa-futbol', fn: reportePagosDeporte },
+  pagosRecorrido: { titulo: 'Pagos por recorrido', icono: 'fa-bus', fn: reportePagosRecorrido },
 };
 
 let reporteActivo = 'deportes';

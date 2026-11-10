@@ -32,7 +32,7 @@ import {
   type FacturaResumen,
   type Solapa,
 } from '../dominio/pagos';
-import { moneda, periodo, textoVencimiento, tipoItem } from '../dominio/formato';
+import { fecha, moneda, periodo, textoVencimiento, tipoItem } from '../dominio/formato';
 import {
   consultaDeRango,
   mover,
@@ -48,7 +48,8 @@ import { ALTO_TOCABLE, colores, espaciado, radio, tipografia } from '../ui/tema'
 
 interface Props {
   hijo: Hijo;
-  onPagar: (factura: FacturaDetallada) => void;
+  /** Sin `onPagar` la pantalla es de sólo lectura: el estudiante ve sus cuotas pero no paga. */
+  onPagar?: (factura: FacturaDetallada) => void;
 }
 
 const SOLAPAS: { clave: Solapa; titulo: string }[] = [
@@ -231,7 +232,13 @@ export function PantallaFinanzas({ hijo, onPagar }: Props) {
         visibles.map((resumen) => {
           const completa = listado.find((f) => f.id === resumen.id);
           if (!completa) return null;
-          return <TarjetaCuota key={resumen.id} factura={completa} onPagar={() => onPagar(completa)} />;
+          return (
+            <TarjetaCuota
+              key={resumen.id}
+              factura={completa}
+              onPagar={onPagar ? () => onPagar(completa) : undefined}
+            />
+          );
         })
       )}
 
@@ -381,14 +388,14 @@ function Flecha({
 
 // ------------------------------------------------------------------
 
-function TarjetaCuota({ factura, onPagar }: { factura: FacturaDetallada; onPagar: () => void }) {
+function TarjetaCuota({ factura, onPagar }: { factura: FacturaDetallada; onPagar?: () => void }) {
   const [abierta, setAbierta] = useState(false);
   const [abriendo, setAbriendo] = useState(false);
 
   const resumen = aResumen(factura);
 
   const pct = porcentajePagado(resumen);
-  const puedePagar = factura.saldo > 0 && factura.estado !== 'ANULADA';
+  const puedePagar = onPagar !== undefined && factura.saldo > 0 && factura.estado !== 'ANULADA';
 
   /**
    * El comprobante es el HTML que emite el backend —el mismo de la web y del
@@ -486,7 +493,9 @@ function TarjetaCuota({ factura, onPagar }: { factura: FacturaDetallada; onPagar
                 <View key={c.id} style={estilos.filaItem}>
                   <View style={estilos.itemTexto}>
                     <Text style={estilos.itemNombre}>{c.bancoOrigen}</Text>
-                    <Text style={estilos.itemFacturado}>Operación {c.numeroOperacion}</Text>
+                    <Text style={estilos.itemFacturado}>
+                      {fecha(c.fechaTransferencia)} · Operación {c.numeroOperacion}
+                    </Text>
                   </View>
                   <View style={{ alignItems: 'flex-end', gap: espaciado.xs }}>
                     <Text style={estilos.itemAdeudado}>{moneda(c.monto)}</Text>

@@ -88,7 +88,7 @@ export function PantallaIngreso() {
       >
         <View style={estilos.encabezado}>
           <Text style={estilos.marca}>Educar para Transformar</Text>
-          <Text style={estilos.subtitulo}>Portal de familias</Text>
+          <Text style={estilos.subtitulo}>Familias, estudiantes, docentes y administración</Text>
         </View>
 
         <View style={estilos.formulario}>

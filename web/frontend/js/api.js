@@ -180,6 +180,8 @@ export const api = {
     darDeBaja: (id, estado) => del(`/profesores/${id}`, { estado }),
     asignarMateria: (id, materiaId) => post(`/profesores/${id}/materias`, { materiaId }),
     quitarMateria: (materiaId) => del(`/profesores/materias/${materiaId}`),
+    /** Reporte por docente del que pregunta: cursos por nivel con horarios. */
+    misCursos: () => get('/profesores/yo/cursos'),
   },
 
   admin: {
@@ -206,13 +208,21 @@ export const api = {
     crearMateria: (datos) => post('/academico/materias', datos),
     actualizarMateria: (id, datos) => patch(`/academico/materias/${id}`, datos),
     darDeBajaMateria: (id) => del(`/academico/materias/${id}`),
+
+    horariosMateria: (id) => get(`/academico/materias/${id}/horarios`),
+    agregarHorarioMateria: (id, datos) => post(`/academico/materias/${id}/horarios`, datos),
+    quitarHorarioMateria: (id, horarioId) => del(`/academico/materias/${id}/horarios/${horarioId}`),
   },
 
   deportes: {
     catalogo: (filtros) => get('/deportes', filtros),
+    crear: (datos) => post('/deportes', datos),
     obtener: (id) => get(`/deportes/${id}`),
     deAlumno: (alumnoId) => get(`/deportes/alumno/${alumnoId}`),
     disponiblesPara: (alumnoId) => get(`/deportes/alumno/${alumnoId}/disponibles`),
+    actualizar: (id, datos) => patch(`/deportes/${id}`, datos),
+    agregarHorario: (id, datos) => post(`/deportes/${id}/horarios`, datos),
+    quitarHorario: (id, horarioId) => del(`/deportes/${id}/horarios/${horarioId}`),
     inscribir: (alumnoId, deporteId) => post('/deportes/inscripciones', { alumnoId, deporteId }),
     darDeBaja: (inscripcionId) => del(`/deportes/inscripciones/${inscripcionId}`),
   },
@@ -221,10 +231,17 @@ export const api = {
     recorridos: (periodo) => get('/servicios/transporte/recorridos', periodo),
     contratarTransporte: (datos) => post('/servicios/transporte', datos),
     bajaTransporte: (id) => del(`/servicios/transporte/${id}`),
+    arancelRecorrido: (id, arancelMensual) => patch(`/servicios/transporte/recorridos/${id}`, { arancelMensual }),
     planesComedor: (periodo) => get('/servicios/comedor/planes', periodo),
+    arancelComedor: (id, arancelMensual) => patch(`/servicios/comedor/planes/${id}`, { arancelMensual }),
     contratarComedor: (datos) => post('/servicios/comedor', datos),
     bajaComedor: (id) => del(`/servicios/comedor/${id}`),
     deAlumno: (alumnoId, periodo) => get(`/servicios/alumno/${alumnoId}`, periodo),
+  },
+
+  publico: {
+    /** "Inscribir a su hijo al cursado": la misma solicitud del formulario público. */
+    solicitarInscripcion: (datos) => post('/public/inscriptions', datos),
   },
 
   padres: {
@@ -245,6 +262,11 @@ export const api = {
     pagos: (filtros) => get('/reportes/pagos', filtros),
     ingresos: (filtros) => get('/reportes/ingresos', filtros),
     morosidad: (filtros) => get('/reportes/morosidad', filtros),
+    porAlumno: (alumnoId, periodo) => get(`/reportes/alumno/${alumnoId}`, periodo),
+    porDocente: (profesorId) => get(`/reportes/docente/${profesorId}`),
+    docentesPorNivel: (filtros) => get('/reportes/docentes-por-nivel', filtros),
+    pagosPorDeporte: (filtros) => get('/reportes/pagos-por-deporte', filtros),
+    pagosPorRecorrido: (filtros) => get('/reportes/pagos-por-recorrido', filtros),
   },
 
   facturacion: {

@@ -17,7 +17,9 @@ import api from '../api.js';
 import {
   avisar,
   badge,
+  dia,
   esc,
+  hora,
   leerFiltros,
   moneda,
   pieDialogo,
@@ -60,9 +62,10 @@ async function refrescarCatalogos() {
 
 const estadoDe = (activo) => badge(activo ? 'ACTIVO' : 'INACTIVO');
 
-function botonesFila(id, activo) {
+function botonesFila(id, activo, extra = '') {
   return `
     <div class="acciones-fila">
+      ${extra}
       <button type="button" class="btn btn--chico btn--suave" data-editar="${id}">
         <i class="fas fa-pen" aria-hidden="true"></i> Editar
       </button>
@@ -162,8 +165,21 @@ const TABLAS = {
               : '<span class="badge badge--espera">sin asignar</span>',
         },
         { clave: 'cargaHoraria', titulo: 'Horas', alinear: 'centro' },
+        { clave: 'horarios', titulo: 'Horarios', render: (m) => resumenHorarios(m.horarios) },
         { clave: 'activo', titulo: 'Estado', alinear: 'centro', render: (m) => estadoDe(m.activo) },
-        { clave: 'acciones', titulo: 'Acciones', render: (m) => botonesFila(m.id, m.activo) },
+        {
+          clave: 'acciones',
+          titulo: 'Acciones',
+          render: (m) =>
+            botonesFila(
+              m.id,
+              m.activo,
+              `<button type="button" class="btn btn--chico btn--suave" data-horarios="${m.id}"
+                       data-nombre="${esc(`${m.nombre} — ${m.curso ? nombreCurso(m.curso) : ''}`)}">
+                 <i class="fas fa-clock" aria-hidden="true"></i> Horarios
+               </button>`,
+            ),
+        },
       ],
       filas: materias ?? [],
     });
@@ -286,6 +302,123 @@ function dialogo() {
         ${pieDialogo({ textoGuardar: 'Guardar', idGuardar: 'ac-guardar' })}
       </form>`,
   });
+}
+
+// ==================================================================
+// Grilla horaria de una materia
+// ==================================================================
+//
+// La consigna pide que el administrador gestione los horarios y el reporte por
+// docente con los "horarios de cada curso". Que una materia no choque con otra
+// del mismo curso ni con otra del mismo docente lo valida el backend
+// (`administrador/grilla.ts`); acá se muestra su mensaje.
+
+function resumenHorarios(horarios) {
+  if (!horarios?.length) return '<span class="badge badge--espera">sin horarios</span>';
+  return horarios
+    .map((h) => `${esc(dia(h.diaSemana))} ${esc(hora(h.horaInicio))}–${esc(hora(h.horaFin))}`)
+    .join('<br>');
+}
+
+const DIAS_SEMANA = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+let materiaDeHorarios = null;
+
+function dialogoHorarios() {
+  return plantillaDialogo({
+    id: 'dlg-horarios',
+    icono: 'fa-clock',
+    titulo: 'Horarios de la materia',
+    cuerpo: `
+      <div id="hm-lista" aria-live="polite"></div>
+      <form id="form-horario" novalidate>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="hm-dia">Día</label>
+            <select id="hm-dia" name="diaSemana" class="form-select" required>
+              ${DIAS_SEMANA.map((d) => `<option value="${d}">${esc(dia(d))}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="hm-aula">Aula (opcional)</label>
+            <input id="hm-aula" name="aula" class="form-input" maxlength="60">
+          </div>
+          <div class="form-group">
+            <label for="hm-desde">Desde</label>
+            <input id="hm-desde" name="horaInicio" type="time" class="form-input" required value="07:30">
+          </div>
+          <div class="form-group">
+            <label for="hm-hasta">Hasta</label>
+            <input id="hm-hasta" name="horaFin" type="time" class="form-input" required value="08:50">
+          </div>
+        </div>
+        <p class="campo__error" id="hm-error" role="alert" hidden></p>
+        ${pieDialogo({ textoGuardar: 'Agregar horario', iconoGuardar: 'fa-plus', idGuardar: 'hm-guardar' })}
+      </form>`,
+  });
+}
+
+async function pintarHorarios() {
+  const lista = document.getElementById('hm-lista');
+  if (!lista || materiaDeHorarios === null) return;
+  const { horarios } = await api.academico.horariosMateria(materiaDeHorarios);
+  lista.innerHTML = horarios.length
+    ? `<ul class="lista-horarios">${horarios
+        .map(
+          (h) => `<li>
+            <span>${esc(dia(h.diaSemana))}</span>
+            <span>${esc(hora(h.horaInicio))}–${esc(hora(h.horaFin))}${h.aula ? ` · ${esc(h.aula)}` : ''}</span>
+            <button type="button" class="btn btn--chico btn--peligro" data-quitar-horario="${h.id}"
+                    aria-label="Quitar el horario del ${esc(dia(h.diaSemana))} a las ${esc(hora(h.horaInicio))}">
+              <i class="fas fa-trash" aria-hidden="true"></i>
+            </button>
+          </li>`,
+        )
+        .join('')}</ul>`
+    : '<p>Todavía no tiene horarios cargados.</p>';
+
+  lista.querySelectorAll('[data-quitar-horario]').forEach((b) => {
+    b.addEventListener('click', async () => {
+      try {
+        const r = await api.academico.quitarHorarioMateria(materiaDeHorarios, Number(b.dataset.quitarHorario));
+        avisar(r.mensaje, 'ok');
+        await pintarHorarios();
+        await pintar();
+      } catch (err) {
+        avisar(err?.message ?? 'No se pudo quitar el horario.', 'error');
+      }
+    });
+  });
+}
+
+async function abrirHorarios(materiaId, nombre) {
+  materiaDeHorarios = materiaId;
+  const dlg = document.getElementById('dlg-horarios');
+  textosDialogo(dlg, { titulo: 'Horarios de la materia', subtitulo: nombre });
+  document.getElementById('hm-error').hidden = true;
+  await pintarHorarios();
+  window.abrirDialogo(dlg, { foco: '#hm-dia' });
+}
+
+async function agregarHorario(e) {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const error = document.getElementById('hm-error');
+  const datos = Object.fromEntries(new FormData(form));
+  error.hidden = true;
+  try {
+    const r = await api.academico.agregarHorarioMateria(materiaDeHorarios, {
+      diaSemana: datos.diaSemana,
+      horaInicio: datos.horaInicio,
+      horaFin: datos.horaFin,
+      aula: datos.aula || null,
+    });
+    avisar(r.mensaje, 'ok');
+    await pintarHorarios();
+    await pintar();
+  } catch (err) {
+    error.textContent = err?.message ?? 'No se pudo agregar el horario.';
+    error.hidden = false;
+  }
 }
 
 const SINGULAR = { niveles: 'nivel', cursos: 'curso', materias: 'materia' };
@@ -523,6 +656,9 @@ async function pintar() {
   panel.querySelectorAll('[data-reactivar]').forEach((b) => {
     b.addEventListener('click', () => reactivar(Number(b.dataset.reactivar)));
   });
+  panel.querySelectorAll('[data-horarios]').forEach((b) => {
+    b.addEventListener('click', () => abrirHorarios(Number(b.dataset.horarios), b.dataset.nombre));
+  });
 }
 
 export async function iniciarAdminAcademico(id) {
@@ -538,7 +674,8 @@ export async function iniciarAdminAcademico(id) {
       </p>
       ${pestanias()}
       <div id="panel-academico" role="tabpanel" aria-labelledby="tab-ac-${solapa}" tabindex="0"></div>
-      ${dialogo()}`;
+      ${dialogo()}
+      ${dialogoHorarios()}`;
   });
 
   contenedor.querySelectorAll('[data-solapa]').forEach((btn) => {
@@ -557,6 +694,7 @@ export async function iniciarAdminAcademico(id) {
   });
 
   document.getElementById('form-academico').addEventListener('submit', guardar);
+  document.getElementById('form-horario').addEventListener('submit', agregarHorario);
 
   await pintar();
 }

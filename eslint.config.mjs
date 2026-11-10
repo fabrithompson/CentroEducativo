@@ -108,7 +108,12 @@ export default tseslint.config(
     },
   },
   {
-    files: ['web/frontend/js/api.js', 'web/frontend/js/ui.js', 'web/frontend/js/vistas/**/*.js'],
+    files: [
+      'web/frontend/js/api.js',
+      'web/frontend/js/ui.js',
+      'web/frontend/js/comprobante.js',
+      'web/frontend/js/vistas/**/*.js',
+    ],
     languageOptions: { sourceType: 'module' },
   },
 

@@ -262,6 +262,90 @@ export const MATERIAS: { nivel: string; curso: string; nombre: string; profesor?
 ];
 
 // ============================================================
+// GRILLA HORARIA DE MATERIAS
+// ============================================================
+
+/**
+ * Bloques de 80 minutos (dos módulos de 40) del turno mañana. Entre bloque y
+ * bloque hay un recreo de 10 minutos.
+ */
+export const BLOQUES_MANANA: { desde: number; hasta: number }[] = [
+  { desde: 7 * 60 + 30, hasta: 8 * 60 + 50 },
+  { desde: 9 * 60, hasta: 10 * 60 + 20 },
+  { desde: 10 * 60 + 30, hasta: 11 * 60 + 50 },
+  { desde: 12 * 60, hasta: 13 * 60 + 20 },
+];
+
+const DIAS_HABILES = [DiaSemana.LUNES, DiaSemana.MARTES, DiaSemana.MIERCOLES, DiaSemana.JUEVES, DiaSemana.VIERNES];
+
+export interface HorarioDeMateriaSeed {
+  nivel: string;
+  curso: string;
+  materia: string;
+  profesor?: string;
+  dia: DiaSemana;
+  desde: number;
+  hasta: number;
+}
+
+/**
+ * Arma la grilla de las materias del seed: cada materia recibe
+ * `ceil(horas / 2)` bloques, en días distintos cuando se puede, sin pisar otra
+ * materia del mismo curso ni otra del mismo docente. Es determinista: corre
+ * siempre igual, así el seed es idempotente.
+ */
+export function armarGrilla(materias: typeof MATERIAS = MATERIAS): HorarioDeMateriaSeed[] {
+  const grilla: HorarioDeMateriaSeed[] = [];
+  const ocupado = (clave: string, dia: DiaSemana, desde: number) =>
+    grilla.some(
+      (h) =>
+        h.dia === dia &&
+        h.desde === desde &&
+        (`${h.nivel}|${h.curso}` === clave || (h.profesor !== undefined && h.profesor === clave)),
+    );
+
+  materias.forEach((m, i) => {
+    const curso = `${m.nivel}|${m.curso}`;
+    const diasUsados = new Set<DiaSemana>();
+    const bloques = Math.ceil(m.horas / 2);
+
+    for (let b = 0; b < bloques; b++) {
+      let elegido: { dia: DiaSemana; bloque: (typeof BLOQUES_MANANA)[number] } | null = null;
+      // Primero se busca un día que la materia todavía no use; si no hay, se repite día.
+      for (const repetirDia of [false, true]) {
+        for (let d = 0; d < DIAS_HABILES.length && !elegido; d++) {
+          const dia = DIAS_HABILES[(i + b + d) % DIAS_HABILES.length]!;
+          if (!repetirDia && diasUsados.has(dia)) continue;
+          for (const bloque of BLOQUES_MANANA) {
+            const libre =
+              !ocupado(curso, dia, bloque.desde) && !(m.profesor && ocupado(m.profesor, dia, bloque.desde));
+            if (libre) {
+              elegido = { dia, bloque };
+              break;
+            }
+          }
+        }
+        if (elegido) break;
+      }
+      if (!elegido) throw new Error(`No hay lugar en la grilla para ${m.nombre} de ${m.curso}.`);
+
+      diasUsados.add(elegido.dia);
+      grilla.push({
+        nivel: m.nivel,
+        curso: m.curso,
+        materia: m.nombre,
+        profesor: m.profesor,
+        dia: elegido.dia,
+        desde: elegido.bloque.desde,
+        hasta: elegido.bloque.hasta,
+      });
+    }
+  });
+
+  return grilla;
+}
+
+// ============================================================
 // DEPORTES — los 8 oficiales
 // ============================================================
 
@@ -285,10 +369,10 @@ const SUM = 'SUM — Salón de usos múltiples';
  * Grilla semanal. Está diseñada con cruces deliberados para poder demostrar la
  * validación de solapamiento:
  *   - Secundario: Fútbol y Básquet comparten el martes 17:00-18:30.
- *   - Secundario: Vóley y Hockey comparten el miércoles 17:00-18:30.
+ *   - Secundario: Vóley y Danza comparten el miércoles 17:00-18:30.
  * Y también casos límite que NO deben bloquearse:
  *   - Secundario: Fútbol termina 18:30 y Ajedrez arranca 18:30 el jueves.
- *   - Secundario: Vóley termina 18:30 y Handball arranca 18:30 el lunes.
+ *   - Secundario: Vóley termina 18:30 y Artes Marciales arranca 18:30 el lunes.
  */
 export const DEPORTES: DeporteSeed[] = [
   {
@@ -321,7 +405,7 @@ export const DEPORTES: DeporteSeed[] = [
     ],
   },
   {
-    nombre: 'Handball', descripcion: 'Handball escolar. Entrenamiento técnico y participación en torneos zonales.',
+    nombre: 'Artes Marciales', descripcion: 'Judo y taekwondo escolar. Técnica, disciplina y respeto, con exámenes de graduación.',
     responsable: 'P-0005', arancel: 20000, cupo: 24,
     horarios: [
       { nivel: 'Primario', dia: DiaSemana.VIERNES, desde: '14:00', hasta: '15:15' },
@@ -349,12 +433,12 @@ export const DEPORTES: DeporteSeed[] = [
     ],
   },
   {
-    nombre: 'Hockey sobre césped', descripcion: 'Hockey femenino. Categorías sub-14, sub-16 y sub-18.',
+    nombre: 'Danza', descripcion: 'Danza contemporánea y folklore argentino. Muestra anual y encuentros intercolegiales.',
     responsable: 'P-0006', arancel: 26000, cupo: 22,
     horarios: [
-      { nivel: 'Primario', dia: DiaSemana.LUNES, desde: '15:30', hasta: '16:45' },
-      { nivel: 'Secundario', dia: DiaSemana.MIERCOLES, desde: '17:00', hasta: '18:30' },
-      { nivel: 'Secundario', dia: DiaSemana.VIERNES, desde: '17:00', hasta: '18:30' },
+      { nivel: 'Primario', dia: DiaSemana.LUNES, desde: '15:30', hasta: '16:45', lugar: SUM },
+      { nivel: 'Secundario', dia: DiaSemana.MIERCOLES, desde: '17:00', hasta: '18:30', lugar: SUM },
+      { nivel: 'Secundario', dia: DiaSemana.VIERNES, desde: '17:00', hasta: '18:30', lugar: SUM },
     ],
   },
   {
@@ -443,10 +527,10 @@ export const CUOTA_POR_NIVEL: Record<string, number> = {
  */
 export const INSCRIPCIONES_DEPORTE: { legajo: string; deportes: string[] }[] = [
   { legajo: 'A-0001', deportes: ['Fútbol', 'Ajedrez'] },        // jueves consecutivos: 17:00-18:30 y 18:30-19:30
-  { legajo: 'A-0002', deportes: ['Vóley', 'Handball'] },        // lunes y miércoles consecutivos
+  { legajo: 'A-0002', deportes: ['Vóley', 'Artes Marciales'] },        // lunes y miércoles consecutivos
   { legajo: 'A-0003', deportes: ['Natación'] },
   { legajo: 'A-0004', deportes: ['Básquet', 'Atletismo'] },
-  { legajo: 'A-0005', deportes: ['Hockey sobre césped'] },
+  { legajo: 'A-0005', deportes: ['Danza'] },
   { legajo: 'A-0006', deportes: ['Vóley', 'Natación'] },
   { legajo: 'A-0007', deportes: ['Ajedrez', 'Atletismo'] },
   { legajo: 'A-0008', deportes: ['Fútbol'] },
@@ -578,6 +662,21 @@ export async function seedDominio(prisma: PrismaClient): Promise<void> {
         profesorId: m.profesor ? profesores.get(m.profesor) : null,
         cargaHoraria: m.horas,
       },
+    });
+  }
+
+  // ---------- Grilla horaria de materias ----------
+  for (const h of armarGrilla()) {
+    const cursoId = cursos.get(`${h.nivel}|${h.curso}`)!;
+    const materia = await prisma.materia.findUnique({
+      where: { cursoId_nombre: { cursoId, nombre: h.materia } },
+      select: { id: true },
+    });
+    if (!materia) continue;
+    await prisma.horarioMateria.upsert({
+      where: { materiaId_diaSemana_horaInicio: { materiaId: materia.id, diaSemana: h.dia, horaInicio: h.desde } },
+      update: { horaFin: h.hasta },
+      create: { materiaId: materia.id, diaSemana: h.dia, horaInicio: h.desde, horaFin: h.hasta },
     });
   }
 
@@ -943,7 +1042,7 @@ async function seedFacturacion(prisma: PrismaClient, cat: Catalogos): Promise<vo
     { tipo: TipoItemFactura.CUOTA, descripcion: 'Cuota mensual — Secundario 1er Año', precio: cuota('A-0002') },
     { tipo: TipoItemFactura.TRANSPORTE, descripcion: 'Transporte — Recorrido 2', precio: 52000 },
     { tipo: TipoItemFactura.DEPORTE, descripcion: 'Deporte — Vóley', precio: 22000 },
-    { tipo: TipoItemFactura.DEPORTE, descripcion: 'Deporte — Handball', precio: 20000 },
+    { tipo: TipoItemFactura.DEPORTE, descripcion: 'Deporte — Artes Marciales', precio: 20000 },
   ];
   const fPerezAgo = await crearFactura({ legajo: 'A-0002', tutor: 'rperez', mes: 8, items: itemsPerez });
   if (fPerezAgo) {

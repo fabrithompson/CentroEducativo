@@ -17,7 +17,7 @@
  */
 
 import { Router } from 'express';
-import { Role, Turno } from '@prisma/client';
+import { DiaSemana, Role, Turno } from '@prisma/client';
 import { z } from 'zod';
 
 import { prisma } from '../../db/prisma';
@@ -36,6 +36,8 @@ import {
   listarMaterias,
   listarNiveles,
 } from './academico.service';
+
+import { agregarHorarioMateria, eliminarHorarioMateria, listarHorariosMateria } from './grilla.service';
 
 const router = Router();
 
@@ -207,6 +209,60 @@ router.patch('/materias/:id', ...soloAdmin, async (req, res, next) => {
     const { id } = idParam.parse(req.params);
     const materia = await actualizarMateria(prisma, id, materiaSchema.partial().extend(edicion).parse(req.body));
     res.json({ exito: true, mensaje: 'Materia actualizada.', materia });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ------------------------------------------------------------------
+// Grilla horaria de una materia
+// ------------------------------------------------------------------
+
+const horarioParams = z.object({
+  id: z.coerce.number().int().positive(),
+  horarioId: z.coerce.number().int().positive(),
+});
+
+/** Acepta "08:00" o minutos desde medianoche, como los horarios de deportes. */
+const hora = z.union([
+  z.coerce.number().int().min(0).max(1440),
+  z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Formato esperado HH:MM.')
+    .transform((h) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3))),
+]);
+
+const horarioMateriaSchema = z.object({
+  diaSemana: z.nativeEnum(DiaSemana),
+  horaInicio: hora,
+  horaFin: hora,
+  aula: z.string().trim().max(60).nullable().optional(),
+});
+
+router.get('/materias/:id/horarios', async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    res.json({ exito: true, horarios: await listarHorariosMateria(prisma, id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/materias/:id/horarios', ...soloAdmin, async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    const horario = await agregarHorarioMateria(prisma, id, horarioMateriaSchema.parse(req.body));
+    res.status(201).json({ exito: true, mensaje: 'Horario agregado.', horario });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/materias/:id/horarios/:horarioId', ...soloAdmin, async (req, res, next) => {
+  try {
+    const { id, horarioId } = horarioParams.parse(req.params);
+    await eliminarHorarioMateria(prisma, id, horarioId);
+    res.json({ exito: true, mensaje: 'Horario quitado.' });
   } catch (err) {
     next(err);
   }

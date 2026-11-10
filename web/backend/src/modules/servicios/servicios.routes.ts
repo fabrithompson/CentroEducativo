@@ -9,6 +9,8 @@
  *   POST   /api/servicios/comedor                 ADMIN, PADRE (vinculado)
  *   DELETE /api/servicios/comedor/:id             ADMIN, PADRE (vinculado)
  *   GET    /api/servicios/alumno/:alumnoId        ADMIN, DOCENTE, PADRE (vinculado), el propio alumno
+ *   PATCH  /api/servicios/transporte/recorridos/:id  ADMIN — arancel del recorrido
+ *   PATCH  /api/servicios/comedor/planes/:id         ADMIN — arancel del plan
  */
 
 import { Router } from 'express';
@@ -16,6 +18,7 @@ import { CodigoRecorrido, Role, TurnoTransporte } from '@prisma/client';
 import { z } from 'zod';
 
 import { prisma } from '../../db/prisma';
+import { aNumero } from '../shared/pagination';
 import { HttpError } from '../../utils/httpError';
 import { requireAuth, requireRole } from '../../middleware/auth';
 import { assertPuedeVerAlumno } from '../shared/authz';
@@ -118,6 +121,67 @@ router.delete(
     }
   },
 );
+
+// ==================================================================
+// ARANCELES (sólo ADMIN)
+// ==================================================================
+
+/**
+ * La consigna: "los administradores solamente pueden especificar el valor de
+ * la cuota, deportes y servicios de transporte y comedor". El valor nuevo rige
+ * desde la próxima facturación; las facturas emitidas guardan su precio.
+ */
+const arancelSchema = z.object({
+  arancelMensual: z.coerce.number().positive('El arancel tiene que ser mayor que cero.').max(10_000_000),
+});
+
+router.patch('/transporte/recorridos/:id', requireAuth, requireRole(Role.ADMIN), async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    const { arancelMensual } = arancelSchema.parse(req.body);
+
+    const recorrido = await prisma.recorridoTransporte.findUnique({ where: { id }, select: { id: true } });
+    if (!recorrido) throw HttpError.notFound('El recorrido no existe.');
+
+    const actualizado = await prisma.recorridoTransporte.update({
+      where: { id },
+      data: { arancelMensual },
+      select: { id: true, codigo: true, nombre: true, arancelMensual: true },
+    });
+
+    res.json({
+      exito: true,
+      mensaje: `Arancel de ${actualizado.nombre} actualizado.`,
+      recorrido: { ...actualizado, arancelMensual: aNumero(actualizado.arancelMensual) },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch('/comedor/planes/:id', requireAuth, requireRole(Role.ADMIN), async (req, res, next) => {
+  try {
+    const { id } = idParam.parse(req.params);
+    const { arancelMensual } = arancelSchema.parse(req.body);
+
+    const plan = await prisma.comedor.findUnique({ where: { id }, select: { id: true } });
+    if (!plan) throw HttpError.notFound('El plan de comedor no existe.');
+
+    const actualizado = await prisma.comedor.update({
+      where: { id },
+      data: { arancelMensual },
+      select: { id: true, nombre: true, arancelMensual: true },
+    });
+
+    res.json({
+      exito: true,
+      mensaje: `Arancel de ${actualizado.nombre} actualizado.`,
+      plan: { ...actualizado, arancelMensual: aNumero(actualizado.arancelMensual) },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // ==================================================================
 // COMEDOR

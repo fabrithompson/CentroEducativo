@@ -1,4 +1,4 @@
-# Aplicación Móvil — Portal de Familias
+# Aplicación Móvil — Familias, estudiantes, docentes y administración
 
 **Proyecto:** Centro Educativo "EDUCAR PARA TRANSFORMAR"
 **Paquete:** `mobile/` (workspace pnpm)
@@ -7,24 +7,44 @@
 
 ---
 
+## 0. Roles y módulos
+
+La app es de los cuatro roles del sistema, igual que la web, y cada uno ve los
+módulos de la Parte 3 de la consigna que le tocan (`src/dominio/roles.ts`, con
+pruebas). Hasta el 09/11/2026 sólo dejaba entrar a padres; la consigna no lo
+dice y se corrigió (ver `plan_de_trabajo_mobile.md` §1.1).
+
+| Rol | Pestañas |
+|---|---|
+| Padre | Inicio (ficha, materias con profesor y horarios, deportes, servicios, asistencia) · Inscribir (deportes, transporte por mes, comedor, cursado) · Carnet · Finanzas (cuotas, filtro por período, deuda por ítem, pago, comprobante) · Cuenta |
+| Estudiante | Inicio · Carnet · Cuotas (lectura: pagar es de los padres) · Cuenta |
+| Docente | Escanear carnet (cámara o carga manual) · Mis cursos (por nivel, con horarios) · Cuenta |
+| Administración | Aranceles (cuota por nivel, deportes, recorridos, comedor) · Pagos (aprobar o rechazar comprobantes) · Escanear · Cuenta |
+
+"Cuenta" es común a todos: cambiar la contraseña y cerrar sesión. El backend
+vuelve a verificar cada permiso: la app sólo decide qué se muestra.
+
+---
+
 ## 1. Stack
 
 | Elemento | Elección |
 |---|---|
-| Framework | **Expo SDK 57** (`~57.0.23`) + React Native 0.86.3 · React 19.2.3 |
+| Framework | **Expo SDK 58** (`~58.0.23`) + React Native 0.88.1 · React 19.3.0 |
 | Lenguaje | TypeScript estricto, con `noUncheckedIndexedAccess` |
 | Almacenamiento de sesión | `expo-secure-store` |
-| Cámara y archivos | `expo-image-picker`, `expo-document-picker` |
+| Cámara y archivos | `expo-camera` (escáner del carnet), `expo-image-picker`, `expo-document-picker` |
 | Comprobante en PDF | `expo-print` (vista previa de impresión del sistema) |
 | Navegación | **Estado propio, sin React Navigation** |
 
 Expo era la recomendación de la auditoría (decisión #1): comparte TypeScript con
 el resto del monorepo y produce un build instalable para la defensa.
 
-**Sobre la navegación:** son cinco pantallas con una barra inferior. React Navigation
-arrastra `react-native-gesture-handler`, `reanimated` y `screens`, todas con
-código nativo. Para este alcance no se justifica. Si el flujo crece, migrar es
-un cambio acotado a `App.tsx`.
+**Sobre la navegación:** es una barra inferior con entre tres y cinco pestañas
+según el rol (`dominio/roles.ts`), más la pantalla de pago, que se abre sola.
+React Navigation arrastra `react-native-gesture-handler`, `reanimated` y
+`screens`, todas con código nativo. Para este alcance no se justifica. Si el
+flujo crece, migrar es un cambio acotado a `App.tsx`.
 
 ---
 
@@ -32,9 +52,9 @@ un cambio acotado a `App.tsx`.
 
 ```
 mobile/
-  App.tsx                       Raíz: sesión, selector de hijo, barra inferior
+  App.tsx                       Raíz: sesión, selector de hijo, pestañas por rol
   index.ts                      Punto de entrada de Expo
-  app.json                      Configuración y permisos
+  app.json                      Configuración, permisos y plugins
   src/
     api/
       client.ts                 HTTP, sesión segura, refresh token
@@ -42,16 +62,25 @@ mobile/
     auth/
       SesionContext.tsx         Estado de sesión
     dominio/
+      roles.ts                  Pestañas de cada rol                 ← testeado
       pagos.ts                  Selección de ítems y clasificación   ← testeado
       formato.ts                Importes, fechas, horarios           ← testeado
       rango.ts                  Período del filtro de cuotas         ← testeado
+      formularios.ts            Formato de contraseña, importes…     ← testeado
+      errores.ts                Mensaje de error de la API           ← testeado
       totp.ts                   Código del carnet (HMAC-SHA256)      ← testeado
     pantallas/
-      Ingreso.tsx
-      Dashboard.tsx
-      Finanzas.tsx
-      PagoTransferencia.tsx
-      Carnet.tsx                QR rotativo y últimos accesos
+      Ingreso.tsx               Todos los roles
+      Cuenta.tsx                Todos: cambiar contraseña, salir
+      Dashboard.tsx             Padre y estudiante: ficha, materias, servicios
+      Inscripciones.tsx         Padre: deportes, transporte, comedor, cursado
+      Carnet.tsx                Padre y estudiante: QR rotativo y accesos
+      Finanzas.tsx              Padre (y estudiante, en lectura): cuotas y deuda
+      PagoTransferencia.tsx     Padre: transferencia y comprobante
+      MisCursos.tsx             Docente: cursos por nivel y horarios
+      Escaner.tsx               Docente y admin: control de acceso con el carnet
+      Aranceles.tsx             Admin: cuota, deportes, recorridos, comedor
+      Comprobantes.tsx          Admin: aprobar o rechazar transferencias
     ui/
       tema.ts                   Tokens visuales
       componentes.tsx           Tarjeta, Estado, Botón, Progreso…
@@ -135,8 +164,10 @@ Las facturas `ANULADA` no aparecen en ninguna solapa: no son deuda ni son un pag
 
 Cada cuota muestra total, pagado, saldo, barra de progreso si hubo pago parcial,
 y texto de vencimiento en lenguaje natural ("Vence en 5 días", "Venció hace 6
-días"). El detalle desplegable trae los conceptos y las transferencias cargadas
-con su estado. **Si un comprobante fue rechazado, se muestra el motivo**.
+días"). El detalle desplegable trae los conceptos y las transferencias cargadas,
+cada una con su fecha, banco, número de operación, importe y estado: es el
+historial de pagos de esa cuota. **Si un comprobante fue rechazado, se muestra
+el motivo**.
 
 ### Filtro por período
 
@@ -293,6 +324,36 @@ pnpm --filter mobile test
 pnpm --filter mobile typecheck
 ```
 
+**La versión de Expo Go manda.** La tienda instala solo el Expo Go del SDK más
+nuevo, y en iPhone no se puede bajar uno anterior. Si el teléfono muestra
+*"Project is incompatible with this version of Expo Go"*, hay que actualizar el
+proyecto al SDK que pide. Pasó el 09/11/2026, del 57 al 58. Se hace desde
+`mobile/`:
+
+```bash
+pnpm exec expo install expo@^58.0.0 --fix   # sube expo y alinea el resto
+pnpm exec expo install --check               # tiene que decir "up to date"
+pnpm peers check                             # sin peers sin cumplir
+```
+
+En esa actualización, `@expo/dom-webview` quedó en la versión 57 dentro del
+lockfile. Es un *peer* opcional de `expo`, que acepta cualquier versión, pero
+`@expo/log-box@58` pide la 58. Se resolvió instalándolo con
+`expo install @expo/dom-webview`, que lo deja como dependencia directa con la
+versión del SDK. Después de actualizar conviene arrancar Metro con
+`--clear`.
+
+`expo install --check` no revisa `app.json`; `npx expo-doctor` sí, y marcó dos
+claves que el SDK 58 ya no acepta:
+
+- `newArchEnabled`: la nueva arquitectura es la única desde el SDK 58, así que
+  la clave se borró.
+- `splash` en la raíz: la pantalla de inicio nativa ahora la configura el plugin
+  `expo-splash-screen` (instalado con `expo install`), con el mismo color de
+  fondo. En la raíz sólo queda `web.splash`, que es para la versión PWA.
+
+Con los dos cambios, `expo-doctor` pasa los 20 controles.
+
 ---
 
 ## 9. Estado de verificación
@@ -307,10 +368,15 @@ pnpm --filter mobile typecheck
 | Código TOTP del carnet contra `node:crypto` | ✅ **24 tests** |
 | Validación del comprobante | ✅ incluida arriba |
 | Clasificación en solapas | ✅ incluida arriba |
-| Suite del paquete móvil | ✅ **96 tests en verde**, todos de dominio |
+| Roles y pestañas por rol | ✅ **9 tests** |
+| Formularios (contraseña, importes, solicitud de cursado) | ✅ **7 tests** |
+| Suite del paquete móvil | ✅ **112 tests en verde**, todos de dominio |
 | Cliente HTTP (`api/client.ts`) | ❌ **Sin pruebas automáticas** |
-| Suite del monorepo | ✅ **405 tests** (309 backend + 96 móvil, al 09/11/2026) |
+| Suite del monorepo | ✅ **435 tests** (323 backend + 112 móvil, al 09/11/2026), más 23 reglas de motor sobre PostgreSQL |
+| Pantallas por rol en la web, contra el servidor de QA | ✅ Admin, padre, docente y estudiante recorridos el 09/11/2026 |
+| Pantallas nuevas de la app en el teléfono | ❌ **No verificado** |
 | Bundle de Android armado por Metro | ✅ sin errores, con `expo-print` (09/11/2026) |
+| `expo-doctor` | ✅ 20/20 controles (09/11/2026) |
 | Comprobante con transferencias acreditadas | ✅ Probado en la web contra el servidor de QA local: la cuota de agosto del seed lista sus dos transferencias |
 | "Ver comprobante" en el teléfono | ❌ **No verificado** |
 | Render en emulador o dispositivo | ❌ **No verificado** |
@@ -337,9 +403,8 @@ emulador.
 | Probar en emulador Android y en un dispositivo real | Lo primero al retomar |
 | Verificar el `multipart` de RN contra multer | Es donde suelen aparecer sorpresas |
 | Rastreo del transporte (RF-08) | El backend está listo (`GET /api/transporte/seguimiento/:alumnoId`); falta la pantalla y un simulador de posiciones |
-| Materias y profesores del hijo (RF-03) | `GET /api/padres/mis-hijos/:id` ya los devuelve; falta mostrarlos |
 | Notificaciones push | La consigna las pide para el QR; en Android requieren un build de desarrollo, no Expo Go |
-| Íconos e imagen de splash | `app.json` tiene los colores; faltan los assets |
+| Íconos e imagen de splash | `app.json` tiene los colores (el de la splash, en el plugin `expo-splash-screen`); faltan los assets |
 | Pantalla de calificaciones | El endpoint existe y está tipado; falta la pantalla |
 | Pruebas del cliente HTTP | Refresco único, oyentes de sesión caída y errores, con un `fetch` simulado |
 | Modo oscuro | El tema está en tokens; falta la variante |

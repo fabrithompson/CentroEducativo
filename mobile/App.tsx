@@ -1,14 +1,17 @@
 /**
  * Raíz de la aplicación.
  *
- * Navegación propia por estado en vez de React Navigation: son tres pantallas y
- * un flujo lineal, así que sumar la librería (y sus dependencias nativas de
- * gestos y reanimated) no se justifica para este alcance. Si el flujo crece,
- * migrar es un cambio acotado a este archivo.
+ * Navegación propia por estado en vez de React Navigation: es una barra
+ * inferior con pocas pantallas por rol, así que sumar la librería (y sus
+ * dependencias nativas de gestos y reanimated) no se justifica. Si el flujo
+ * crece, migrar es un cambio acotado a este archivo.
  *
- * El selector de hijo vive acá arriba porque lo comparten el dashboard y las
- * finanzas: una familia con dos chicos cambia una sola vez y las dos pantallas
- * quedan alineadas.
+ * La app es de los cuatro roles del sistema, como la web, y cada uno ve sus
+ * módulos (`dominio/roles.ts`):
+ *   - familias (padre y estudiante): siguen a uno o más alumnos, con un
+ *     selector arriba que comparten todas las pestañas;
+ *   - personal (docente y administración): control de acceso, cursos,
+ *     aranceles y comprobantes.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -18,15 +21,31 @@ import { StatusBar } from 'expo-status-bar';
 
 import api, { type FacturaDetallada, type Hijo } from './src/api/endpoints';
 import { ProveedorSesion, useSesion } from './src/auth/SesionContext';
+import {
+  esFamilia,
+  nombreDeRol,
+  pestaniasDe,
+  puedePagar,
+  rolDe,
+  tituloDeVista,
+  vistaInicial,
+  type Pestania,
+  type Rol,
+  type Vista,
+} from './src/dominio/roles';
 import { PantallaIngreso } from './src/pantallas/Ingreso';
 import { PantallaDashboard } from './src/pantallas/Dashboard';
 import { PantallaFinanzas } from './src/pantallas/Finanzas';
 import { PantallaCarnet } from './src/pantallas/Carnet';
 import { PantallaPago } from './src/pantallas/PagoTransferencia';
+import { PantallaInscripciones } from './src/pantallas/Inscripciones';
+import { PantallaCuenta } from './src/pantallas/Cuenta';
+import { PantallaEscaner } from './src/pantallas/Escaner';
+import { PantallaMisCursos } from './src/pantallas/MisCursos';
+import { PantallaAranceles } from './src/pantallas/Aranceles';
+import { PantallaComprobantes } from './src/pantallas/Comprobantes';
 import { Boton, Cargando, ErrorPantalla, Vacio } from './src/ui/componentes';
 import { ALTO_TOCABLE, colores, espaciado, radio, tipografia } from './src/ui/tema';
-
-type Vista = 'dashboard' | 'carnet' | 'finanzas';
 
 export default function App() {
   return (
@@ -50,17 +69,23 @@ function Raiz() {
     );
   }
 
-  if (!usuario) return <PantallaIngreso />;
+  // El ingreso ya rechaza un rol desconocido; esto cubre una sesión guardada vieja.
+  const rol = rolDe(usuario?.tipo);
+  if (!usuario || !rol) return <PantallaIngreso />;
 
-  return <AppConSesion />;
+  return esFamilia(rol) ? <AppFamilia rol={rol} /> : <AppPersonal rol={rol} />;
 }
 
-function AppConSesion() {
+// ==================================================================
+// Familias: padre y estudiante
+// ==================================================================
+
+function AppFamilia({ rol }: { rol: Rol }) {
   const { usuario, salir } = useSesion();
 
   const [hijos, setHijos] = useState<Hijo[] | null>(null);
   const [hijoActivo, setHijoActivo] = useState<number | null>(null);
-  const [vista, setVista] = useState<Vista>('dashboard');
+  const [vista, setVista] = useState<Vista>(vistaInicial(rol));
   const [pagando, setPagando] = useState<FacturaDetallada | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recarga, setRecarga] = useState(0);
@@ -77,7 +102,7 @@ function AppConSesion() {
           : (r.hijos[0]?.alumno.id ?? null),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No pudimos cargar tus hijos.');
+      setError(err instanceof Error ? err.message : 'No pudimos cargar tus datos.');
     }
   }, []);
 
@@ -96,7 +121,7 @@ function AppConSesion() {
   if (!hijos) {
     return (
       <SafeAreaView style={estilos.pantallaCompleta}>
-        <Cargando mensaje="Cargando tus hijos…" />
+        <Cargando mensaje={rol === 'padre' ? 'Cargando tus hijos…' : 'Cargando tus datos…'} />
       </SafeAreaView>
     );
   }
@@ -105,8 +130,12 @@ function AppConSesion() {
     return (
       <SafeAreaView style={estilos.pantallaCompleta}>
         <Vacio
-          titulo="Todavía no tenés hijos vinculados"
-          mensaje="Administración realiza la vinculación. Acercate a secretaría con tu DNI y la vinculamos en el momento."
+          titulo={rol === 'padre' ? 'Todavía no tenés hijos vinculados' : 'Tu cuenta no tiene un legajo asociado'}
+          mensaje={
+            rol === 'padre'
+              ? 'Administración realiza la vinculación. Acercate a secretaría con tu DNI y la vinculamos en el momento.'
+              : 'Pedí en secretaría que asocien tu usuario a tu legajo de alumno.'
+          }
         />
         <View style={{ padding: espaciado.xl }}>
           <Boton titulo="Cerrar sesión" variante="suave" onPress={() => void salir()} />
@@ -138,12 +167,12 @@ function AppConSesion() {
   return (
     <SafeAreaView style={estilos.pantallaCompleta} edges={['top', 'bottom']}>
       <Encabezado
-        titulo={vista === 'dashboard' ? 'Mi hijo' : vista === 'carnet' ? 'Carnet digital' : 'Pagos y finanzas'}
-        subtitulo={usuario?.nombre}
+        titulo={tituloDeVista(vista)}
+        subtitulo={`${usuario?.nombre ?? ''} · ${nombreDeRol(rol)}`}
         onSalir={() => confirmarSalida(() => void salir())}
       />
 
-      {hijos.length > 1 ? (
+      {hijos.length > 1 && vista !== 'cuenta' ? (
         <View style={estilos.selectorHijo}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.selectorContenido}>
             {hijos.map((h) => {
@@ -157,9 +186,7 @@ function AppConSesion() {
                   accessibilityLabel={`Ver a ${h.alumno.nombres} ${h.alumno.apellido}`}
                   style={[estilos.chipHijo, activo && estilos.chipHijoActivo]}
                 >
-                  <Text style={[estilos.chipTexto, activo && estilos.chipTextoActivo]}>
-                    {h.alumno.nombres}
-                  </Text>
+                  <Text style={[estilos.chipTexto, activo && estilos.chipTextoActivo]}>{h.alumno.nombres}</Text>
                 </Pressable>
               );
             })}
@@ -168,16 +195,55 @@ function AppConSesion() {
       ) : null}
 
       <View style={{ flex: 1 }}>
-        {vista === 'dashboard' ? (
-          <PantallaDashboard hijo={hijo} onIrAFinanzas={() => setVista('finanzas')} />
+        {vista === 'inicio' ? (
+          <PantallaDashboard hijo={hijo} rol={rol} onIrAFinanzas={() => setVista('finanzas')} />
+        ) : vista === 'inscripciones' ? (
+          <PantallaInscripciones hijo={hijo} />
         ) : vista === 'carnet' ? (
           <PantallaCarnet hijo={hijo} />
+        ) : vista === 'finanzas' ? (
+          <PantallaFinanzas hijo={hijo} onPagar={puedePagar(rol) ? setPagando : undefined} />
         ) : (
-          <PantallaFinanzas hijo={hijo} onPagar={setPagando} />
+          <PantallaCuenta rol={rol} />
         )}
       </View>
 
-      <BarraInferior vista={vista} onCambiar={setVista} />
+      <BarraInferior pestanias={pestaniasDe(rol)} vista={vista} onCambiar={setVista} />
+    </SafeAreaView>
+  );
+}
+
+// ==================================================================
+// Personal: docente y administración
+// ==================================================================
+
+function AppPersonal({ rol }: { rol: Rol }) {
+  const { usuario, salir } = useSesion();
+  const [vista, setVista] = useState<Vista>(vistaInicial(rol));
+
+  return (
+    <SafeAreaView style={estilos.pantallaCompleta} edges={['top', 'bottom']}>
+      <Encabezado
+        titulo={tituloDeVista(vista)}
+        subtitulo={`${usuario?.nombre ?? ''} · ${nombreDeRol(rol)}`}
+        onSalir={() => confirmarSalida(() => void salir())}
+      />
+
+      <View style={{ flex: 1 }}>
+        {vista === 'escanear' ? (
+          <PantallaEscaner />
+        ) : vista === 'cursos' ? (
+          <PantallaMisCursos />
+        ) : vista === 'aranceles' ? (
+          <PantallaAranceles />
+        ) : vista === 'comprobantes' ? (
+          <PantallaComprobantes />
+        ) : (
+          <PantallaCuenta rol={rol} />
+        )}
+      </View>
+
+      <BarraInferior pestanias={pestaniasDe(rol)} vista={vista} onCambiar={setVista} />
     </SafeAreaView>
   );
 }
@@ -224,13 +290,15 @@ function Encabezado({
   );
 }
 
-function BarraInferior({ vista, onCambiar }: { vista: Vista; onCambiar: (v: Vista) => void }) {
-  const pestanias: { clave: Vista; titulo: string }[] = [
-    { clave: 'dashboard', titulo: 'Inicio' },
-    { clave: 'carnet', titulo: 'Carnet' },
-    { clave: 'finanzas', titulo: 'Finanzas' },
-  ];
-
+function BarraInferior({
+  pestanias,
+  vista,
+  onCambiar,
+}: {
+  pestanias: Pestania[];
+  vista: Vista;
+  onCambiar: (v: Vista) => void;
+}) {
   return (
     <View style={estilos.barra} accessibilityRole="tablist">
       {pestanias.map((p) => {
@@ -244,7 +312,9 @@ function BarraInferior({ vista, onCambiar }: { vista: Vista; onCambiar: (v: Vist
             accessibilityLabel={p.titulo}
             style={estilos.barraItem}
           >
-            <Text style={[estilos.barraTexto, activa && estilos.barraTextoActivo]}>{p.titulo}</Text>
+            <Text style={[estilos.barraTexto, activa && estilos.barraTextoActivo]} numberOfLines={1}>
+              {p.titulo}
+            </Text>
             {activa ? <View style={estilos.barraIndicador} /> : null}
           </Pressable>
         );
@@ -306,8 +376,9 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: espaciado.xs,
+    paddingHorizontal: 2,
   },
-  barraTexto: { fontSize: 14, fontWeight: '600', color: colores.textoSuave },
+  barraTexto: { fontSize: 13, fontWeight: '600', color: colores.textoSuave },
   barraTextoActivo: { color: colores.primario },
   barraIndicador: { height: 3, width: 28, borderRadius: radio.pill, backgroundColor: colores.primario },
 });
