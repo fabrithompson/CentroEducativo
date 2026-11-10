@@ -14,7 +14,10 @@
       "package": "ar.edu.educarparatransformar.tutores",
       "adaptiveIcon": {
         "backgroundColor": "#1f4e79"
-      }
+      },
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       [
@@ -27,7 +30,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "La app usa la cámara para leer el QR del carnet en el micro y en el comedor, y para fotografiar comprobantes de transferencia."
+          "cameraPermission": "La app usa la cámara para leer el QR del carnet en el micro y en el comedor, y para fotografiar comprobantes de transferencia.",
+          "recordAudioAndroid": false
         }
       ],
       "expo-secure-store",
@@ -41,7 +45,11 @@
       ]
     ],
     "extra": {
-      "apiUrl": "https://transformar-para-educar.up.railway.app"
-    }
+      "apiUrl": "https://transformar-para-educar.up.railway.app",
+      "eas": {
+        "projectId": "ff8738ff-7f21-4528-9503-6d10bdf749ed"
+      }
+    },
+    "owner": "fabrithompson"
   }
 }
